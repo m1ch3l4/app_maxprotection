@@ -1,0 +1,78 @@
+name: app_maxprotection
+
+description: A new Flutter project.
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.14.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  intl: 0.17.0
+  cupertino_icons: ^1.0.0
+  popup_window: ^1.1.2
+  sliding_up_panel: ^2.0.0+1
+  http: ^0.13.1
+  url_launcher: ^6.0.3
+  equatable: ^2.0.0
+  firebase_core: ^1.10.0
+  firebase_messaging: ^11.1.0
+  fluttertoast: ^8.0.8
+  contactus: ^1.1.9
+  mask_text_input_formatter: ^2.1.0
+  local_auth: 1.1.0
+  shared_preferences: ^2.0.6
+  flutter_html: ^2.2.1
+  open_file: ^3.2.1
+  path_provider: ^2.0.9
+  pdf: ^3.7.3
+  just_audio: ^0.9.20
+  flutter_swiper: ^1.1.6
+  record_mp3: ^3.0.0
+  permission_handler: ^8.1.6
+  rxdart: ^0.27.3
+  flutter_local_notifications: ^9.6.0
+  localstorage: ^4.0.0+1
+  flutter_phone_direct_caller: ^2.1.1
+
+dependency_overrides:
+  path_provider_android: 2.0.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - images/logo.webp
+    - images/icon.png
+    - images/icon2.png
+    - images/icon.webp
+    - assets/images/
+    - assets/images/ic_share.png
+    - assets/alert.mp3
+    - assets/bell.mp3
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Poppins-ExtraBold.ttf
+          weight: 800
+
+  

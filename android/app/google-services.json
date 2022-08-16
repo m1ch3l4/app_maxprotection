@@ -1,0 +1,118 @@
+{
+  "project_info": {
+    "project_number": "725434711469",
+    "project_id": "maxprotection-bc1f4",
+    "storage_bucket": "maxprotection-bc1f4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725434711469:android:c31c6bc38e29b9578eb524",
+        "android_client_info": {
+          "package_name": "br.com.maxprotection.security_news.client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3sDhljb7zgmqbqKbvItA0UQbmElhB_Uo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "725434711469-8abbh437s5mg705ql7htd929dpfgqoer.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.maxprotection.securityNews"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725434711469:android:40ca404611ae518d8eb524",
+        "android_client_info": {
+          "package_name": "br.com.maxprotection.security_news.consultor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3sDhljb7zgmqbqKbvItA0UQbmElhB_Uo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "725434711469-8abbh437s5mg705ql7htd929dpfgqoer.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.maxprotection.securityNews"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725434711469:android:40ca404611ae518d8eb524",
+        "android_client_info": {
+          "package_name": "br.com.maxprotection.security_news"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3sDhljb7zgmqbqKbvItA0UQbmElhB_Uo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "725434711469-7go9d67j3tgc429ca7ltnjb7opj31j4i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "725434711469-8abbh437s5mg705ql7htd929dpfgqoer.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "br.com.maxprotection.securityNews"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
