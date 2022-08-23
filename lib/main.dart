@@ -1,3 +1,4 @@
+//@dart=2.9
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/login_screen.dart';
 import 'package:app_maxprotection/screens/welcome_screen.dart';
