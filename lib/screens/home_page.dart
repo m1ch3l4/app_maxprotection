@@ -497,7 +497,7 @@ class _MyHomePageState extends State<MyHomePage>{
       Usuario u = resp.result;
       if(u.phone!=null){
         Message.showMessage("Ligando para "+u.name+", telefone: "+u.phone);
-        String ph = u.phone.replaceAll(RegExp('[^0-9]'), '');
+        String ph = "0"+u.phone.replaceAll(RegExp('[^0-9]'), ''); // 25/08/2022 - adicionando o ZERO pela questão da operadora...
         if(ph.length>10) {
           FlutterPhoneDirectCaller.callNumber(ph);
         }else{
