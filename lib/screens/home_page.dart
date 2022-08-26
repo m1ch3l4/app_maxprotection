@@ -526,6 +526,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     children: <Widget>[
                       ActiveProjectsCard(
                         ctx:context,
+                        r:false,
                         action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
                         cardColor: Colors.white,
                         icon: Icon(Icons.support,
@@ -535,6 +536,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       SizedBox(width: 20.0),
                       ActiveProjectsCard(
                           ctx:context,
+                          r:false,
                           action: (isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),
                         cardColor: Colors.white,
                         icon:Icon(Icons.watch_later_outlined,
@@ -547,6 +549,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     children: <Widget>[
                       ActiveProjectsCard(
                         ctx:context,
+                        r:false,
                         action: InnerElastic(),
                         cardColor: Colors.white,
                         icon: Icon(Icons.volume_down_sharp,
@@ -556,6 +559,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       SizedBox(width: 20.0),
                       ActiveProjectsCard(
                         ctx:context,
+                        r:false,
                         action: InnerZabbix(),
                         cardColor: Colors.white,
                         icon: Icon(Icons.web,
@@ -567,6 +571,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   Row(
                     children: <Widget>[
                       ActiveProjectsCard(
+                        r:false,
                         ctx:context,
                         action: InnerMessages(2),
                         cardColor: Colors.white,
@@ -575,6 +580,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       ),
                       SizedBox(width: 20.0),
                       ActiveProjectsCard(
+                        r:false,
                         ctx:context,
                         action: InnerMessages(1),
                         cardColor: Colors.white,
@@ -587,6 +593,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   Row(
                     children: <Widget>[
                       ActiveProjectsCard(
+                        r:false,
                         ctx:context,
                         action: InnerMessages(4),
                         cardColor: Colors.white,
@@ -600,6 +607,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     children: <Widget>[
                       ActiveProjectsCard(
                         ctx:context,
+                        r:false,
                         action: InnerMessages(3),
                         cardColor: Colors.white,
                         icon: (dashboard.msgZabbix>0?Icon(Icons.email_outlined,
@@ -627,6 +635,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   Row(
                     children: <Widget>[
                       ActiveProjectsCard(
+                        r:false,
                         ctx:context,
                         action: InnerTecnicos(),
                         cardColor: Colors.white,

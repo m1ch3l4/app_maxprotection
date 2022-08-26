@@ -88,6 +88,7 @@ class BottomMenu extends StatelessWidget{
                               children: <Widget>[
                                 ActiveProjectsCard(
                                   ctx:context,
+                                  r:false,
                                   action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
                                   cardColor: Colors.white,
                                   icon: Icon(Icons.support,
@@ -97,6 +98,7 @@ class BottomMenu extends StatelessWidget{
                                 SizedBox(width: 20.0),
                                 ActiveProjectsCard(
                                   ctx:context,
+                                  r:false,
                                   action: (isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),
                                   cardColor: Colors.white,
                                   icon:Icon(Icons.watch_later_outlined,
@@ -108,6 +110,7 @@ class BottomMenu extends StatelessWidget{
                             Row(
                               children: <Widget>[
                                 ActiveProjectsCard(
+                                  r:false,
                                   ctx:context,
                                   //action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
                                   action: InnerOpenTicket(),
