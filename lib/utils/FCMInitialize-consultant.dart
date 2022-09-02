@@ -258,8 +258,8 @@ class FCMInitConsultor{
           _firebaseMessaging.subscribeToTopic('techsupport'+user['company_id'].toString());
         topics.add('techsupport'+user['company_id'].toString());}
    }
-     _firebaseMessaging.subscribeToTopic('all');
-    topics.add('all');
+     _firebaseMessaging.subscribeToTopic('news');
+    topics.add('news');
   }
 
   void showMessage(MessageData message){

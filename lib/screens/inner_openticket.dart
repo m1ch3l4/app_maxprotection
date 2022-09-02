@@ -1,6 +1,8 @@
 // @dart=2.10
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:app_maxprotection/model/ChamadoMp3.dart';
 import 'package:app_maxprotection/model/usuario.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:flutter/material.dart';
@@ -207,26 +209,27 @@ class _MyAppState extends State<OpenTicketPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         DropdownButton<Empresa>(
-          value: empSel,
-          icon: const Icon(Icons.arrow_downward),
-          iconSize: 24,
-          elevation: 16,
-          style: TextStyle(color: HexColor(Constants.red)),
-          underline: Container(
-            height: 2,
-            color: HexColor(Constants.blue),
+            value: empSel,
+            icon: const Icon(Icons.arrow_downward),
+            iconSize: 24,
+            elevation: 16,
+            style: TextStyle(color: HexColor(Constants.red)),
+            underline: Container(
+              height: 2,
+              color: HexColor(Constants.blue),
+            ),
+            onChanged: (Empresa newValue) {
+              setState(() {
+                empSel = newValue;
+                _empSearch.setDefaultOpt(newValue);
+              });
+            },
+            items: _empSearch.lstOptions.map((Empresa bean) {
+              return  DropdownMenuItem<Empresa>(
+                  value: bean,
+                  child: SizedBox(width: 310.0,child: Text(bean.name,overflow: TextOverflow.ellipsis,)));}
+                  ).toList(),
           ),
-          onChanged: (Empresa newValue) {
-            setState(() {
-              empSel = newValue;
-              _empSearch.setDefaultOpt(newValue);
-            });
-          },
-          items: _empSearch.lstOptions.map((Empresa bean) {
-            return  DropdownMenuItem<Empresa>(
-                value: bean,
-                child: Text(bean.name));}).toList(),
-        )
       ],
     );
   }
@@ -403,7 +406,14 @@ class _MyAppState extends State<OpenTicketPage> {
     //Get the response from the server
     var responseData = await response.stream.toBytes();
     var responseString = String.fromCharCodes(responseData);
-    print(responseString);
+    final data = jsonDecode(responseString);
+    ChamadoMp3 cmp3 = ChamadoMp3.fromJson(data);
+    if(cmp3!=null && cmp3.name!=null && cmp3.size>0){
+      Message.showMessage("Chamado enviado para servidor.\nEm breve entrará listagem da empresa.");
+      delete();
+    }else{
+      Message.showMessage("Erro ao enviar o chamado para o servidor.\nPor favor entre em contato com nosso suporte.");
+    }
   }
 
   void resumeRecord() {

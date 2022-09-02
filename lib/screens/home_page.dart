@@ -45,6 +45,7 @@ import 'inner_zabbix.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
+final keyHP = new GlobalKey<_MyHomePageState>();
 
 class HomePage extends StatelessWidget {
   static const routeName = '/dashboard';
@@ -62,7 +63,7 @@ class HomePage extends StatelessWidget {
             theme: new ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: new MyHomePage(title: 'MaxProtection E-Seg', user: snapshot.data),
+            home: new MyHomePage(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data),
           ) : CircularProgressIndicator());
         },
       ),
@@ -95,6 +96,8 @@ class _MyHomePageState extends State<MyHomePage>{
   bool isConsultor = false;
   String perfil = "Analista";
 
+  DashboardData get dashboardDados=>dashboard;
+
   static EmpresasSearch _empSearch = EmpresasSearch();
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
@@ -102,6 +105,14 @@ class _MyHomePageState extends State<MyHomePage>{
   TextTheme textTheme;
   final df = new DateFormat('dd/MM HH:mm');
 
+  diableBlink(){
+    print("chamou disableBlink da Home...");
+    setState(() {
+      this.dashboard.msgLead = 0;
+      loading = false;
+    });
+
+  }
 
   void initFCM(){
     EmpresasSearch _empSearch = new EmpresasSearch();
@@ -599,6 +610,7 @@ class _MyHomePageState extends State<MyHomePage>{
                         cardColor: Colors.white,
                         icon: (dashboard.msgLead>0?BlinkIcon():null),
                         title: 'Leads',
+                        disableBlink: (){this.diableBlink();},
                       ),
                     ],
                   )

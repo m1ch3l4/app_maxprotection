@@ -35,4 +35,9 @@ class _BlinkIconState extends State<BlinkIcon> with SingleTickerProviderStateMix
       },
     );
   }
+  @override
+  dispose() {
+    _controller.dispose(); // you need this
+    super.dispose();
+  }
 }

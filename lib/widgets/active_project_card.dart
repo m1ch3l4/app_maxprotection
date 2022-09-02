@@ -1,4 +1,5 @@
 // @dart=2.9
+import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:flutter/material.dart';
 
 
@@ -8,13 +9,15 @@ import 'custom_route.dart';
 
 class ActiveProjectsCard extends StatelessWidget {
   final Color cardColor;
-  final Widget icon;
+  Widget icon;
   final String title;
   final Widget action;
   BuildContext ctx;
   final Function onclickF;
   final width;
   final bool r;
+
+  Function disableBlink;
 
   ActiveProjectsCard({
     this.cardColor,
@@ -24,7 +27,8 @@ class ActiveProjectsCard extends StatelessWidget {
     this.ctx,
     this.width,
     this.r,
-    this.onclickF
+    this.onclickF,
+    this.disableBlink
   });
 
   @override
@@ -39,6 +43,9 @@ class ActiveProjectsCard extends StatelessWidget {
          if(r){
             onclickF();
          }else {
+           if(title == "Leads"){
+              disableBlink();
+           }
            Navigator.of(ctx).pushReplacement(FadePageRoute(
              builder: (context) => action,
            ));
