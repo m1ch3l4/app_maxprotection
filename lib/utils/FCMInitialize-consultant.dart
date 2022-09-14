@@ -50,7 +50,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
   print(message.data["type"]); //Verificar a configuração de alert de som por tipo de mensagem
   saveToLocalStorage(message);
-  isTecnico();
+  isTecnico(message);
 }
 Future<void> saveToLocalStorage(RemoteMessage message) async{
   var now = new DateTime.now();
@@ -81,11 +81,12 @@ Future<void> saveToLocalStorage(RemoteMessage message) async{
   }
 }
 
-Future<bool> isTecnico() async{
+Future<bool> isTecnico(RemoteMessage message) async{
   final sharedPref = SharedPref();
   var value = await sharedPref.getValue("tecnico");
-  if(value=="true")
+  if(value=="true") {
     playAlertSound();
+  }
 }
 
 class FCMInitConsultor{
@@ -194,7 +195,7 @@ class FCMInitConsultor{
   void setConsultant(Map<String, dynamic> usr){
     user = usr;
     isTecnico=false;
-    readSavedPushMessage();
+
     lst = [];
     if(user['tipo']=="C" && user['empresas']!=null) {
       for (Map i in user['empresas']) {
@@ -202,8 +203,10 @@ class FCMInitConsultor{
       }
     }
 
-    if(user['tipo']=='T')
+    if(user['tipo']=='T') {
       isTecnico = true;
+      readSavedPushMessage();
+    }
 
     registerOnFirebase();
     registerNotification();
