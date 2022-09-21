@@ -66,50 +66,97 @@ class _TicketsPageState extends State<TicketsPage> {
   var loading = false;
   EmpresasSearch _empSearch = new EmpresasSearch();
   List<Empresa> lstEmpresa;
-
+  List<Empresa> loaded = [];
+  var novo = 0;
+  var aguardando = 0;
+  var atendimento = 0;
+  int lastIndex = 0;
+  bool ultimo = false;
+  int tamanho = 10;
+  int ultimoIndex = 0;
+  
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
-  Future<Null> getData() async{
+
+  final ScrollController _controller = ScrollController();
+
+
+  _onScroll() {
+    if (_controller.offset >=
+        _controller.position.maxScrollExtent &&
+        !_controller.position.outOfRange && !ultimo) {
+      setState(() {
+        loading = true;
+      });
+      lazyLoad();
+    }
+  }
+
+  Future lazyLoad() async{
+    lastIndex = loaded.length;
+    if(lstEmpresa.elementAt(lastIndex)!=null) {
+      await getData(lastIndex);
+
+      setState(() {
+        loaded.addAll(
+            lstEmpresa.sublist(lastIndex, ultimoIndex)
+        );
+        loading = false;
+      });
+    }else{
+      ultimo = true;
+      setState(() {
+        loading=false;
+      });
+    }
+  }
+
+  Future<Null> getData(int index) async{
     setState(() {
       loading = true;
     });
     String urlApi = "";
 
-    lstEmpresa = _empSearch.lstOptions;
+    var total = index+tamanho;
 
-    for(var i=0;i<lstEmpresa.length;i++){
-      Empresa emp = lstEmpresa[i];
+      for(var i=index;i<(index+tamanho);i++){
+        if(lstEmpresa.asMap().containsKey(i)) {
+          ultimoIndex = i;
+          Empresa emp = lstEmpresa[i];
+          emp.setNovo(0);
+          emp.setAtendimento(0);
+          emp.setAguardando(0);
+
           urlApi = Constants.urlEndpoint + "enterprise/stat/" + emp.id;
 
-          print(urlApi);
+          final responseData = await http.get(Uri.parse(urlApi)).timeout(
+              Duration(seconds: 3));
 
-        final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));
-
-        if (responseData.statusCode == 200) {
-          String source = Utf8Decoder().convert(responseData.bodyBytes);
-          final data = jsonDecode(source);
-          var novo = 0;
-          var aguardando = 0;
-          var atendimento = 0;
-          novo = data["novos"];
-          aguardando = data["aguardando"];
-          atendimento = data["atendimento"];
-          emp.setAguardando(aguardando);
-          emp.setNovo(novo);
-          emp.setAtendimento(atendimento);
-          loading = false;
+          if (responseData.statusCode == 200) {
+            String source = Utf8Decoder().convert(responseData.bodyBytes);
+            final data = jsonDecode(source);
+            emp.setAguardando(data["aguardando"]);
+            emp.setNovo(data["novos"]);
+            emp.setAtendimento(data["atendimento"]);
+            loading = false;
+          } else {
+            loading = false;
+          }
         }else{
-          loading = false;
+          ultimo = true;
         }
       }
     setState(() {
       loading=false;
     });
-    }
+}
 
 
   void initState() {
+    _controller.addListener(_onScroll);
     super.initState();
-    getData();
+    lstEmpresa = _empSearch.lstOptions;
+    lazyLoad();
+    //getData(lastIndex);
   }
 
   @override
@@ -152,8 +199,8 @@ class _TicketsPageState extends State<TicketsPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        //optionsToShow(),
-        listView(),
+        lazyListView()
+        //listView(),
       ],
     );
   }
@@ -167,10 +214,26 @@ class _TicketsPageState extends State<TicketsPage> {
     ));
   }
 
+  Widget lazyListView(){
+    return Expanded(child:
+    ListView.builder(
+      controller: _controller,
+      itemCount: loading ? loaded.length + 1 : loaded.length,
+      itemBuilder: (context, index) {
+        if (loaded.length == index)
+          return Center(
+              child: CircularProgressIndicator()
+          );
+        return getAlert(loaded[index]);
+      },
+    )
+    );
+  }
+
   Widget getAlert(Empresa emp){
     GestureDetector gd;
-    print("widget.tipo ");print(widget.tipo);
-    print("Empresa: ");print(emp.id);
+    //print("widget.tipo ");print(widget.tipo);
+    //print("Empresa: ");print(emp.id);
     switch(widget.tipo){
       case 0:
         gd = GestureDetector(

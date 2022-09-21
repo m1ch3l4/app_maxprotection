@@ -89,7 +89,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
-        firstDate: minDate.subtract(Duration(days:30)),
+        firstDate: minDate.subtract(Duration(days:15)),
         lastDate: minDate,
         builder: (BuildContext context, Widget child) {
           return Theme(
@@ -145,6 +145,9 @@ class _ZabbixPageState extends State<ZabbixPage> {
   }
 
   Future<Null> getData() async{
+
+    if(!mounted) return;
+
     setState(() {
       loading = true;
     });
@@ -155,35 +158,49 @@ class _ZabbixPageState extends State<ZabbixPage> {
      */
     print('getData...: $dtParam1 - $dtParam2');
 
+
     if(widget.user["tipo"]=="C")
       urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/zabbix/"+dtParam1+"/"+dtParam2;
     else
-      urlApi = Constants.urlEndpoint+"alert/zabbix/"+widget.user['id'].toString()+"/"+dtParam1+"/"+dtParam2;
+      if(widget.user["tipo"]=="T"){
+        urlApi = Constants.urlEndpoint + "alert/zabbix/" +
+            widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+      }else {
+        urlApi = Constants.urlEndpoint + "alert/zabbix/" +
+            widget.user['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+      }
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
-      String source = Utf8Decoder().convert(responseData.bodyBytes);
-      final data = jsonDecode(source);
-      setState(() {
-        for(Map i in data){
-          var ent = i["company"];
-          var alert = AlertData.fromJson(i);
-          alert.setEmpresa(ent["name"]);
-          listModel.add(alert);
-        }
+    try {
+      final responseData = await http.get(Uri.parse(urlApi)).timeout(
+          Duration(seconds: 5));
+      if (responseData.statusCode == 200) {
+        String source = Utf8Decoder().convert(responseData.bodyBytes);
+        //print("zabbix.body "+source);
+        final data = jsonDecode(source);
+        setState(() {
+          for (Map i in data) {
+            //var ent = i["company"];
+            var alert = AlertData.fromJson(i);
+            //alert.setEmpresa(ent["name"]);
+            listModel.add(alert);
+          }
+          loading = false;
+        });
+      } else {
         loading = false;
-      });
-    }else{
-      loading = false;
+      }
+    }catch(error, exception){
+      print("Zabbix.Erro : $error > $exception ");
     }
   }
 
 
   void initState() {
-    firstDate = minDate.subtract(Duration(days: 30));
+    firstDate = minDate.subtract(Duration(days: 2));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
     dtParam1 = dbFormat.format(firstDate);

@@ -168,6 +168,8 @@ class _MyHomePageState extends State<MyHomePage>{
         String source = Utf8Decoder().convert(responseData.bodyBytes);
         final data = jsonDecode(source);
         //print('dashboard...'+data.toString());
+        if(!mounted) return;
+
         setState(() {
           dashboard = DashboardData.fromJson(data);
           if(data!=null && data['infoNewsList']!=null) {
@@ -193,31 +195,32 @@ class _MyHomePageState extends State<MyHomePage>{
     urlApi = Constants.urlEndpoint + "dashboard/consultor/refresh/" +
           widget.user['id'].toString();
 
+    try{
     final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));
     if(responseData.statusCode == 200) {
-      if(responseData.body.length>0){
+      if (responseData.body.length > 0) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
 
-        Map<String,dynamic> mapResponse  = jsonDecode(source);
+        Map<String, dynamic> mapResponse = jsonDecode(source);
         Usuario refresh = Usuario.fromJson(mapResponse);
         Usuario doSistema = Usuario.fromSharedPref(widget.user);
 
         Role rAtual = doSistema.role;
         Role rNova = refresh.role;
 
-        if(!refresh.hasAccess && refresh.tipo == "T"){
+        if (!refresh.hasAccess && refresh.tipo == "T") {
           Message.showMessage("A sua credencial não é mais válida!");
           logoff();
         }
 
-        if(rAtual.nome != rNova.nome){
+        if (rAtual.nome != rNova.nome) {
           setState(() {
-            mnu = SliderMenu('index',refresh.toJson(),textTheme);
+            mnu = SliderMenu('index', refresh.toJson(), textTheme);
             prefs.setString('usuario', json.encode(refresh));
           });
         }
 
-        if(doSistema.tipo=="C") {
+        if (doSistema.tipo == "C") {
           List<Empresa> eNova = refresh.empresas;
           List<Empresa> eOld = doSistema.empresas;
           eNova.sort((a, b) => a.name.compareTo(b.name));
@@ -236,11 +239,15 @@ class _MyHomePageState extends State<MyHomePage>{
           eNova = null;
           eOld = null;
         }
-      }else{
-          Message.showMessage("A sua credencial não é mais válida!");
-          logoff();
+      } else {
+        Message.showMessage("A sua credencial não é mais válida!");
+        logoff();
       }
     }
+    }catch(error, exception){
+      print("Home.Erro : $error > $exception ");
+    }
+
   }
 
   void initState(){
@@ -494,7 +501,8 @@ class _MyHomePageState extends State<MyHomePage>{
   logoff() async {
       SharedPreferences preferences = await SharedPreferences.getInstance();
       await preferences.clear();
-      FCMInitConsultor().unRegisterAll();
+      await FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+      await FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
       exit(0);
   }
 

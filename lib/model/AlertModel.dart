@@ -29,7 +29,8 @@ class AlertData {
     data = df.format(DateTime.parse(json['date']));
     text = json['texto'];
     categoria = json['category'];
-    empresa = json['empresa'];
+    empresa = json['company']['name']; //no zabbix está vindo assim, verificar no elastic...
+    //empresa = json['empresa'];
     total = json["noOcorrencia"];
     status = json["status"]; //Elastic: LOW, MEDIUM, HIGH, Zabbix:
   }

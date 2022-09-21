@@ -28,19 +28,16 @@ class PushApi{
             "Access-Control-Allow-Methods": "POST, OPTIONS"},
           body: body).timeout(Duration(seconds: 5));
 
-      print("${response.statusCode}");
-
-      //Map<String,dynamic> mapResponse = json.decode(response.body);
+      print("Push.retorno...${response.statusCode}");
 
       if(response.statusCode == 200){
         return ApiResponse.ok("Confirmação de Recebimento enviada");
       }else{
         return ApiResponse.error("Erro");
       }
-      return ApiResponse.error("Falha ao trocar a senha");
 
     }catch(error, exception){
-      print("Erro : $error > $exception ");
+      print("Push.Erro : $error > $exception ");
       return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
     }
   }

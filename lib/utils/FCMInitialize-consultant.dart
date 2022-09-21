@@ -84,6 +84,7 @@ Future<void> saveToLocalStorage(RemoteMessage message) async{
 Future<bool> isTecnico(RemoteMessage message) async{
   final sharedPref = SharedPref();
   var value = await sharedPref.getValue("tecnico");
+  print("FCMInitialize...isTecnico: "+value);
   if(value=="true") {
     playAlertSound();
   }
@@ -116,6 +117,11 @@ class FCMInitConsultor{
     }
   }
 
+  void deletePushStorage() async {
+    storage = new LocalStorage('pushmessage');
+    await storage.clear();
+  }
+
     void registerNotification() async {
     await Firebase.initializeApp();
     _firebaseMessaging = FirebaseMessaging.instance;
@@ -143,8 +149,13 @@ class FCMInitConsultor{
         } else if (Platform.isIOS) {
           messageFCM.type = message.data['type'];
         }
-        goto(message.data['type'], ctx);
-        showMessage(messageFCM);
+        //goto(message.data['type'], ctx);
+        if(user["tipo"]=="T"){
+          showMessage(messageFCM);
+        }else{
+          showSimpleMessage(messageFCM);
+        }
+
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage mes) {
@@ -204,6 +215,11 @@ class FCMInitConsultor{
     }
 
     if(user['tipo']=='T') {
+      if(user['empresas']!=null){
+        for (Map i in user['empresas']) {
+          lst.add(Empresa(i["id"], i["name"]));
+        }
+      }
       isTecnico = true;
       readSavedPushMessage();
     }
@@ -220,49 +236,86 @@ class FCMInitConsultor{
 
   registerOnFirebase(){
 
+    topics = [];
+
     if(user["tipo"]=="C" || user["tipo"]=="T"){
-      if(user['pm_elastic']) {
+      print("FCMInit...assumindo que é consultor ou técnico...");
         lst.forEach((emp) {
           if(emp.id!="0") {
             _firebaseMessaging.subscribeToTopic('elastic' + emp.id);
             topics.add('elastic'+emp.id);
-          }
-        });
-      }
-      if(user['pm_zabbix']) {
-        lst.forEach((emp) {
-          if(emp.id!="0") {
             _firebaseMessaging.subscribeToTopic('zabbix' + emp.id);
             topics.add('zabbix' + emp.id);
-          }
-        });
-      }
-      if(user['pm_tickets']) {
-        lst.forEach((emp) {
-          if(emp.id!="0") {
             _firebaseMessaging.subscribeToTopic('techsupport' + emp.id);
             topics.add('techsupport' + emp.id);
           }
         });
-      }
-      if(user["tipo"]=="T")
-        _firebaseMessaging.subscribeToTopic("plantao"+user["id"]);
-
-    }else{
-        if (user['pm_elastic']){
-          _firebaseMessaging.subscribeToTopic(
+        if(user["tipo"]=="T") {
+          _firebaseMessaging.subscribeToTopic("plantao" + user["id"]);
+          topics.add('plantao'+user['id']);
+        }
+    }else{ //se for diretor....
+      print("FCMInit...assumindo que é diretor...");
+        _firebaseMessaging.subscribeToTopic(
               'elastic' + user['company_id'].toString());
-        topics.add('elastic' + user['company_id'].toString());}
-        if (user['pm_zabbix']){
+        topics.add('elastic' + user['company_id'].toString());
           _firebaseMessaging.subscribeToTopic(
               'zabbix' + user['company_id'].toString());
-        topics.add('zabbix' + user['company_id'].toString());}
-        if(user['pm_tickets']){
-          _firebaseMessaging.subscribeToTopic('techsupport'+user['company_id'].toString());
-        topics.add('techsupport'+user['company_id'].toString());}
+        topics.add('zabbix' + user['company_id'].toString());
+        _firebaseMessaging.subscribeToTopic('techsupport'+user['company_id'].toString());
+        topics.add('techsupport'+user['company_id'].toString());
    }
      _firebaseMessaging.subscribeToTopic('news');
     topics.add('news');
+
+    for(String s in topics) {
+      print('FCMInit...registrado em:'+s);
+    }
+
+  }
+
+  void showSimpleMessage(MessageData message){
+    if(message.title!="titulo") {
+      showDialog(
+          context: ctx,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(32.0))),
+              title: Text(message.title,
+                  style: TextStyle(color: HexColor(Constants.red))),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    Text(message.text)
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+            Row (
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                TextButton(
+                  child: Text('Fechar',
+                      style: TextStyle(color: HexColor(Constants.blue))),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    }
+                ),
+                TextButton(
+                  child: Text('Ver Ocorrência',
+                      style: TextStyle(color: HexColor(Constants.blue))),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    goto(message.type,context);
+                  },
+                ),
+              ])
+              ],
+            );
+          }
+      );
+    }
   }
 
   void showMessage(MessageData message){
@@ -288,9 +341,10 @@ class FCMInitConsultor{
                       style: TextStyle(color: HexColor(Constants.blue))),
                   onPressed: () {
                     removeMessageRead(message.id);
-                    PushApi.changePass(user["id"], message.id);
-                    Navigator.of(context).pop();
-                    goto(message.type,context);
+                    PushApi.changePass(user["id"], message.id).then((value){
+                      Navigator.of(context).pop();
+                      goto(message.type,context);
+                    } );
                   },
                 ),
               ],

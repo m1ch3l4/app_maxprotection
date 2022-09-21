@@ -155,7 +155,13 @@ class _ElasticPageState extends State<ElasticPage> {
     if(widget.user["tipo"]=="C")
       urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/elastic/"+dtParam1+"/"+dtParam2;
     else
-      urlApi = Constants.urlEndpoint+"alert/elastic/"+widget.user['id'].toString()+"/"+dtParam1+"/"+dtParam2;
+    if(widget.user["tipo"]=="T"){
+      urlApi = Constants.urlEndpoint + "alert/elastic/" +
+          widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+    }else {
+      urlApi = Constants.urlEndpoint + "alert/elastic/" +
+          widget.user['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+    }
 
     print("****URL API: ");
     print(urlApi);
