@@ -11,6 +11,8 @@ import 'dart:async';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '../model/AlertModel.dart';
+import '../model/empresa.dart';
+import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../widgets/bottom_menu.dart';
@@ -83,6 +85,14 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
+  bool isConsultor = false;
+  static EmpresasSearch _empSearch = EmpresasSearch();
+
+  Empresa empSel;
+
+  static List<DropdownMenuItem<Empresa>> _data = [];
+  String _selected = '';
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
         initialDatePickerMode: DatePickerMode.day,
@@ -140,7 +150,8 @@ class _ZabbixPageState extends State<ZabbixPage> {
         dtParam2 = dbFormat.format(endDate);
         var i = txt.text;
         var j = txt2.text;
-        getData();
+        if(!isConsultor)
+          getData();
       });
   }
 
@@ -160,7 +171,9 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
 
     if(widget.user["tipo"]=="C")
-      urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/zabbix/"+dtParam1+"/"+dtParam2;
+      urlApi = Constants.urlEndpoint + "alert/zabbix/" +
+          empSel.id+ "/" + dtParam1 + "/" + dtParam2;
+      //urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/zabbix/"+dtParam1+"/"+dtParam2;
     else
       if(widget.user["tipo"]=="T"){
         urlApi = Constants.urlEndpoint + "alert/zabbix/" +
@@ -179,9 +192,10 @@ class _ZabbixPageState extends State<ZabbixPage> {
           Duration(seconds: 5));
       if (responseData.statusCode == 200) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
-        //print("zabbix.body "+source);
+        print("zabbix.body "+source);
         final data = jsonDecode(source);
         setState(() {
+          listModel.clear();
           for (Map i in data) {
             //var ent = i["company"];
             var alert = AlertData.fromJson(i);
@@ -198,6 +212,73 @@ class _ZabbixPageState extends State<ZabbixPage> {
     }
   }
 
+  void loadData() {
+    if(mounted) {
+      setState(() {
+        loading = true;
+      });
+      _data = [];
+      print("Num de empresas: ");
+      print(_empSearch.lstOptions.length);
+      for (Empresa bean in _empSearch.lstOptions) {
+        _data.add(
+            new DropdownMenuItem(
+                value: bean,
+                child: Text(bean.name, overflow: TextOverflow.fade,)));
+      }
+      loading = false;
+    }
+  }
+
+  Widget empresasToShow() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Column(
+          children: [Text('Empresas Monitoradas:',
+            textAlign: TextAlign.start,
+            style: TextStyle(
+              fontSize: 14.0,
+              color: HexColor(Constants.red),
+              fontWeight: FontWeight.w600,
+            ),
+          )],
+        ),
+        Column(
+          children: [SizedBox(width: 10,)],
+        ),
+        Flexible(
+          fit: FlexFit.loose,
+          child: Column(
+            children: [
+              DropdownButton<Empresa>(
+                  value: empSel,
+                  isExpanded: true,
+                  icon: const Icon(Icons.arrow_downward),
+                  iconSize: 24,
+                  elevation: 16,
+                  style: TextStyle(color: HexColor(Constants.red)),
+                  underline: Container(
+                    height: 2,
+                    color: HexColor(Constants.blue),
+                  ),
+                  onChanged: (Empresa newValue) {
+                    setState(() {
+                      empSel = newValue;
+                      _empSearch.setDefaultOpt(newValue);
+                      listModel = [];
+                      getData();
+                    });
+                  },
+                  items: _data
+              )],
+          ),
+        )
+
+      ],
+    );
+  }
 
   void initState() {
     firstDate = minDate.subtract(Duration(days: 2));
@@ -205,7 +286,13 @@ class _ZabbixPageState extends State<ZabbixPage> {
     txt2.text = df.format(minDate);
     dtParam1 = dbFormat.format(firstDate);
     dtParam2 = dbFormat.format(minDate);
-    getData();
+
+    if(widget.user["tipo"]=="C") {
+      isConsultor = true;
+      loadData();
+    }else {
+      getData();
+    }
     super.initState();
     _fabHeight = _initFabHeight;
   }
@@ -248,6 +335,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
       child: Column(
         children: <Widget>[
           _header(width),
+          (isConsultor?empresasToShow():SizedBox(height: 1,)),
           rangeDate(),
           Divider(
             height: 5,

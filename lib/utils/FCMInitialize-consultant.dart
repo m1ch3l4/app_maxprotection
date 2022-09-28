@@ -115,6 +115,7 @@ class FCMInitConsultor{
       print('FCMInit...unsubscribe...'+s);
       _firebaseMessaging.unsubscribeFromTopic(s);
     }
+    _firebaseMessaging.deleteToken();
   }
 
   void deletePushStorage() async {
