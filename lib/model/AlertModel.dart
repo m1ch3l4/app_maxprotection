@@ -9,6 +9,8 @@ class AlertData {
   String empresa;
   String total;
   String status;
+  String link;
+  String linkSoc;
 
   AlertData.data([this.title,this.data,this.text,this.categoria]) {
     // Set these rather than using the default value because Firebase returns
@@ -17,6 +19,10 @@ class AlertData {
     this.data ??= 'dd/MM/yyyy';
     this.text ??='text';
     this.categoria ??= 'Categoria do Evento';
+    this.status ??="LOW";
+    this.total ??="0";
+    this.link ??="";
+    this.linkSoc ??="";
   }
 
   void setEmpresa(String emp){
@@ -31,7 +37,9 @@ class AlertData {
     categoria = json['category'];
     empresa = json['company']['name']; //no zabbix está vindo assim, verificar no elastic...
     //empresa = json['empresa'];
-    total = json["noOcorrencia"];
+    total = json["noOcorrencia"].toString();
     status = json["status"]; //Elastic: LOW, MEDIUM, HIGH, Zabbix:
+    link = json["link"];
+    linkSoc = json["linkSoc"];
   }
 }

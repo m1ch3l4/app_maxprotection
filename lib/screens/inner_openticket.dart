@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:app_maxprotection/model/ChamadoMp3.dart';
 import 'package:app_maxprotection/model/usuario.dart';
 import 'package:app_maxprotection/utils/Message.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
@@ -101,6 +102,13 @@ class _MyAppState extends State<OpenTicketPage> {
           _player.durationStream,
               (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
+
+
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
 
   void initState() {
     super.initState();

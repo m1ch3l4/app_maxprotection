@@ -1,6 +1,7 @@
 // @dart=2.10
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -150,10 +151,21 @@ class _TicketsPageState extends State<TicketsPage> {
     });
 }
 
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
 
   void initState() {
     _controller.addListener(_onScroll);
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     lstEmpresa = _empSearch.lstOptions;
     lazyLoad();
     //getData(lastIndex);

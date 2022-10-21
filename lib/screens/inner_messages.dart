@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_maxprotection/model/MessageModel.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -83,6 +84,12 @@ class _MessagesPageState extends State<MessagesPage> {
 
   List<ChatData> listModel = [];
   var loading = false;
+
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
 
   void initState() {
     super.initState();

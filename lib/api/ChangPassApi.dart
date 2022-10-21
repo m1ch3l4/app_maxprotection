@@ -10,6 +10,45 @@ import 'package:http/http.dart' as http;
 class ChangePassApi{
 
 
+  static Future<ApiResponse<String>> sendMessageDiretor(String iduser, String message) async {
+    try{
+      var url =Constants.urlEndpoint+'diretor/contato';
+
+      print("url $url");
+
+      Map params = {
+        'iduser': iduser,
+        'mensagem' : message
+      };
+
+      //encode Map para JSON(string)
+      var body = json.encode(params);
+
+      var response = await http.post(Uri.parse(url),
+          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "POST, OPTIONS"},
+          body: body).timeout(Duration(seconds: 5));
+
+      print("${response.statusCode}");
+
+      print("Response...."+response.body);
+
+      if(response.statusCode == 200){
+        return ApiResponse.ok("Mensagem enviada!");
+      }else{
+        return ApiResponse.error("Erro");
+      }
+
+    }catch(error, exception){
+
+      print("Erro : $error > $exception ");
+
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
+
+    }
+  }
 
   static Future<ApiResponse<Usuario>> changePass(String iduser, String password, bool consultor) async {
     SharedPref sharedPref = SharedPref();

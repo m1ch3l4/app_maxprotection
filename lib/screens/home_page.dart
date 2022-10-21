@@ -4,7 +4,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:app_maxprotection/api/CallTecnicoApi.dart';
+import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/RoleModel.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:collection/collection.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
 import 'package:app_maxprotection/screens/inner_servicos.dart';
@@ -111,8 +113,16 @@ class _MyHomePageState extends State<MyHomePage>{
       this.dashboard.msgLead = 0;
       loading = false;
     });
-
   }
+
+
+
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
 
   void initFCM(){
     EmpresasSearch _empSearch = new EmpresasSearch();
@@ -260,8 +270,13 @@ class _MyHomePageState extends State<MyHomePage>{
       getDashboardData();
       refreshUser();
     });
+    BackButtonInterceptor.add(myInterceptor);
   }
 
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
@@ -270,6 +285,9 @@ class _MyHomePageState extends State<MyHomePage>{
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
 
+  TextEditingController _textFieldController = TextEditingController();
+  String valueText="";
+  String codeDialog="";
 
   Text subheading(String title) {
     return Text(
@@ -665,6 +683,18 @@ class _MyHomePageState extends State<MyHomePage>{
                     ],
                   )
                       : SizedBox(height: 1,)),
+                  Row(
+                    children: <Widget>[
+                      ActiveProjectsCard(
+                        ctx: context,
+                        r:true,
+                        onclickF: ()=>faleComDiretor(context),
+                        cardColor: Colors.white,
+                        icon: Icon(Icons.call_outlined, color: HexColor(Constants.red),size:20.0),
+                        title: 'Fale com o Diretor',
+                      ),
+                    ],
+                  ),
                   buildTileNoticia(width),
                 ],
               ),
@@ -673,6 +703,53 @@ class _MyHomePageState extends State<MyHomePage>{
         ),
       ),
     );
+  }
+
+
+  Future<void> faleComDiretor(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32.0))),
+            title: Text('Fale com o Diretor'),
+            content: TextField(
+              maxLines: 5,
+              onChanged: (value) {
+                setState(() {
+                  valueText = value;
+                });
+              },
+              controller: _textFieldController,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16.0),borderSide: BorderSide(width: 1, color: HexColor(Constants.red)))
+                  ,hintText: "Mensagem"),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                color: HexColor(Constants.red),
+                textColor: Colors.white,
+                child: Text('OK'),
+                onPressed: () {
+                  ChangePassApi.sendMessageDiretor(widget.user["id"], valueText).then((resp){
+                    if(resp.ok){
+                      Message.showMessage("Mensagem enviada com sucesso!");
+                    }else{
+                      Message.showMessage("Problemas ao enviar mensagem!\nTente novamente em instantes.");
+                    }
+                  });
+                  setState(() {
+                    codeDialog = valueText;
+                    valueText="";
+                    Navigator.pop(context);
+                  });
+                },
+              ),
+
+            ],
+          );
+        });
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {

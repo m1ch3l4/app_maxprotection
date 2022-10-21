@@ -2,6 +2,7 @@
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -106,8 +107,20 @@ class _TicketsPageState extends State<TicketsPage> {
     }
   }
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
   void initState() {
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     getData(widget.ticket);
   }
 

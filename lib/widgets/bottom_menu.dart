@@ -1,6 +1,9 @@
 import 'package:app_maxprotection/screens/inner_openticket.dart';
+import 'package:app_maxprotection/utils/Message.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:new_version/new_version.dart';
 
 import '../screens/ticketlist-consultor.dart';
 import '../screens/ticketsview-consultor.dart';
@@ -26,7 +29,27 @@ class BottomMenu extends StatelessWidget{
       isConsultor=true;
   }
 
-  @override
+
+
+/** advancedStatusCheck(NewVersion newVersion) async {
+  final status = await newVersion.getVersionStatus();
+  if (status != null) {
+    debugPrint(status.releaseNotes);
+    debugPrint(status.appStoreLink);
+    debugPrint(status.localVersion);
+    debugPrint(status.storeVersion);
+    debugPrint(status.canUpdate.toString());
+    newVersion.showUpdateDialog(
+      context: ctx,
+      versionStatus: status,
+      dialogTitle: 'Custom Title',
+      dialogText: 'Custom Text',
+    );
+  }
+}**/
+
+
+@override
   Widget build(BuildContext context) {
     return MediaQuery.removePadding(
         context: ctx,

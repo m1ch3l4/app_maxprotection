@@ -1,7 +1,9 @@
 //@dart=2.10
 import 'dart:io';
 
+import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -103,8 +105,15 @@ class _NoticiasPageState extends State<NoticiasPage> {
   DateFormat simpleDate = DateFormat('dd/MM/yy');
   String languageCode="pt-br";
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
   void initState() {
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     getData();
     _fabHeight = _initFabHeight;
   }
@@ -266,7 +275,7 @@ class _NoticiasPageState extends State<NoticiasPage> {
     );
   }
   void _launchURL(_url) async =>
-      await canLaunch(Uri.encodeFull(_url)) ? await launch(Uri.encodeFull(_url)) : throw 'Could not launch $_url';
+      await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
 
   Widget getAlert(String title, DateTime date, String event, String justify){
     DateFormat dayOfWeek = DateFormat('EEEE',languageCode);

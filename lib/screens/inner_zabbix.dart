@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -280,7 +281,19 @@ class _ZabbixPageState extends State<ZabbixPage> {
     );
   }
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
   void initState() {
+    BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 2));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);

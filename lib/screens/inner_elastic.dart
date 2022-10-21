@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:app_maxprotection/utils/EmpresasSearch.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -10,11 +11,13 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../model/AlertModel.dart';
 import '../model/empresa.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
@@ -216,13 +219,19 @@ class _ElasticPageState extends State<ElasticPage> {
     }
   }
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
   Widget empresasToShow() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Column(
-          children: [Text('Empresas Monitoradas:',
+          children: [Text('  Empresas Monitoradas:',
             textAlign: TextAlign.start,
             style: TextStyle(
               fontSize: 14.0,
@@ -267,6 +276,7 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   void initState() {
+    BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
@@ -314,13 +324,34 @@ class _ElasticPageState extends State<ElasticPage> {
     );
   }
 
+  Widget warming(){
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: HexColor(Constants.red))
+      ),
+      margin: EdgeInsets.all(7.0),
+      padding: EdgeInsets.all(10.0),
+      child: Row(children: [
+        Icon(Icons.warning_amber_outlined,color:HexColor(Constants.red),size: 40.0),
+        Expanded(child: Text('Para ver o evento no Kibana você deve estar conectado à VPN da sua empresa ou na rede interna.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15.0,
+            color: HexColor(Constants.red),
+            fontWeight: FontWeight.w400,
+          ),
+        ))]),
+    );
+  }
+
   Widget getMain(double width){
     return SafeArea(
       child: Column(
         children: <Widget>[
           _header(width),
-          (isConsultor?empresasToShow():SizedBox(height: 1,)),
           rangeDate(),
+          (isConsultor?empresasToShow():SizedBox(height: 1,)),
+          warming(),
           Divider(
             height: 5,
             thickness: 1,
@@ -477,6 +508,10 @@ class _ElasticPageState extends State<ElasticPage> {
     );
   }
 
+  void _launchURL(_url) async =>
+      await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
+
+
   Widget getAlert(AlertData tech){
     Color cl = Colors.green;
     var urg = tech.status;
@@ -500,17 +535,25 @@ class _ElasticPageState extends State<ElasticPage> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Text("#", style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
+                      children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Expanded(child: Text(tech.title,style: TextStyle(fontSize: 16.0)))],
+                      children: [Expanded(child: Text(tech.title,style: TextStyle(fontWeight: FontWeight.w500)))],
                     ),
                     SizedBox(height: 5,),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Text("-",style: TextStyle(fontWeight: FontWeight.w500))],
+                      children: [Expanded(child:Text(tech.text,style: TextStyle(fontSize: 16.0)))],
                     ),
+                    ((tech.link!=null && tech.link.length>1)?
+                        InkWell(child:
+                        Row(mainAxisAlignment: MainAxisAlignment.start,
+                          children: [Expanded(child:Text("Veja o evento no Kibana",style: TextStyle(fontSize: 16.0,color: HexColor(Constants.red))))],),
+                      onTap: ()=> {
+                          _launchURL(isConsultor?tech.linkSoc:tech.link)
+                        })
+                    :SizedBox(height: 1,)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [Text(tech.empresa)],

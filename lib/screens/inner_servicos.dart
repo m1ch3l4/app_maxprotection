@@ -5,6 +5,7 @@ import 'package:app_maxprotection/model/MessageModel.dart';
 import 'package:app_maxprotection/model/ServicoModel.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -118,8 +119,20 @@ class _ServicosPageState extends State<ServicosPage> {
     }
   }
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
   void initState() {
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     if(widget.user["tipo"]!="C") {
       getData();
     }else{

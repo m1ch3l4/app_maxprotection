@@ -1,6 +1,7 @@
 // @dart=2.10
 import 'dart:io';
 
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -98,9 +99,20 @@ class _TecnicosPageState extends State<TecnicosPage> {
   }
 
 
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
   void initState() {
     getData();
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
   }
 

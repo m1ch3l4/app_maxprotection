@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -75,8 +76,20 @@ class _PwdPageState extends State<PwdPage> {
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("BACK BUTTON!"); // Do some stuff.
+    return true;
+  }
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
+
   void initState() {
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     consultant = (widget.user["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
   }

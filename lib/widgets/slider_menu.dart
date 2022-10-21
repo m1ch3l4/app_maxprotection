@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,7 @@ import 'package:app_maxprotection/screens/inner_servicos.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:new_version/new_version.dart';
 
 
 import '../model/PermissaoModel.dart';
@@ -17,6 +19,7 @@ import '../screens/inner_preferences.dart';
 import '../screens/inner_pwd.dart';
 import '../screens/inner_zabbix.dart';
 import '../screens/ticketsview-consultor.dart';
+import '../utils/Message.dart';
 import 'HexColor.dart';
 import 'constants.dart';
 import 'custom_route.dart';
@@ -32,6 +35,73 @@ class SliderMenu extends StatelessWidget{
   late List<Permissao> lst;
 
   late StatelessWidget instance;
+  late Timer _timer;
+
+  NewVersion newVersion = NewVersion(
+    iOSId: 'br.com.maxprotection.securityNews',
+    androidId: 'br.com.maxprotection.security_news',
+  );
+
+  basicStatusCheck() async{
+    try {
+      final status = await newVersion.getVersionStatus();
+      if(status!=null)
+      {
+        if(status.canUpdate)
+        {
+          newVersion.showUpdateDialog
+            (
+              context: ctx,
+              versionStatus: status,
+              dialogTitle: "App desatualizado",
+              //dismissButtonText: "Skip",
+              dialogText: "Atualize a versão "+"${status.localVersion}"+ " para "+ "${status.storeVersion}",
+              allowDismissal: false,
+              dismissAction: ()
+              {
+                Navigator.pop(ctx);
+              },
+              updateButtonText: "Atualizar"
+          );
+        }else {
+          //Message.showMessage("Versão: " + status.localVersion);
+          showDialog(
+              context: ctx,
+              builder: (BuildContext builderContext) {
+                _timer = Timer(Duration(seconds: 5), () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(builderContext).pop();
+                });
+
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius:
+                  BorderRadius.all(Radius.circular(15))),
+                  backgroundColor: HexColor(Constants.grey),
+                  title: Text('Versão do App',style:TextStyle(
+                    fontSize: 18.0,
+                    color: HexColor(Constants.red),
+                    fontWeight: FontWeight.w600,
+                  ),textAlign: TextAlign.center),
+                  content: SingleChildScrollView(
+                    child: Text('Você está com a última versão: '+status.localVersion,style: TextStyle(
+                      fontSize: 16.0,
+                      color: HexColor(Constants.red),
+                      fontWeight: FontWeight.w400,
+                    ),textAlign: TextAlign.center,),
+                  ),
+                );
+              }
+          ).then((val){
+            if (_timer.isActive) {
+              _timer.cancel();
+            }
+          });
+        }
+      }
+    }catch(e){
+      print("Erro: "+e.toString());
+    }
+  }
 
   SliderMenu(String screen, Map<String, dynamic> user, TextTheme theme){
     this.screen = screen;
@@ -132,6 +202,12 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(6),
         ):SizedBox(height: 10)),**/
         ListTile(
+          leading: Icon(Icons.info_outline,color:HexColor(Constants.red)),
+          title: Text("Versão",style:Theme.of(context).textTheme.subtitle1),
+          selected: _selectedDestination ==11,
+          onTap: () => selectDestination(11),
+        ),
+        ListTile(
           leading: Icon(Icons.logout,color:HexColor(Constants.red)),
           title: Text('Sair',style:Theme.of(context).textTheme.subtitle1),
           selected: _selectedDestination == 7,
@@ -215,8 +291,11 @@ class SliderMenu extends StatelessWidget{
         Navigator.of(ctx).pushReplacement(FadePageRoute(
           builder: (context) =>InnerServicos(),
         ));
-
         screen = "servicos";
+        break;
+      case 11:
+        basicStatusCheck();
+        break;
     }
   }
   Future<void> logout() async{

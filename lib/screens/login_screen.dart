@@ -19,8 +19,13 @@ import '../widgets/top_container.dart';
 import 'home_page.dart';
 
 
-class LoginScreen extends StatelessWidget  {
+class LoginScreen extends StatefulWidget {
   static const routeName = '/login';
+  @override
+  LoginScreenState createState() => LoginScreenState();
+}
+
+class LoginScreenState extends State<LoginScreen> {
   GlobalKey<FormState> _key = new GlobalKey();
   bool _validate = false;
   String login='', senha='';
@@ -30,6 +35,8 @@ class LoginScreen extends StatelessWidget  {
 
   FingerPrintAuth fp = new FingerPrintAuth();
   SharedPref sharedPref = SharedPref();
+
+  bool _isHidden=true;
 
   Text subheading(String title) {
     return Text(
@@ -181,6 +188,13 @@ class LoginScreen extends StatelessWidget  {
     );
   }
 
+  void _togglePasswordView() {
+    setState(() {
+      _isHidden = !_isHidden;
+    });
+  }
+
+
   Widget _formUI() {
     return Form(
         key: _key,
@@ -217,7 +231,7 @@ class LoginScreen extends StatelessWidget  {
         ),
         new TextFormField(
           cursorColor: Colors.white,
-          obscureText: true,
+          obscureText: _isHidden,
           controller: passCtrl,
           style: TextStyle(color: Colors.white),
           decoration: new InputDecoration(hintText: 'Senha', hintStyle: TextStyle(color: Colors.white),
@@ -229,7 +243,11 @@ class LoginScreen extends StatelessWidget  {
               ),
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
-              ),errorStyle: TextStyle(color: Colors.white)),
+              ),errorStyle: TextStyle(color: Colors.white),
+          suffixIcon: InkWell(
+            onTap: _togglePasswordView,
+            child: Icon(Icons.visibility_outlined,color: Colors.white),
+          )),
           maxLength: 12,
           validator: (value){
             if (value == null || value.isEmpty) {
@@ -318,5 +336,10 @@ class LoginScreen extends StatelessWidget  {
     );
   }
 
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
+  }
 }
 

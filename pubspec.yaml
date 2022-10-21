@@ -39,6 +39,8 @@ dependencies:
   flutter_local_notifications: ^9.6.0
   localstorage: ^4.0.0+1
   flutter_phone_direct_caller: ^2.1.1
+  back_button_interceptor: ^6.0.1
+  new_version: ^0.3.0
 
 dependency_overrides:
   path_provider_android: 2.0.11
