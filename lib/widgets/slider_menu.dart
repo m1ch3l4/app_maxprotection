@@ -64,7 +64,7 @@ class SliderMenu extends StatelessWidget{
               updateButtonText: "Atualizar"
           );
         }else {
-          //Message.showMessage("Versão: " + status.localVersion);
+          Message.showMessage("Versão: " + status.localVersion);
           showDialog(
               context: ctx,
               builder: (BuildContext builderContext) {
@@ -133,6 +133,7 @@ class SliderMenu extends StatelessWidget{
           height: 1,
           thickness: 1,
         ),**/
+        SizedBox(height: 20,),
         ListTile(leading: Icon(Icons.arrow_back_ios,color:HexColor(Constants.red)),
         title: Text('Voltar',style:Theme.of(context).textTheme.subtitle1),
         selected: _selectedDestination == 0,

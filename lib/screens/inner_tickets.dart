@@ -272,7 +272,7 @@ class _TicketsPageState extends State<TicketsPage> {
                     },
                   ),
                   Text(
-                    'Tickets Movie Desk',
+                    'Tickets MoviDesk',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 18.0,
