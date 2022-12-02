@@ -246,7 +246,7 @@ class _TicketsPageState extends State<TicketsPage> {
           Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TicketDetail(tech,widget.empresa), // <-- document instance
+            builder: (context) => TicketDetail(tech,widget.empresa,widget.status), // <-- document instance
           ));},
         child: Card(
         child:

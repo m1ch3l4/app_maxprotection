@@ -333,7 +333,7 @@ class _ElasticPageState extends State<ElasticPage> {
       padding: EdgeInsets.all(10.0),
       child: Row(children: [
         Icon(Icons.warning_amber_outlined,color:HexColor(Constants.red),size: 40.0),
-        Expanded(child: Text('Para ver o evento no Kibana você deve estar conectado à VPN da sua empresa ou na rede interna.',
+        Expanded(child: Text('Para ver o evento no SIEM você deve estar conectado à VPN da sua empresa ou na rede interna.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15.0,

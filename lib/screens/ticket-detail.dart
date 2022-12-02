@@ -24,9 +24,10 @@ class TicketDetail extends StatelessWidget {
 
   final TechSupportData ticket;
   final Empresa emp;
+  final int status;
   SharedPref sharedPref = SharedPref();
 
-  TicketDetail(this.ticket,this.emp){
+  TicketDetail(this.ticket,this.emp,this.status){
   }
   static const routeName = '/ticketdetail';
   @override
@@ -41,7 +42,7 @@ class TicketDetail extends StatelessWidget {
             theme: new ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: new TicketsPage(title: ticket.id+"-"+ticket.title, user: snapshot.data,ticket: ticket, emp:emp),
+            home: new TicketsPage(title: ticket.id+"-"+ticket.title, user: snapshot.data,ticket: ticket, emp:emp,status:status),
           ) : CircularProgressIndicator());
         },
       ),
@@ -50,12 +51,13 @@ class TicketDetail extends StatelessWidget {
 }
 
 class TicketsPage extends StatefulWidget {
-  TicketsPage({Key key, this.title,this.user,this.ticket,this.emp}) : super(key: key);
+  TicketsPage({Key key, this.title,this.user,this.ticket,this.emp,this.status}) : super(key: key);
 
   final String title;
   final Map<String, dynamic> user;
   final TechSupportData ticket;
   final Empresa emp;
+  final int status;
 
   @override
   _TicketsPageState createState() => new _TicketsPageState();
@@ -141,7 +143,7 @@ class _TicketsPageState extends State<TicketsPage> {
             ),
             onPressed: () {
               Navigator.of(context).pushReplacement(FadePageRoute(
-                builder: (context) => TicketlistConsultor(widget.emp,0),
+                builder: (context) => TicketlistConsultor(widget.emp,widget.status),
               ));
             },
           )
