@@ -74,7 +74,7 @@ class _PwdPageState extends State<PwdPage> {
   bool _obscureText = true;
   String senha, confsenha;
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {

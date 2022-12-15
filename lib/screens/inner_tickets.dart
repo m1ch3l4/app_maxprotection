@@ -39,7 +39,7 @@ class InnerTickets extends StatelessWidget {
           ) : CircularProgressIndicator());
         },
       ),**/
-      child: new TicketsPage(title: 'Tickets MovieDesk'),
+      child: new TicketsPage(title: 'Tickets MoviDesk'),
     );
   }
 }
@@ -56,7 +56,7 @@ class TicketsPage extends StatefulWidget {
 
 class _TicketsPageState extends State<TicketsPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;

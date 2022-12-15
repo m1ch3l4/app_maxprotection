@@ -69,7 +69,7 @@ class OpenTicketPage extends StatefulWidget {
 }
 
 class _MyAppState extends State<OpenTicketPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -92,6 +92,8 @@ class _MyAppState extends State<OpenTicketPage> {
 
 
   final _player = AudioPlayer();
+
+  bool isLoading = false;
 
   /// Collects the data useful for displaying in a seek bar, using a handy
   /// feature of rx_dart to combine the 3 streams of interest into one.
@@ -166,6 +168,10 @@ class _MyAppState extends State<OpenTicketPage> {
           empresasToShow(),
           //_body(),
           makeBody(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [isLoading? CircularProgressIndicator(color: HexColor(Constants.red)):SizedBox(height: 1,)],
+          )
         ],
       ),
     );
@@ -294,8 +300,9 @@ class _MyAppState extends State<OpenTicketPage> {
           children: [
             (isComplete && recordFilePath!=""? makeControles()
         : SizedBox(height: 1,))
+
           ],
-        )
+        ),
       ]),
       //),
       //],
@@ -396,6 +403,10 @@ class _MyAppState extends State<OpenTicketPage> {
   }
 
   _asyncFileUpload(String text) async{
+    setState(() {
+      isLoading=true;
+    });
+
     await Future.delayed(Duration(seconds: 3));
 
     var url =Constants.urlEndpoint+'tech/upload';
@@ -410,7 +421,9 @@ class _MyAppState extends State<OpenTicketPage> {
     //add multipart to request
     request.files.add(mp3);
     var response = await request.send();
-
+    setState(() {
+      isLoading=false;
+    });
     //Get the response from the server
     var responseData = await response.stream.toBytes();
     var responseString = String.fromCharCodes(responseData);

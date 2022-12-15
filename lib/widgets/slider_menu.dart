@@ -53,14 +53,10 @@ class SliderMenu extends StatelessWidget{
             (
               context: ctx,
               versionStatus: status,
-              dialogTitle: "App desatualizado",
-              //dismissButtonText: "Skip",
+              dialogTitle: "App Desatualizado",
+              dismissButtonText: "Agora Não",
               dialogText: "Atualize a versão "+"${status.localVersion}"+ " para "+ "${status.storeVersion}",
-              allowDismissal: false,
-              dismissAction: ()
-              {
-                Navigator.pop(ctx);
-              },
+              allowDismissal: true,
               updateButtonText: "Atualizar"
           );
         }else {
@@ -241,7 +237,7 @@ class SliderMenu extends StatelessWidget{
         Navigator.of(ctx).push(FadePageRoute(
           //builder: (context) => (isConsultant?ElasticAlertsConsultant():ElasticAlerts()),
           builder: (context){
-            instance = InnerElastic();
+            instance = InnerElastic(null,null);
             return instance;
           },
         ));
@@ -250,7 +246,7 @@ class SliderMenu extends StatelessWidget{
       case 2:
         Navigator.of(ctx).pushReplacement(FadePageRoute(
           //builder: (context) => (isConsultant?ZabbixAlertsConsultant():ZabbixAlerts()),
-          builder: (context) => InnerZabbix(),
+          builder: (context) => InnerZabbix(null,null),
         ));
         screen = "zabbix";
         break;

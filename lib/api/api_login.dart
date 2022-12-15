@@ -9,6 +9,7 @@ import '../utils/perfil.dart';
 import '../widgets/constants.dart';
 import 'api_response.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert' show utf8;
 
 class LoginApi{
 
@@ -42,29 +43,36 @@ class LoginApi{
             "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
             "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
             "Access-Control-Allow-Methods": "POST, OPTIONS"},
-          body: body).timeout(Duration(seconds: 5));
+          body: body).timeout(Duration(seconds: 10));
 
-      print("${response.statusCode}");
+      /** print("${response.statusCode}");
       print("login...");
       print(response.body);
-      print("++++++++++++++++");
+      print("++++++++++++++++"); **/
 
       Map<String,dynamic> mapResponse = json.decode(response.body);
 
 
       if(response.statusCode == 200){
+
+        //mapResponse.forEach((k,v) => print("got key $k with $v"));
+
         final usuario = Usuario.fromJson(mapResponse);
+        if(usuario.id=="-1"){
+          return ApiResponse.error(utf8.decode(usuario.name.codeUnits)); //acento
+        }else {
+          Perfil.setTecnico(usuario.tipo == "T" ? true : false);
 
-        Perfil.setTecnico(usuario.tipo=="T"?true:false);
-
-        if(usuario.hasAccess || usuario.tipo!="T") {
-          prefs.setString('usuario', json.encode(usuario));
-          prefs.setString('tecnico',(usuario.tipo=="T"?"true":"false"));
-          FCMInitConsultor _fcmInit = new FCMInitConsultor();
-          _fcmInit.setConsultant(usuario.toJson());
-          return ApiResponse.ok(usuario);
-        }else{
-          return ApiResponse.error("A sua credencial não é mais válida!");
+          if (usuario.hasAccess || usuario.tipo != "T") {
+            prefs.setString('usuario', json.encode(usuario));
+            prefs.setString(
+                'tecnico', (usuario.tipo == "T" ? "true" : "false"));
+            FCMInitConsultor _fcmInit = new FCMInitConsultor();
+            _fcmInit.setConsultant(usuario.toJson());
+            return ApiResponse.ok(usuario);
+          } else {
+            return ApiResponse.error("A sua credencial não é mais válida!");
+          }
         }
       }
 

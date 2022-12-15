@@ -11,10 +11,10 @@ class TechSupportData{
   String tecnico;
   String urgencia;
 
-  TechSupportData.data([this.title,this.data,this.status,this.id,this.justify,this.empresa]) {
+  TechSupportData(this.title,this.data,this.status,this.id,this.justify,this.empresa) {
     // Set these rather than using the default value because Firebase returns
     // null if the value is not specified.
-    this.title ??= 'Título';
+    this.title ??= '';
     this.data ??= 'dd/MM/yyyy';
     this.status ??='status';
     this.id ??= 'id';

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_maxprotection/utils/SharedPref.dart';
@@ -29,11 +30,11 @@ class ChangePassApi{
             "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
             "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
             "Access-Control-Allow-Methods": "POST, OPTIONS"},
-          body: body).timeout(Duration(seconds: 5));
+          body: body).timeout(Duration(seconds: 20));
 
-      print("${response.statusCode}");
+      print("Response..sendMessageDiretor..Code "+response.statusCode.toString());
 
-      print("Response...."+response.body);
+      print("Response..SendMessageDiretor.."+response.body);
 
       if(response.statusCode == 200){
         return ApiResponse.ok("Mensagem enviada!");
@@ -49,6 +50,7 @@ class ChangePassApi{
 
     }
   }
+
 
   static Future<ApiResponse<Usuario>> changePass(String iduser, String password, bool consultor) async {
     SharedPref sharedPref = SharedPref();

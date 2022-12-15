@@ -24,9 +24,14 @@ import '../widgets/top_container.dart';
 import 'home_page.dart';
 
 
-void main() => runApp(new InnerZabbix());
+//void main() => runApp(new InnerZabbix());
 
 class InnerZabbix extends StatelessWidget {
+
+  final String eid;
+  final String aid;
+
+  InnerZabbix(this.eid,this.aid);
 
   static const routeName = '/zabbix';
   SharedPref sharedPref = SharedPref();
@@ -42,7 +47,7 @@ class InnerZabbix extends StatelessWidget {
           theme: new ThemeData(
           primarySwatch: Colors.blue,
           ),
-          home: new ZabbixPage(title: 'Alertas Zabbix', user: snapshot.data),
+          home: new ZabbixPage(title: 'Alertas Zabbix', user: snapshot.data,eid:eid,aid:aid),
           ) : CircularProgressIndicator());
           },
           ),
@@ -51,8 +56,10 @@ class InnerZabbix extends StatelessWidget {
 }
 
 class ZabbixPage extends StatefulWidget {
-  ZabbixPage({Key key, this.title,this.user}) : super(key: key);
+  ZabbixPage({Key key, this.title,this.user,this.eid,this.aid}) : super(key: key);
 
+  final String eid;
+  final String aid;
   final String title;
   final Map<String, dynamic> user;
 
@@ -62,7 +69,7 @@ class ZabbixPage extends StatefulWidget {
 
 class _ZabbixPageState extends State<ZabbixPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -121,6 +128,8 @@ class _ZabbixPageState extends State<ZabbixPage> {
         initDate = pickedDate;
         txt.text = df.format(initDate);
         dtParam1 = dbFormat.format(initDate);
+        if(!isConsultor)
+          getData();
       });
   }
 
@@ -181,7 +190,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
             widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
       }else {
         urlApi = Constants.urlEndpoint + "alert/zabbix/" +
-            widget.user['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+            widget.user['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
       }
 
     print("****URL API: ");
@@ -190,7 +199,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
     try {
       final responseData = await http.get(Uri.parse(urlApi)).timeout(
-          Duration(seconds: 5));
+          Duration(seconds: 5),onTimeout: _onTimeout);
       if (responseData.statusCode == 200) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
         print("zabbix.body "+source);
@@ -200,8 +209,12 @@ class _ZabbixPageState extends State<ZabbixPage> {
           for (Map i in data) {
             //var ent = i["company"];
             var alert = AlertData.fromJson(i);
-            //alert.setEmpresa(ent["name"]);
-            listModel.add(alert);
+            if(widget.aid!=null){
+              if(alert.id == widget.aid)
+                listModel.add(alert);
+            }else {
+              listModel.add(alert);
+            }
           }
           loading = false;
         });
@@ -213,14 +226,18 @@ class _ZabbixPageState extends State<ZabbixPage> {
     }
   }
 
+
+  FutureOr<http.Response> _onTimeout(){
+    print("não foi possível conectar em 8sec");
+    loading=false;
+  }
+
   void loadData() {
     if(mounted) {
       setState(() {
         loading = true;
       });
       _data = [];
-      print("Num de empresas: ");
-      print(_empSearch.lstOptions.length);
       for (Empresa bean in _empSearch.lstOptions) {
         _data.add(
             new DropdownMenuItem(
@@ -306,6 +323,13 @@ class _ZabbixPageState extends State<ZabbixPage> {
     }else {
       getData();
     }
+
+    if(widget.eid!=null) {
+      print("veio com info de Eid...");
+      empSel = Empresa(widget.eid,"");
+      getData();
+    }
+
     super.initState();
     _fabHeight = _initFabHeight;
   }

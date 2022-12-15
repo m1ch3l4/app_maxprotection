@@ -277,9 +277,9 @@ class LoginScreenState extends State<LoginScreen> {
       if(!resp.ok){
         Message.showMessage(resp.msg);
       }else {
-        Navigator.of(context).push(FadePageRoute(
+        Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
           builder: (context)=>HomePage(),
-        ));
+        ),(Route<dynamic> route) => false);
       }
     });
   }

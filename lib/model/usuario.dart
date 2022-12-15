@@ -20,8 +20,9 @@ class Usuario extends ChangeNotifier{
   List<Empresa> empresas; //se for [C]onsultor tera uma lista de empresas...
   Role role;
   String phone;
+  bool interno;
 
-  Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T"});
+  Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T",this.interno=false});
 
   Usuario.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -37,7 +38,8 @@ class Usuario extends ChangeNotifier{
     tipo = json["tipo"];
     phone = json["phone"];
     var j = json["role"];
-    role = Role.fromJson(j);
+    if(json["role"]!=null)
+        role = Role.fromJson(j);
     if(tipo=="T"){
       var e = json["relacionamento"];
       print("Usuario.fromJson..."+e.toString());
@@ -57,6 +59,7 @@ class Usuario extends ChangeNotifier{
       }
     }
     hasAccess = json['hasAccess'];
+    interno = (json['interno']!=null?json['interno']:false);
   }
 
   Usuario.fromCall(Map<String,dynamic> json){
@@ -71,6 +74,7 @@ class Usuario extends ChangeNotifier{
     tipo = json["tipo"];
     phone = json["phone"];
     hasAccess = json['hasAccess'];
+    interno = json['interno'];
   }
   Usuario.fromSharedPref(Map<String, dynamic> json) {
     id = json['id'];
@@ -93,6 +97,7 @@ class Usuario extends ChangeNotifier{
         empresas.add(Empresa.fromJson(i));
       }
     hasAccess = json["hasAccess"];
+      interno = json['interno'];
   }
 
   void setEmpresas(List<Empresa> lst){
@@ -118,6 +123,7 @@ class Usuario extends ChangeNotifier{
     data["role"] = this.role.toJson();
     data['empresas'] =  this.empresas != null ? this.empresas.map((i) => i.toJson()).toList() : null;
     data['hasAccess'] = this.hasAccess;
+    data['interno'] = this.interno;
     return data;
   }
 

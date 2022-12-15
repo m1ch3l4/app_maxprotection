@@ -2,6 +2,7 @@
 import 'package:intl/intl.dart';
 
 class AlertData {
+  String id;
   String title;
   String data;
   String text;
@@ -31,6 +32,7 @@ class AlertData {
 
   AlertData.fromJson(Map<String, dynamic> json) {
     final df = new DateFormat('dd/MM HH:mm');
+    id = json['id'].toString();
     title = json['title'];
     data = df.format(DateTime.parse(json['date']));
     text = json['texto'];

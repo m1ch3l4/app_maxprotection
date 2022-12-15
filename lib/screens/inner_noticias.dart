@@ -64,7 +64,7 @@ class NoticiasPage extends StatefulWidget {
 
 class _NoticiasPageState extends State<NoticiasPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;

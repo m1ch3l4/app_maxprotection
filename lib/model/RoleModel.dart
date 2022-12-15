@@ -10,8 +10,10 @@ class Role{
     id = json["id"];
     nome = json["nome"];
     permissoes = [];
-    for (Map<String, dynamic> j in json['permissoes']) {
-      permissoes.add(Permissao.fromJson(j));
+    if(json['permissoes']!=null) {
+      for (Map<String, dynamic> j in json['permissoes']) {
+        permissoes.add(Permissao.fromJson(j));
+      }
     }
   }
   void setPermissoes(List<Permissao> lst){

@@ -60,7 +60,7 @@ class TecnicosPage extends StatefulWidget {
 
 class _TecnicosPageState extends State<TecnicosPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -77,6 +77,8 @@ class _TecnicosPageState extends State<TecnicosPage> {
     });
     String urlApi = "";
 
+    //widget.user.forEach((k,v) => print("chave $k valor $v"));
+
     urlApi = Constants.urlEndpoint+"diretor/tecnicos/"+widget.user['id'].toString();
 
     print("****URL API: ");
@@ -86,7 +88,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     final responseData = await http.get(Uri.parse(urlApi));    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
-      print("data ");
+      //print("data ");
       setState(() {
         for(Map i in data){
           var alert = Usuario.fromJson(i);
@@ -195,7 +197,8 @@ class _TecnicosPageState extends State<TecnicosPage> {
                       ));
                     },
                   ),
-                  Text(
+                  //TODO: ver aqui.
+                  Expanded(child: Text(
                     'Técnicos da '+widget.user["company_name"],
                     textAlign: TextAlign.start,
                     style: TextStyle(
@@ -203,7 +206,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
                       color: Colors.white,
                       fontWeight: FontWeight.w400,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),

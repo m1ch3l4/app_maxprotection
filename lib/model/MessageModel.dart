@@ -9,6 +9,9 @@ class MessageData{
   String data;
   String type;
   String sender;
+  String enterprise;
+  String aid;
+  String msgid;
 
   MessageData.fromJson(Map<String, dynamic> json) {
     final df = new DateFormat('dd/MM HH:mm');
@@ -17,6 +20,9 @@ class MessageData{
     text = json['text'];
     type = json['tipo'];
     id = json['id'];
+    enterprise = json['enterprise'];
+    aid = json['aid'];
+    msgid = json['msgid'];
   }
 
   MessageData.fromJsonLS(Map<String, dynamic> json) {
@@ -25,6 +31,9 @@ class MessageData{
     text = json['text'];
     type = json['type'];
     id = json['id'];
+    enterprise = json['enterprise'];
+    aid = json['aid'];
+    msgid = json['msgid'];
   }
 
   toJSON() {
@@ -34,6 +43,9 @@ class MessageData{
     m['data'] = data;
     m['text'] = text;
     m['type'] = type;
+    m['enterprise'] = enterprise;
+    m['aid'] = aid;
+    m['msgid'] = msgid;
 
     return m;
   }

@@ -2,10 +2,13 @@
 import 'dart:io';
 
 import 'package:app_maxprotection/api/PushConfirmApi.dart';
+import 'package:app_maxprotection/model/TechSupportModel.dart';
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/inner_elastic.dart';
+import 'package:app_maxprotection/screens/inner_messages.dart';
 import 'package:app_maxprotection/screens/inner_noticias.dart';
 import 'package:app_maxprotection/screens/inner_zabbix.dart';
+import 'package:app_maxprotection/screens/ticket-detail.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:http/http.dart';
@@ -52,7 +55,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   saveToLocalStorage(message);
   isTecnico(message);
 }
-Future<void> saveToLocalStorage(RemoteMessage message) async{
+MessageData convertMessage(RemoteMessage message){
   var now = new DateTime.now();
   var formatter = new DateFormat('dd/MM HH:mm');
   String formattedDate = formatter.format(now);
@@ -62,7 +65,15 @@ Future<void> saveToLocalStorage(RemoteMessage message) async{
   m.text = message.notification.body;
   m.type = message.data['type'];
   m.id = message.data['id'];
+  m.enterprise = message.data['eid'];
+  m.aid = message.data['aid'];
+  m.msgid = (message.data['msgid']!=null?message.data['msgid']:"-1");
   m.data = formattedDate;
+  return m;
+}
+Future<void> saveToLocalStorage(RemoteMessage message) async{
+
+  MessageData m = convertMessage(message);
 
   if(m.id!=null) {
     print("deve armazenar a message no storage");
@@ -143,8 +154,13 @@ class FCMInitConsultor{
       );
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        messageFCM.text = message.notification?.body;
+        /** messageFCM.text = message.notification?.body;
         messageFCM.title = message.notification?.title;
+        messageFCM.enterprise = message.data['eid'];
+        messageFCM.aid = message.data['aid'];**/
+
+        messageFCM = convertMessage(message);
+
         if (Platform.isAndroid) {
           messageFCM.type = message.data['type'];
         } else if (Platform.isIOS) {
@@ -162,7 +178,9 @@ class FCMInitConsultor{
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage mes) {
         stopAlertSound();
         String tipo = mes.data["type"];
-        goto(tipo, ctx);
+        String eid = mes.data["eid"];
+        messageFCM = convertMessage(mes);
+        goto(messageFCM, ctx);
       });
 
     } else {
@@ -204,6 +222,7 @@ class FCMInitConsultor{
     }
     await storage.deleteItem(id);
   }
+
   void setConsultant(Map<String, dynamic> usr){
     user = usr;
     isTecnico=false;
@@ -227,6 +246,7 @@ class FCMInitConsultor{
 
     registerOnFirebase();
     registerNotification();
+    print("setou FCM....");
   }
 
   void configureMessage(BuildContext context, String scr){
@@ -268,6 +288,8 @@ class FCMInitConsultor{
    }
      _firebaseMessaging.subscribeToTopic('news');
     topics.add('news');
+    _firebaseMessaging.subscribeToTopic("message"+user["id"]);
+    topics.add('message'+user['id']);
 
     for(String s in topics) {
       print('FCMInit...registrado em:'+s);
@@ -308,7 +330,7 @@ class FCMInitConsultor{
                       style: TextStyle(color: HexColor(Constants.blue))),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    goto(message.type,context);
+                    goto(message,context);
                   },
                 ),
               ])
@@ -344,7 +366,7 @@ class FCMInitConsultor{
                     removeMessageRead(message.id);
                     PushApi.changePass(user["id"], message.id).then((value){
                       Navigator.of(context).pop();
-                      goto(message.type,context);
+                      goto(message,context);
                     } );
                   },
                 ),
@@ -354,27 +376,37 @@ class FCMInitConsultor{
       );
     }
   }
-  void goto(String tipo, BuildContext context){
+  void goto(MessageData msg, BuildContext context){
     print("goto.userTipo: "+user["tipo"]);
-    print(tipo);
+    print(msg.type);
+    print("Empresa.id: "+msg.enterprise);
+    print("Alert.id: "+msg.aid);
 
     bool isConsultor = (user["tipo"]=="C"?true:false);
-    switch (tipo) {
+    switch (msg.type) {
       case 'elastic':
         Navigator.of(context).pushReplacement(FadePageRoute(
-          builder: (context) => InnerElastic(),));
+          builder: (context) => InnerElastic(msg.enterprise,msg.aid),));
         break;
       case 'zabbix':
         Navigator.of(context).pushReplacement(FadePageRoute(
-          builder: (context) => InnerZabbix(),));
+          builder: (context) => InnerZabbix(msg.enterprise,msg.aid),));
         break;
       case 'techsupport':
+        Empresa emp = Empresa(msg.enterprise,"");
+        TechSupportData tech = TechSupportData(null,null,null,msg.aid,null,null);
+
         Navigator.of(context).pushReplacement(FadePageRoute(
-          builder: (context) => (isConsultor?TicketsviewConsultor(0):TicketlistConsultor(null, 0)),));
+          //builder: (context) => (isConsultor?TicketsviewConsultor(0):TicketlistConsultor(null, 0)),));
+          builder: (context) => (isConsultor?TicketDetail(tech,emp,1):TicketlistConsultor(null, 0)),));
         break;
       case 'news':
         Navigator.of(context).pushReplacement(
             FadePageRoute(builder: (context) => InnerNoticias(),));
+        break;
+      case 'msg':
+        //0 padrao, 1 - siem, 2 - ticket, 3 - zabbix, 4- lead
+        Navigator.of(context).pushReplacement(FadePageRoute(builder:(context)=> InnerMessages(int.parse(msg.msgid)),)); //parseint
         break;
       default:
         Navigator.of(context).pop();

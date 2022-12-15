@@ -139,7 +139,7 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
+    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5),onTimeout: _onTimeout);    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       print("source..."+source);
       final data = jsonDecode(source);
@@ -160,6 +160,14 @@ class _TicketsPageState extends State<TicketsPage> {
     }else{
       loading = false;
     }
+  }
+
+
+  FutureOr<http.Response> _onTimeout(){
+    setState(() {
+      loading=false;
+      print("não foi possível conectar em 8sec");
+    });
   }
 
   void dispose(){
@@ -273,7 +281,7 @@ class _TicketsPageState extends State<TicketsPage> {
                 ),
                 Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Text(tech.empresa)],
+                  children: [Expanded(child: Text(tech.empresa))],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

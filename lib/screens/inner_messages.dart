@@ -22,6 +22,7 @@ import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../widgets/active_project_card.dart';
 import '../widgets/bottom_container.dart';
+import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
@@ -71,7 +72,7 @@ class MessagesPage extends StatefulWidget {
 
 class _MessagesPageState extends State<MessagesPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -273,17 +274,23 @@ class _MessagesPageState extends State<MessagesPage> {
               children: [
                 Column(
                 mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Text(sender,style: TextStyle(
+                  children: [
+                    Padding(padding: EdgeInsets.only(left:5),
+                    child: Text(sender,style: TextStyle(
                       fontSize: 14.0,
                       color: Colors.black45,
-                      fontWeight: FontWeight.w400,))],
+                      fontWeight: FontWeight.w400,)),)
+                    ],
                 ),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: [Text(simpleDate.format(date)+" | "+dayOfWeek.format(date),style: TextStyle(
-                  fontSize: 14.0,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w400,))],
+                  children: [
+                    Padding(padding: EdgeInsets.only(right: 5),
+                    child: Text(simpleDate.format(date)+" | "+dayOfWeek.format(date),style: TextStyle(
+                      fontSize: 14.0,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w400,)))
+                    ],
                 )
               ],
             ),
@@ -324,7 +331,8 @@ class _MessagesPageState extends State<MessagesPage> {
       await canLaunch(Uri.encodeFull(_url)) ? await launch(Uri.encodeFull(_url)) : throw 'Could not launch $_url';
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return MediaQuery.removePadding(
+    return BottomMenu(ctx,sc,width,widget.user);
+    /** return MediaQuery.removePadding(
         context: ctx,
         removeTop: true,
         child: ListView(
@@ -402,7 +410,7 @@ class _MessagesPageState extends State<MessagesPage> {
               height: 5,
             ),
           ],
-        ));
+        ));**/
   }
 
 }

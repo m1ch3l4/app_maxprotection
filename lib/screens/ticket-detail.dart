@@ -261,7 +261,7 @@ class _TicketsPageState extends State<TicketsPage> {
         margin: EdgeInsets.all(10.0),
         child:Column(
         children: [
-          Row(children: [Text((detail.serviceFirstLevel!=null?detail.serviceFirstLevel:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16))]),
+          Row(children: [Expanded(child: Text((detail.serviceFirstLevel!=null?detail.serviceFirstLevel:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)))]),
           Row(children: [Text((detail.serviceSecondLevel!=null?detail.serviceSecondLevel:'-'))])
         ],
       )),

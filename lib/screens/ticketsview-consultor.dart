@@ -29,6 +29,7 @@ class TicketsviewConsultor extends StatelessWidget {
    * 3 - Aguardando
    */
   final int tipo;
+  //final String eid;
 
   TicketsviewConsultor(this.tipo);
 
@@ -44,7 +45,7 @@ class TicketsviewConsultor extends StatelessWidget {
             theme: new ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: new TicketsPage(title: 'Tickets MovieDesk', user: snapshot.data, tipo:tipo),
+            home: new TicketsPage(title: 'Tickets MoviDesk', user: snapshot.data, tipo:tipo),
           ) : CircularProgressIndicator());
         },
       ),
@@ -94,16 +95,23 @@ class _TicketsPageState extends State<TicketsPage> {
 
   Future lazyLoad() async{
     lastIndex = loaded.length;
+
     if(lstEmpresa.elementAt(lastIndex)!=null) {
       await getData(lastIndex);
 
       setState(() {
-        loaded.addAll(
-            lstEmpresa.sublist(lastIndex, ultimoIndex)
-        );
+        if(ultimoIndex<1){ //só tem 1 empresa
+          loaded.addAll(lstEmpresa);
+        }else {
+          loaded.addAll(
+              lstEmpresa.sublist(lastIndex, ultimoIndex)
+          );
+        }
+        print("loaded..."+loaded.toString());
         loading = false;
       });
     }else{
+      print("disse que a primeira empresa é null...");
       ultimo = true;
       setState(() {
         loading=false;
@@ -118,6 +126,8 @@ class _TicketsPageState extends State<TicketsPage> {
     String urlApi = "";
 
     var total = index+tamanho;
+
+    print("getData..."+index.toString()+"tamanho: "+tamanho.toString());
 
       for(var i=index;i<(index+tamanho);i++){
         if(lstEmpresa.asMap().containsKey(i)) {
@@ -163,6 +173,7 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   void initState() {
+    print("TicketsView-consultor....");
     _controller.addListener(_onScroll);
     super.initState();
     BackButtonInterceptor.add(myInterceptor);

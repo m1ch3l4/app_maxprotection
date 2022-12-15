@@ -97,6 +97,7 @@ class _MyHomePageState extends State<MyHomePage>{
   int msgTicket = 0;
   bool isConsultor = false;
   String perfil = "Analista";
+  Timer alarm;
 
   DashboardData get dashboardDados=>dashboard;
 
@@ -130,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage>{
     var a = widget.user;
     if(a!=null) {
       if(a['empresas']!=null) {
-        print('empresa...'+a['empresas'].toString());
+        //print('empresa...'+a['empresas'].toString());
         for (Map<String, dynamic> i in a['empresas']) {
           lstEmpresas.add(Empresa.fromJson(i));
         }
@@ -140,6 +141,7 @@ class _MyHomePageState extends State<MyHomePage>{
     FCMInitConsultor _fcmInit = new FCMInitConsultor();
     _fcmInit.setConsultant(a);
   }
+
   Future<Null> getDashboardData() async{
     if(!mounted)
       return;
@@ -153,18 +155,18 @@ class _MyHomePageState extends State<MyHomePage>{
 
     if(widget.user['tipo']=="C") {
       urlApi = Constants.urlEndpoint + "dashboard/consultor/" +
-          widget.user['id'].toString() + "/30";
+          widget.user['id'].toString();
       isConsultor=true;
       perfil="Consultor";
     } else {
       if(widget.user['tipo']=='D'){
         urlApi = Constants.urlEndpoint + "dashboard/diretor/" +
             widget.user['company_id'].toString() + "/" +
-            widget.user['id'].toString() + "/30";
+            widget.user['id'].toString() ;
         perfil="Diretor";
       }else {
         urlApi = Constants.urlEndpoint + "dashboard/tecnico/" +
-            widget.user['id'].toString() + "/30";
+            widget.user['id'].toString() ;
         print("Tecnico: "+urlApi);
         perfil = "Analista";
       }
@@ -172,8 +174,8 @@ class _MyHomePageState extends State<MyHomePage>{
     }
 
     //print('urlApi...'+urlApi);
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));
-    if(responseData.statusCode == 200){
+    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 8),onTimeout: _onTimeout);
+    if(responseData!=null && responseData.statusCode == 200){
       if(responseData.body.length>0){
         String source = Utf8Decoder().convert(responseData.bodyBytes);
         final data = jsonDecode(source);
@@ -182,6 +184,8 @@ class _MyHomePageState extends State<MyHomePage>{
 
         setState(() {
           dashboard = DashboardData.fromJson(data);
+          //data.forEach((k,v) => print("Dashboard.got key $k with $v"));
+
           if(data!=null && data['infoNewsList']!=null) {
             for (Map i in data['infoNewsList']) {
               listModel.add(NoticiaData.fromJson(i));
@@ -199,15 +203,23 @@ class _MyHomePageState extends State<MyHomePage>{
     }
   }
 
+  FutureOr<http.Response> _onTimeout(){
+    setState(() {
+      loading=false;
+      print("não foi possível conectar em 8sec");
+    });
+  }
   void refreshUser() async{
+    print("******chamou refreshUser....");
+
     final prefs = await SharedPreferences.getInstance();
     String urlApi = "";
     urlApi = Constants.urlEndpoint + "dashboard/consultor/refresh/" +
           widget.user['id'].toString();
 
     try{
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));
-    if(responseData.statusCode == 200) {
+    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 8),onTimeout: _onTimeout);
+    if(responseData!=null && responseData.statusCode == 200) {
       if (responseData.body.length > 0) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
 
@@ -240,6 +252,7 @@ class _MyHomePageState extends State<MyHomePage>{
             List<Empresa> lstEmpresas = [];
             lstEmpresas.add(Empresa("0", "Todas"));
             lstEmpresas.addAll(refresh.empresas);
+            print("Se entrou aqui encontrou mudança na lista de empresas...");
             _empSearch.setOptions(lstEmpresas);
             FCMInitConsultor().unRegisterAll();
             FCMInitConsultor().setConsultant(refresh.toJson());
@@ -262,15 +275,20 @@ class _MyHomePageState extends State<MyHomePage>{
 
   void initState(){
     getDashboardData();
-
     _fabHeight = _initFabHeight;
     super.initState();
-    const fiveSec = const Duration(minutes: 5);
-    new Timer.periodic(fiveSec, (Timer t) {
-      getDashboardData();
-      refreshUser();
-    });
+    taskRefresh();
     BackButtonInterceptor.add(myInterceptor);
+  }
+
+  void taskRefresh(){
+    const fiveSec = const Duration(minutes: 5);
+    if(alarm == null) {
+      alarm = new Timer.periodic(fiveSec, (Timer t) {
+        getDashboardData();
+        refreshUser();
+      });
+    }
   }
 
   void dispose(){
@@ -278,7 +296,7 @@ class _MyHomePageState extends State<MyHomePage>{
     super.dispose();
   }
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -312,7 +330,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
-    mnu = SliderMenu('index',widget.user,textTheme);
+    mnu = SliderMenu('home',widget.user,textTheme);
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
@@ -587,7 +605,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       ActiveProjectsCard(
                         ctx:context,
                         r:false,
-                        action: InnerElastic(),
+                        action: InnerElastic(null,null),
                         cardColor: Colors.white,
                         icon: Icon(Icons.volume_down_sharp,
                             color: HexColor(Constants.red), size: 20.0),
@@ -597,7 +615,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       ActiveProjectsCard(
                         ctx:context,
                         r:false,
-                        action: InnerZabbix(),
+                        action: InnerZabbix(null,null),
                         cardColor: Colors.white,
                         icon: Icon(Icons.web,
                             color: HexColor(Constants.red), size: 20.0),
@@ -683,6 +701,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     ],
                   )
                       : SizedBox(height: 1,)),
+                  ((widget.user["tipo"]=="D" && widget.user["interno"])?SizedBox(height: 1,):
                   Row(
                     children: <Widget>[
                       ActiveProjectsCard(
@@ -694,7 +713,7 @@ class _MyHomePageState extends State<MyHomePage>{
                         title: 'Fale com o Diretor',
                       ),
                     ],
-                  ),
+                  )),
                   buildTileNoticia(width),
                 ],
               ),

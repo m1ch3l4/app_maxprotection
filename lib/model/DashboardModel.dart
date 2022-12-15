@@ -3,6 +3,7 @@ class DashboardData{
   int siem;
   int zabbix;
   int open;
+  int novo;
   int close;
   int waiting;
   int msgSiem;
@@ -10,12 +11,13 @@ class DashboardData{
   int msgTicket;
   int msgLead;
 
-  DashboardData.data([this.siem,this.zabbix,this.open,this.close,this.waiting]) {
+  DashboardData.data([this.siem,this.zabbix,this.open,this.close,this.waiting,this.novo]) {
     this.siem ??= 0;
     this.zabbix ??=0;
     this.open ??= 0;
     this.close ??= 0;
     this.waiting ??=0;
+    this.novo ??=0;
   }
 
   DashboardData.fromJson(Map<String, dynamic> json){
@@ -24,6 +26,7 @@ class DashboardData{
     open = json['open'];
     close = json['close'];
     waiting = json['waiting'];
+    novo = (json['novo']!=null?json['novo']:0);
     msgLead = (json['msgLead']!=null?json['msgLead']:0);
     msgSiem = (json['msgSiem']!=null?json['msgSiem']:0);
     msgZabbix = (json['msgZabbix']!=null?json['msgZabbix']:0);

@@ -26,13 +26,17 @@ import '../widgets/top_container.dart';
 import 'home_page.dart';
 
 
-void main() => runApp(new InnerElastic());
 
 class InnerElastic extends StatelessWidget {
 
   SharedPref sharedPref = SharedPref();
 
   static const routeName = '/elastic';
+  final String eid;
+  final String aid;
+
+  InnerElastic(this.eid, this.aid);
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -45,7 +49,7 @@ class InnerElastic extends StatelessWidget {
             theme: new ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: new ElasticPage(title: 'Alertas SIEM', user: snapshot.data),
+            home: new ElasticPage(title: 'Alertas SIEM', user: snapshot.data, eid:eid, aid: aid),
           ) : CircularProgressIndicator());
         },
       ),
@@ -54,9 +58,11 @@ class InnerElastic extends StatelessWidget {
 }
 
 class ElasticPage extends StatefulWidget {
-  ElasticPage({Key key, this.title,this.user}) : super(key: key);
+  ElasticPage({Key key, this.title,this.user,this.eid,this.aid}) : super(key: key);
 
   final String title;
+  final String eid;
+  final String aid;
   final Map<String, dynamic> user;
 
   @override
@@ -65,7 +71,7 @@ class ElasticPage extends StatefulWidget {
 
 class _ElasticPageState extends State<ElasticPage> {
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -176,14 +182,14 @@ class _ElasticPageState extends State<ElasticPage> {
           widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
     }else {
       urlApi = Constants.urlEndpoint + "alert/elastic/" +
-          widget.user['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+          widget.user['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
     }
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
+    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5),onTimeout: _onTimeout);    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {
@@ -192,13 +198,24 @@ class _ElasticPageState extends State<ElasticPage> {
           var ent = i["company"];
           var alert = AlertData.fromJson(i);
           alert.setEmpresa(ent["name"]);
-          listModel.add(alert);
+
+          if(widget.aid!=null){
+            if(alert.id==widget.aid)
+              listModel.add(alert);
+          }else {
+            listModel.add(alert);
+          }
         }
         loading = false;
       });
     }else{
       loading = false;
     }
+  }
+
+  FutureOr<http.Response> _onTimeout(){
+    print("não foi possível conectar em 8sec");
+    loading=false;
   }
 
   void loadData() {
@@ -287,6 +304,11 @@ class _ElasticPageState extends State<ElasticPage> {
       isConsultor = true;
       loadData();
     }else {
+      getData();
+    }
+
+    if(widget.eid!=null){
+      empSel = Empresa(widget.eid,"");
       getData();
     }
 
