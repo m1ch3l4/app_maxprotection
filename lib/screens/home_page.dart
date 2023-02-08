@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:app_maxprotection/api/CallTecnicoApi.dart';
 import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/RoleModel.dart';
+import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:collection/collection.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
@@ -47,7 +48,7 @@ import 'inner_zabbix.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-final keyHP = new GlobalKey<_MyHomePageState>();
+final GlobalKey<_MyHomePageState> keyHP = new GlobalKey<_MyHomePageState>();
 
 class HomePage extends StatelessWidget {
   static const routeName = '/dashboard';
@@ -143,6 +144,12 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   Future<Null> getDashboardData() async{
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
     if(!mounted)
       return;
 
@@ -170,11 +177,27 @@ class _MyHomePageState extends State<MyHomePage>{
         print("Tecnico: "+urlApi);
         perfil = "Analista";
       }
+      print("URLAPI...."+urlApi);
       isConsultor=false;
     }
 
-    //print('urlApi...'+urlApi);
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 8),onTimeout: _onTimeout);
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+    "Authorization": basicAuth,
+    };
+
+    if(ssl) {
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 8), onTimeout: _onTimeout);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 8), onTimeout: _onTimeout);
+    }
+
     if(responseData!=null && responseData.statusCode == 200){
       if(responseData.body.length>0){
         String source = Utf8Decoder().convert(responseData.bodyBytes);
@@ -199,7 +222,18 @@ class _MyHomePageState extends State<MyHomePage>{
         logoff();
       }
     }else{
+      if(responseData!=null && responseData.statusCode==401){
+        Message.showMessage("As suas credenciais não são mais válidas!");
+        sleep(Duration(seconds:8));
+        logoff();
+      }
       loading = false;
+      dashboard = new DashboardData.data(0,0,0,0,0,0);
+      dashboard.msgTicket=0;
+      dashboard.msgLead=0;
+      dashboard.msgZabbix=0;
+      dashboard.msgSiem=0;
+      Message.showMessage("Não foi possível sincronizar com a nuvem.\nVerifique sua conexão com a Internet.");
     }
   }
 
@@ -218,7 +252,28 @@ class _MyHomePageState extends State<MyHomePage>{
           widget.user['id'].toString();
 
     try{
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 8),onTimeout: _onTimeout);
+
+      String u = widget.user["login"]+"|"+widget.user["password"];
+      String p = widget.user["password"];
+      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+      var ssl = false;
+      var responseData = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
+      Map<String, String> h = {
+        "Authorization": basicAuth,
+      };
+
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 8), onTimeout: _onTimeout);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 8), onTimeout: _onTimeout);
+    }
     if(responseData!=null && responseData.statusCode == 200) {
       if (responseData.body.length > 0) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
@@ -543,7 +598,7 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   callTecnico() async{
-    CallTecnicoApi.callTecnico(widget.user["id"])
+    CallTecnicoApi.callTecnico(widget.user["login"],widget.user["password"],widget.user["id"])
     .then((resp){
     print('callTecnicoAPI. ${resp.ok}');
     if(!resp.ok){

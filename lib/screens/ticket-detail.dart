@@ -16,6 +16,7 @@ import '../model/empresa.dart';
 import '../model/moviedesk/Action.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
@@ -75,8 +76,22 @@ class _TicketsPageState extends State<TicketsPage> {
       loading = true;
     });
     String urlApi = "";
-    //TODO: criar um novo endpoint
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+
     urlApi = Constants.urlEndpoint+"tech/full/"+tk.id;
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
 
     if(widget.user["tipo"]=="C")
       isConsultor = true;
@@ -87,7 +102,15 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }
+
     if(responseData.statusCode == 200){
       if(responseData.contentLength>0) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);

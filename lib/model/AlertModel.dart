@@ -12,6 +12,8 @@ class AlertData {
   String status;
   String link;
   String linkSoc;
+  String zhost;
+  String zstatus;
 
   AlertData.data([this.title,this.data,this.text,this.categoria]) {
     // Set these rather than using the default value because Firebase returns
@@ -43,5 +45,7 @@ class AlertData {
     status = json["status"]; //Elastic: LOW, MEDIUM, HIGH, Zabbix:
     link = json["link"];
     linkSoc = json["linkSoc"];
+    zhost = json['zHost'];
+    zstatus = json['zStatus'];
   }
 }

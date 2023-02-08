@@ -4,9 +4,13 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:app_maxprotection/model/ChamadoMp3.dart';
 import 'package:app_maxprotection/model/usuario.dart';
+import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
+import 'package:dio/adapter.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
@@ -29,6 +33,8 @@ import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
+
+import 'package:dio/src/multipart_file.dart' as multipart;
 
 void main() => runApp(InnerOpenTicket());
 
@@ -128,6 +134,11 @@ class _MyAppState extends State<OpenTicketPage> {
     _empSearch.setOptions(usr.empresas);
     empSel = _empSearch.defaultOpt;
 
+    if(_empSearch.lstOptions.length <3)
+      empSel = _empSearch.lstOptions.elementAt(0);
+
+    print("empSel...."+empSel.name);
+
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     double width = MediaQuery.of(context).size.width;
@@ -223,7 +234,6 @@ class _MyAppState extends State<OpenTicketPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         DropdownButton<Empresa>(
-            value: empSel,
             icon: const Icon(Icons.arrow_downward),
             iconSize: 24,
             elevation: 16,
@@ -242,7 +252,8 @@ class _MyAppState extends State<OpenTicketPage> {
               return  DropdownMenuItem<Empresa>(
                   value: bean,
                   child: SizedBox(width: 310.0,child: Text(bean.name,overflow: TextOverflow.ellipsis,)));}
-                  ).toList(),
+              ).toList(),
+          value: empSel,
           ),
       ],
     );
@@ -407,26 +418,74 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    var ssl = false;
+    var request  = null;
+    var response = null;
+    var responseData = null;
+    var responseString = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
     await Future.delayed(Duration(seconds: 3));
 
     var url =Constants.urlEndpoint+'tech/upload';
-    //create multipart request for POST or PATCH method
-    var request = http.MultipartRequest("POST", Uri.parse(url));
-    //add text fields
     File file = File(recordFilePath);
-    request.fields["id"] = text;
-    request.fields["empresa"] = empSel.name;
-    //create multipart using filepath, string or bytes
-    var mp3 = await http.MultipartFile.fromPath("file", file.path);
-    //add multipart to request
-    request.files.add(mp3);
-    var response = await request.send();
-    setState(() {
-      isLoading=false;
-    });
-    //Get the response from the server
-    var responseData = await response.stream.toBytes();
-    var responseString = String.fromCharCodes(responseData);
+
+    print("arquivo..."+recordFilePath);
+
+    if(ssl){
+      Dio dio = HttpsClient().dioClient;
+
+      var len = await file.length();
+
+      var formData = FormData.fromMap({
+        "id":text,
+        "empresa":empSel.name,
+        "file":await multipart.MultipartFile.fromFile(recordFilePath,filename:'file.mp3')
+      });
+
+      response = await dio.post(url,
+          data: formData,
+          options: Options(headers: {
+            Headers.contentLengthHeader: len,
+            "Authorization": basicAuth,
+          } // set content-length
+          ));
+      setState(() {
+        isLoading=false;
+      });
+    }else {
+      request = http.MultipartRequest("POST", Uri.parse(url));
+      request.headers.addAll(h);
+      //add text fields
+      request.fields["id"] = text;
+      request.fields["empresa"] = empSel.name;
+      //create multipart using filepath, string or bytes
+      var mp3 = await http.MultipartFile.fromPath("file", file.path);
+      //add multipart to request
+      request.files.add(mp3);
+      response = await request.send();
+      setState(() {
+        isLoading=false;
+      });
+    }
+
+
+    if(ssl){
+      responseString = response.data;
+    }else {
+      responseData = await response.stream.toBytes();
+      responseString = String.fromCharCodes(responseData);
+    }
+
     final data = jsonDecode(responseString);
     ChamadoMp3 cmp3 = ChamadoMp3.fromJson(data);
     if(cmp3!=null && cmp3.name!=null && cmp3.size>0){

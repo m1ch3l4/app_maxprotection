@@ -1,4 +1,5 @@
 // @dart=2.10
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/EmpresasSearch.dart';
@@ -17,6 +18,7 @@ import '../model/AlertModel.dart';
 import '../model/empresa.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
@@ -25,6 +27,8 @@ import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
 
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 
 class InnerElastic extends StatelessWidget {
@@ -91,6 +95,7 @@ class _ElasticPageState extends State<ElasticPage> {
   var dtParam2="";
 
   List<AlertData> listModel = [];
+  List<Empresa> initialEmpresa = [];
   var loading = false;
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
@@ -102,6 +107,11 @@ class _ElasticPageState extends State<ElasticPage> {
 
   static List<DropdownMenuItem<Empresa>> _data = [];
 
+  List<_ChartData> data = [];
+  TooltipBehavior _tooltip;
+  HashMap<String,int> dados;
+
+  bool firstLoad = true;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
@@ -109,7 +119,7 @@ class _ElasticPageState extends State<ElasticPage> {
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
-        firstDate: minDate.subtract(Duration(days:30)),
+        firstDate: minDate.subtract(Duration(days:180)),
         lastDate: minDate,
         builder: (BuildContext context, Widget child) {
           return Theme(
@@ -130,6 +140,7 @@ class _ElasticPageState extends State<ElasticPage> {
         initDate = pickedDate;
         txt.text = df.format(initDate);
         dtParam1 = dbFormat.format(initDate);
+        getData();
       });
   }
 
@@ -160,16 +171,69 @@ class _ElasticPageState extends State<ElasticPage> {
         dtParam2 = dbFormat.format(endDate);
         var i = txt.text;
         var j = txt2.text;
-        if(!isConsultor)
           getData();
       });
   }
 
-  Future<Null> getData() async{
+  Future<Null> initialEnterpriseData() async{
     setState(() {
       loading = true;
     });
     String urlApi = "";
+
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+      urlApi = Constants.urlEndpoint + "alert/elastic/initial/" +
+          widget.user["id"] + "/" + dtParam1 + "/" + dtParam2;
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 7), onTimeout: _onTimeout);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 7), onTimeout: _onTimeout);
+    }
+    if(responseData.statusCode == 200){
+      String source = Utf8Decoder().convert(responseData.bodyBytes);
+      final dataj = jsonDecode(source);
+      setState(() {
+        initialEmpresa.clear();
+        for(Map i in dataj){
+          var e = Empresa.fromJson(i);
+          initialEmpresa.add(e);
+        }
+        loading = false;
+      });
+    }else{
+      loading = false;
+    }
+  }
+
+  Future<Null> getData() async{
+    setState(() {
+      firstLoad = false;
+      loading = true;
+    });
+    String urlApi = "";
+
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
 
     //TODO: aqui fazer a condicão se é consultour ou cliente
     if(widget.user["tipo"]=="C")
@@ -189,25 +253,50 @@ class _ElasticPageState extends State<ElasticPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5),onTimeout: _onTimeout);    if(responseData.statusCode == 200){
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 7), onTimeout: _onTimeout);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 7), onTimeout: _onTimeout);
+    }
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
-      final data = jsonDecode(source);
+      final dataj = jsonDecode(source);
       setState(() {
         listModel.clear();
-        for(Map i in data){
+        data = [];
+        dados = new HashMap<String,int>();
+        for(Map i in dataj){
           var ent = i["company"];
           var alert = AlertData.fromJson(i);
           alert.setEmpresa(ent["name"]);
 
-          if(widget.aid!=null){
+          if(widget.aid!=null && isConsultor){
             if(alert.id==widget.aid)
               listModel.add(alert);
           }else {
             listModel.add(alert);
           }
+          if(!dados.containsKey(alert.status)){
+            dados.putIfAbsent(alert.status, () => 1);
+          }else{
+            dados.update(alert.status, (value) => value+1);
+          }
         }
+
         loading = false;
       });
+      dados.forEach((k,v) => data.add(_ChartData(k, v)));
     }else{
       loading = false;
     }
@@ -218,14 +307,51 @@ class _ElasticPageState extends State<ElasticPage> {
     loading=false;
   }
 
+  //TODO: Como exibir uma lista inicial....
+  Widget listViewEmpresa(){
+    return Expanded(child: ListView(
+      children: <Widget>[
+        for(Empresa ep in initialEmpresa)
+          getEmpresaData(ep)
+      ],
+    ));
+  }
+
+  //TODO:
+  Widget getEmpresaData(Empresa emp){
+    GestureDetector gd;
+        gd = GestureDetector(
+            onTap: (){
+              empSel = emp;
+              firstLoad = false;
+              getData();
+            },
+            child:
+            Card(
+                color: HexColor(Constants.grey),
+                child: Container(
+                    margin: EdgeInsets.all(10.0),
+                    child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
+                            ],
+                          ),
+                        ]
+                    )
+                ))
+        );
+    return gd;
+  }
+
   void loadData() {
     if(mounted) {
       setState(() {
         loading = true;
       });
       _data = [];
-      print("Num de empresas: ");
-      print(_empSearch.lstOptions.length);
       for (Empresa bean in _empSearch.lstOptions) {
         _data.add(
             new DropdownMenuItem(
@@ -294,15 +420,18 @@ class _ElasticPageState extends State<ElasticPage> {
 
   void initState() {
     BackButtonInterceptor.add(myInterceptor);
-    firstDate = minDate.subtract(Duration(days: 30));
+    firstDate = minDate.subtract(Duration(days: 90));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
     dtParam1 = dbFormat.format(firstDate);
     dtParam2 = dbFormat.format(minDate);
 
+    firstLoad = true;
+
     if(widget.user["tipo"]=="C") {
       isConsultor = true;
       loadData();
+      initialEnterpriseData();
     }else {
       getData();
     }
@@ -373,7 +502,6 @@ class _ElasticPageState extends State<ElasticPage> {
           _header(width),
           rangeDate(),
           (isConsultor?empresasToShow():SizedBox(height: 1,)),
-          warming(),
           Divider(
             height: 5,
             thickness: 1,
@@ -381,15 +509,23 @@ class _ElasticPageState extends State<ElasticPage> {
             endIndent: 5,
             color: HexColor(Constants.grey),
           ),
-          _body(),
+          graph(context),
+          ((isConsultor && firstLoad)?_initialBody():_body())
+          //_body(),
         ],
       ),
     );
   }
 
+  Widget _initialBody(){
+    return listViewEmpresa();
+  }
   Widget _body(){
     return Expanded(
-        child: listView());
+        //child: listView());
+        child: SingleChildScrollView(
+        child:criaTabela() ,
+    ));
   }
 
   Widget _header(double width){
@@ -505,31 +641,6 @@ class _ElasticPageState extends State<ElasticPage> {
     );
   }
 
-  Widget getAlert_(String title, String date, String event, String empresa){
-    return Card(
-        child: Column(
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.all(0),
-              minLeadingWidth: 10.0,
-              title: Column(mainAxisAlignment:MainAxisAlignment.start,crossAxisAlignment: CrossAxisAlignment.start,children:[Text(title, style: TextStyle(fontWeight: FontWeight.w500)),Text(empresa, style: TextStyle(fontSize: 16))]),
-              subtitle: Text(event),
-              leading: Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ),
-              trailing: Text(date, style: TextStyle(fontWeight: FontWeight.w400,color: HexColor(Constants.red))),
-            )
-          ],
-        )
-    );
-  }
-
   void _launchURL(_url) async =>
       await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
 
@@ -543,7 +654,7 @@ class _ElasticPageState extends State<ElasticPage> {
     if(tech.status=="MEDIUM")
       cl = Colors.yellow;
     if(tech.status=="HIGH")
-      cl = Colors.red;
+      cl = HexColor(Constants.red);
 
     return Card(
             child:
@@ -556,38 +667,32 @@ class _ElasticPageState extends State<ElasticPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [Expanded(child: Text(tech.title,style: TextStyle(fontWeight: FontWeight.w500)))],
                     ),
-                    SizedBox(height: 5,),
+                    SizedBox(height: 7,),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [Expanded(child:Text(tech.text,style: TextStyle(fontSize: 16.0)))],
                     ),
-                    ((tech.link!=null && tech.link.length>1)?
-                        InkWell(child:
-                        Row(mainAxisAlignment: MainAxisAlignment.start,
-                          children: [Expanded(child:Text("Veja o evento no Kibana",style: TextStyle(fontSize: 16.0,color: HexColor(Constants.red))))],),
-                      onTap: ()=> {
-                          _launchURL(isConsultor?tech.linkSoc:tech.link)
-                        })
-                    :SizedBox(height: 1,)),
-                    Row(
+                    SizedBox(height: 7,),
+                    /**Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [Text(tech.empresa)],
-                    ),
+                    ),**/
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500))],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [Text(tech.total)],
-                    ),
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [Text(tech.total)],
+                        ),
+                        Column(children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500))])
+                     ]
+                    )
                   ],
 
                 )
@@ -595,4 +700,201 @@ class _ElasticPageState extends State<ElasticPage> {
         );
   }
 
+
+
+  criaTabela() {
+    return listModel.isNotEmpty?Table(
+      defaultColumnWidth: FractionColumnWidth(.33),
+      border: TableBorder(
+        horizontalInside: BorderSide(
+          color: HexColor(Constants.red),
+          style: BorderStyle.solid,
+          width: 1.0,
+        ),
+      ),
+      children: [
+        _criarLinhaTable("Título, Data, Severidade",0,"-1"),
+        for (int i = 0; i < listModel.length; i++)
+          _criarLinhaTable(listModel[i].title+","+listModel[i].data+","+listModel[i].status,(i+1),listModel[i].id),
+      ],
+    ):SizedBox(width: 1,);
+  }
+
+  _criarLinhaTable(String listaNomes,int index,String id) {
+    return TableRow(
+      children: listaNomes.split(',').map((name) {
+        return
+          GestureDetector(
+            child:
+            Container(
+              alignment: Alignment.center,
+              child: Text(
+                  name,
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                      fontSize: 14.0,
+                      color: (index<1?HexColor(Constants.red):HexColor(Constants.blue))
+                  )
+              ),
+              padding: EdgeInsets.all(8.0),
+            ),
+            onTap: (){
+              print("Indice do alert: "+index.toString());
+              if(index>0)
+                showAlert(context,index-1);
+            },);
+      }).toList(),
+    );
+  }
+
+
+  Future<void> showAlert(BuildContext context,int index) async {
+    AlertData d = listModel.elementAt(index);
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32.0))),
+            content: Stack(
+                children: [
+                  Container(
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red))),
+                                _getCloseButton(context),
+                              ]
+                              ,),
+                            SizedBox(height: 2,),
+                            detalhes(d),
+                          ]))
+                ]
+            ),
+            actions: <Widget>[
+            ],
+          );
+        });
+  }
+
+  _getCloseButton(context) {
+    return IconButton(
+        icon: Icon(Icons.close,color: HexColor(Constants.red)),
+        onPressed: (){
+          Navigator.pop(context);
+        }
+    );
+  }
+
+  Widget graph(BuildContext context) {
+    return (data.isNotEmpty?Container(
+        height: 250,
+        width: 250,
+        child:SfCircularChart(
+            title: ChartTitle(text: 'Alertas por Status',textStyle: TextStyle(
+              fontSize: 14.0,
+              color: HexColor(Constants.red),
+              fontWeight: FontWeight.w600,
+            )),
+            legend: Legend(isVisible: true),
+            series: <PieSeries<_ChartData, String>>[
+              PieSeries<_ChartData, String>(
+                  explode: true,
+                  explodeIndex: 0,
+                  dataSource: data,
+                  xValueMapper: (_ChartData data, _) => data.x,
+                  yValueMapper: (_ChartData data, _) => data.y,
+                  dataLabelMapper: (_ChartData data, _) => data.y.toString(),
+                  dataLabelSettings: DataLabelSettings(isVisible: true)),
+            ]
+        )
+    ):SizedBox(width: 1,));
+  }
+
+  Widget detalhes(AlertData tech){
+    Color cl = Colors.green;
+    var urg = tech.status;
+
+    if(tech.status=="LOW")
+      cl = Colors.green;
+    if(tech.status=="MEDIUM")
+      cl = Colors.yellow;
+    if(tech.status=="HIGH")
+      cl = HexColor(Constants.red);
+
+    return Card(
+        elevation: 0,
+        child:
+        Container(
+            height: 250,
+            width: 380,
+            child:
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
+                ),
+                Row(
+                  children: [Column(children: [Text("Evento:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Expanded(child:
+                    Text(tech.title))
+                  ],
+                ),
+                SizedBox(height: 10,),
+                Row(
+                  children: [Column(children: [Text("Descrição:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Expanded(child:
+                    Text(tech.text))
+                  ],
+                ),
+                SizedBox(height: 10,),
+                Row(
+                  children: [Column(children: [Text("N.Ocorrencias:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Expanded(child:
+                    Text((tech.total!=null?tech.total:"-")))
+                  ],
+                ),
+                SizedBox(height: 7,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(children: [Text("Status:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                    Column(children: [Text((tech.status!=null?tech.status:"-"),style: TextStyle(fontWeight: FontWeight.w500,color: cl))],)
+                  ],
+                ),
+              ],
+            )
+        )
+    );
+  }
+
+
+}
+class _ChartData {
+  _ChartData(this.x, this.y);
+  final String x;
+  final int y;
 }

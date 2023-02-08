@@ -41,6 +41,8 @@ dependencies:
   flutter_phone_direct_caller: ^2.1.1
   back_button_interceptor: ^6.0.1
   new_version: ^0.3.0
+  syncfusion_flutter_charts: ^20.3.61
+  dio: ^4.0.6
 
 dependency_overrides:
   path_provider_android: 2.0.11

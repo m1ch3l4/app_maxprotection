@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 
 import '../model/usuario.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/constants.dart';
 import 'api_response.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,13 @@ class ChangePassApi{
     try{
       var url =Constants.urlEndpoint+'diretor/contato';
 
+
+      var ssl = false;
+      var response = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
       print("url $url");
 
       Map params = {
@@ -24,14 +32,30 @@ class ChangePassApi{
 
       //encode Map para JSON(string)
       var body = json.encode(params);
-
-      var response = await http.post(Uri.parse(url),
-          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
-            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "POST, OPTIONS"},
-          body: body).timeout(Duration(seconds: 20));
-
+      if(ssl) {
+        var client = HttpsClient().httpsclient;
+        response = await client.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 20));
+      }else {
+        response = await http.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 20));
+      }
       print("Response..sendMessageDiretor..Code "+response.statusCode.toString());
 
       print("Response..SendMessageDiretor.."+response.body);
@@ -52,9 +76,15 @@ class ChangePassApi{
   }
 
 
-  static Future<ApiResponse<Usuario>> changePass(String iduser, String password, bool consultor) async {
+  static Future<ApiResponse<Usuario>> changePass(String login, String pass, String iduser, String password, bool consultor) async {
     SharedPref sharedPref = SharedPref();
     try{
+      var ssl = false;
+      var response = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
 
       var url =Constants.urlEndpoint+'user/changepass';
       if(consultor)
@@ -70,13 +100,36 @@ class ChangePassApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      var response = await http.post(Uri.parse(url),
-          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
-            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "POST, OPTIONS"},
-          body: body).timeout(Duration(seconds: 5));
+      String u = login+"|"+pass;
 
+      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$pass'));
+
+      if(ssl) {
+        var client = HttpsClient().httpsclient;
+        response = await client.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Authorization": basicAuth
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }else {
+        response = await http.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Authorization": basicAuth
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }
       print("${response.statusCode}");
 
       Map<String,dynamic> mapResponse = json.decode(response.body);
@@ -111,8 +164,12 @@ class ChangePassApi{
     try{
       SharedPref sharedPref = SharedPref();
 
-      print("consultor?");
-      print(consultant);
+      var ssl = false;
+      var response = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
 
       var url =Constants.urlEndpoint+'user/pushmessage';
       if(consultant)
@@ -130,12 +187,30 @@ class ChangePassApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      var response = await http.post(Uri.parse(url),
-          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
-            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
-            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "POST, OPTIONS"},
-          body: body).timeout(Duration(seconds: 5));
+      if(ssl) {
+        var client = HttpsClient().httpsclient;
+        response = await client.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }else {
+        response = await http.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }
 
       print("${response.statusCode}");
 

@@ -8,6 +8,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:http/http.dart' as http;
 
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../utils/Message.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
@@ -307,6 +308,12 @@ class LoginRequestState extends State<LoginRequest> {
 
   Future<String> sendMessage() async{
     var url =Constants.urlEndpoint+'message/app';
+    var ssl = false;
+    var response = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
 
     print("url $url");
     int tipo = 0;
@@ -326,13 +333,30 @@ class LoginRequestState extends State<LoginRequest> {
     //encode Map para JSON(string)
     var body = json.encode(params);
 
-    var response = await http.post(Uri.parse(url),
-        headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
-          "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
-          "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-          "Access-Control-Allow-Methods": "POST, OPTIONS"},
-        body: body).timeout(Duration(seconds: 5));
-
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      response = await client.post(Uri.parse(url),
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true",
+            // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "POST, OPTIONS"
+          },
+          body: body).timeout(Duration(seconds: 5));
+    }else {
+      response = await http.post(Uri.parse(url),
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true",
+            // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "POST, OPTIONS"
+          },
+          body: body).timeout(Duration(seconds: 5));
+    }
     print("${response.statusCode}");
     print("sentMessage...");
     print(response.body);

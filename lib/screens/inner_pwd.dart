@@ -238,7 +238,7 @@ class _PwdPageState extends State<PwdPage> {
   }
 
   Future<String> changePass(String iduser,String newpass) {
-    return ChangePassApi.changePass(iduser, newpass,consultant).then((resp) {
+    return ChangePassApi.changePass(widget.user["login"],widget.user["password"],iduser, newpass,consultant).then((resp) {
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Fluttertoast.showToast(

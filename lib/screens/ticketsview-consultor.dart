@@ -1,5 +1,6 @@
 // @dart=2.10
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
+import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
@@ -124,6 +125,11 @@ class _TicketsPageState extends State<TicketsPage> {
       loading = true;
     });
     String urlApi = "";
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
 
     var total = index+tamanho;
 
@@ -139,9 +145,24 @@ class _TicketsPageState extends State<TicketsPage> {
 
           urlApi = Constants.urlEndpoint + "enterprise/stat/" + emp.id;
 
-          final responseData = await http.get(Uri.parse(urlApi)).timeout(
-              Duration(seconds: 3));
+          String u = widget.user["login"]+"|"+widget.user["password"];
+          String p = widget.user["password"];
+          String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
 
+          Map<String, String> h = {
+            "Authorization": basicAuth,
+          };
+
+          if(ssl){
+            var client = HttpsClient().httpsclient;
+            responseData =
+            await client.get(Uri.parse(urlApi), headers: h).timeout(
+                Duration(seconds: 3));
+          }else {
+            responseData =
+            await http.get(Uri.parse(urlApi), headers: h).timeout(
+                Duration(seconds: 3));
+          }
           if (responseData.statusCode == 200) {
             String source = Utf8Decoder().convert(responseData.bodyBytes);
             final data = jsonDecode(source);

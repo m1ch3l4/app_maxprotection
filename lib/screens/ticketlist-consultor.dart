@@ -14,6 +14,7 @@ import '../model/TechSupportModel.dart';
 import '../model/empresa.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
@@ -78,6 +79,11 @@ class _TicketsPageState extends State<TicketsPage> {
       loading = true;
     });
     String urlApi = "";
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
 
     if(widget.user["tipo"]=="C"){
       isConsultor = true;
@@ -139,7 +145,23 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5),onTimeout: _onTimeout);    if(responseData.statusCode == 200){
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5), onTimeout: _onTimeout);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5), onTimeout: _onTimeout);
+    }
+
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       print("source..."+source);
       final data = jsonDecode(source);

@@ -1,17 +1,21 @@
 import 'dart:convert';
 
 import '../model/usuario.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/constants.dart';
 import 'api_response.dart';
 import 'package:http/http.dart' as http;
 
 class CallTecnicoApi{
 
-  static Future<ApiResponse<Usuario>> callTecnico(String iduser) async {
+  static Future<ApiResponse<Usuario>> callTecnico(String login, String pass, String iduser) async {
     try {
       var url = Constants.urlEndpoint + 'calltecnico/save';
+      var ssl = false;
+      var response = null;
 
-      print("url $url");
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
 
       Map params = {
         'cliente': iduser
@@ -20,17 +24,36 @@ class CallTecnicoApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      var response = await http.post(Uri.parse(url),
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            // Required for CORS support to work
-            "Access-Control-Allow-Credentials": "true",
-            // Required for cookies, authorization headers with HTTPS
-            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-            "Access-Control-Allow-Methods": "POST, OPTIONS"
-          },
-          body: body).timeout(Duration(seconds: 5));
+      String u = login+"|"+pass;
 
+      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$pass'));
+
+      if(ssl){
+        var client = HttpsClient().httpsclient;
+        response = await client.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Authorization": basicAuth
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }else {
+        response = await http.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Authorization": basicAuth
+            },
+            body: body).timeout(Duration(seconds: 5));
+      }
       print("${response.statusCode}");
       print("callTecnico "+response.body);
 

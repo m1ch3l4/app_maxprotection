@@ -17,6 +17,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../model/NoticiaModel.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
@@ -87,8 +88,29 @@ class _NoticiasPageState extends State<NoticiasPage> {
     print("****URL API: ");
     print(urlApi);
     print("**********");
+    var ssl = false;
+    var responseData = null;
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }
+
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {

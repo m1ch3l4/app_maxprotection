@@ -11,7 +11,7 @@ class EmpresasSearch{
   }
 
   Empresa defaultOption;
-  Empresa defaultValue = Empresa("0","Selecione");
+  Empresa defaultValue = Empresa("0","Selecione a empresa");
   List<Empresa> options = [];
 
   EmpresasSearch._internal(){

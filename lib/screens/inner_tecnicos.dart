@@ -13,6 +13,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../model/AlertModel.dart';
 import '../model/usuario.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../utils/Message.dart';
 import '../utils/SharedPref.dart';
 import '../widgets/bottom_menu.dart';
@@ -77,6 +78,18 @@ class _TecnicosPageState extends State<TecnicosPage> {
     });
     String urlApi = "";
 
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
     //widget.user.forEach((k,v) => print("chave $k valor $v"));
 
     urlApi = Constants.urlEndpoint+"diretor/tecnicos/"+widget.user['id'].toString();
@@ -85,7 +98,14 @@ class _TecnicosPageState extends State<TecnicosPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi));    if(responseData.statusCode == 200){
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h);
+    }
+
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       //print("data ");
@@ -261,6 +281,24 @@ class _TecnicosPageState extends State<TecnicosPage> {
   Future<String> acessoServicosContrato(String idTecnico, bool permitir) async{
     var url =Constants.urlEndpoint+'diretor/acesso';
 
+    var ssl = false;
+    var response = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+      "Access-Control-Allow-Origin": "*", // Required for CORS support to work
+      "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+      "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+      "Access-Control-Allow-Methods": "POST, OPTIONS"
+    };
+
     print("url $url");
 
     Map params = {
@@ -271,12 +309,16 @@ class _TecnicosPageState extends State<TecnicosPage> {
     //encode Map para JSON(string)
     var body = json.encode(params);
 
-    var response = await http.post(Uri.parse(url),
-        headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
-          "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
-          "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-          "Access-Control-Allow-Methods": "POST, OPTIONS"},
-        body: body).timeout(Duration(seconds: 5));
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      response = await client.post(Uri.parse(url),
+          headers: h,
+          body: body).timeout(Duration(seconds: 5));
+    }else{
+      response = await http.post(Uri.parse(url),
+          headers: h,
+          body: body).timeout(Duration(seconds: 5));
+    }
 
     if(response.statusCode==200){
       Message.showMessage(response.body);

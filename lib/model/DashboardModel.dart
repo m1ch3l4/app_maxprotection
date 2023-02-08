@@ -18,6 +18,9 @@ class DashboardData{
     this.close ??= 0;
     this.waiting ??=0;
     this.novo ??=0;
+    this.msgSiem ??= 0;
+    this.msgLead ??=0;
+    this.msgTicket??= 0;
   }
 
   DashboardData.fromJson(Map<String, dynamic> json){

@@ -1,4 +1,5 @@
 //@dart=2.10
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/SharedPref.dart';
@@ -16,13 +17,15 @@ import '../model/empresa.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
-
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 //void main() => runApp(new InnerZabbix());
 
@@ -101,13 +104,17 @@ class _ZabbixPageState extends State<ZabbixPage> {
   static List<DropdownMenuItem<Empresa>> _data = [];
   String _selected = '';
 
+  List<_ChartData> data = [];
+  TooltipBehavior _tooltip;
+  HashMap<String,int> dados;
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
         initialDatePickerMode: DatePickerMode.day,
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
-        firstDate: minDate.subtract(Duration(days:15)),
+        firstDate: minDate.subtract(Duration(days:180)),
         lastDate: minDate,
         builder: (BuildContext context, Widget child) {
           return Theme(
@@ -128,7 +135,6 @@ class _ZabbixPageState extends State<ZabbixPage> {
         initDate = pickedDate;
         txt.text = df.format(initDate);
         dtParam1 = dbFormat.format(initDate);
-        if(!isConsultor)
           getData();
       });
   }
@@ -160,7 +166,6 @@ class _ZabbixPageState extends State<ZabbixPage> {
         dtParam2 = dbFormat.format(endDate);
         var i = txt.text;
         var j = txt2.text;
-        if(!isConsultor)
           getData();
       });
   }
@@ -173,12 +178,11 @@ class _ZabbixPageState extends State<ZabbixPage> {
       loading = true;
     });
     String urlApi = "";
+    var ssl = false;
+    var responseData = null;
 
-    /**
-     * @GetMapping(value="alert/consultor/{id}/{tipo}/{init}/{fim}")
-     */
-    print('getData...: $dtParam1 - $dtParam2');
-
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
 
     if(widget.user["tipo"]=="C")
       urlApi = Constants.urlEndpoint + "alert/zabbix/" +
@@ -197,27 +201,51 @@ class _ZabbixPageState extends State<ZabbixPage> {
     print(urlApi);
     print("**********");
 
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
     try {
-      final responseData = await http.get(Uri.parse(urlApi)).timeout(
-          Duration(seconds: 5),onTimeout: _onTimeout);
+      if(ssl){
+        var client = HttpsClient().httpsclient;
+        responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+            Duration(seconds: 5), onTimeout: _onTimeout);
+      }else {
+        responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+            Duration(seconds: 5), onTimeout: _onTimeout);
+      }
+
+
+
       if (responseData.statusCode == 200) {
         String source = Utf8Decoder().convert(responseData.bodyBytes);
         print("zabbix.body "+source);
-        final data = jsonDecode(source);
+        final dataJ = jsonDecode(source);
+        data = [];
+        dados = new HashMap<String,int>();
         setState(() {
           listModel.clear();
-          for (Map i in data) {
-            //var ent = i["company"];
+          for (Map i in dataJ) {
             var alert = AlertData.fromJson(i);
-            if(widget.aid!=null){
+            if(widget.aid!=null && isConsultor){
               if(alert.id == widget.aid)
                 listModel.add(alert);
             }else {
               listModel.add(alert);
             }
+            if(alert.zstatus==null)alert.zstatus="OK";
+            if(!dados.containsKey(alert.zstatus)){
+                dados.putIfAbsent(alert.zstatus, () => 1);
+            }else{
+              dados.update(alert.zstatus, (value) => value+1);
+            }
           }
           loading = false;
         });
+        dados.forEach((k,v) => data.add(_ChartData(k, v)));
       } else {
         loading = false;
       }
@@ -311,7 +339,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
   void initState() {
     BackButtonInterceptor.add(myInterceptor);
-    firstDate = minDate.subtract(Duration(days: 2));
+    firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
     dtParam1 = dbFormat.format(firstDate);
@@ -369,7 +397,8 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
   Widget getMain(double width){
     return SafeArea(
-      child: Column(
+      child:
+      Column(
         children: <Widget>[
           _header(width),
           (isConsultor?empresasToShow():SizedBox(height: 1,)),
@@ -381,6 +410,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
             endIndent: 5,
             color: HexColor(Constants.grey),
           ),
+          graph(context),
           _body(),
         ],
       ),
@@ -389,7 +419,11 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
   Widget _body(){
     return Expanded(
-        child: listView());
+      child: SingleChildScrollView(
+        child:criaTabela() ,
+      )
+        //child: listView()
+    );
   }
 
   Widget _header(double width){
@@ -495,48 +529,174 @@ class _ZabbixPageState extends State<ZabbixPage> {
     );
   }
 
+
+  criaTabela() {
+    return listModel.isNotEmpty?Table(
+      defaultColumnWidth: FractionColumnWidth(.33),
+      border: TableBorder(
+        horizontalInside: BorderSide(
+          color: HexColor(Constants.red),
+          style: BorderStyle.solid,
+          width: 1.0,
+        ),
+      ),
+      children: [
+        _criarLinhaTable("Título, Data, Severidade",0,"-1"),
+        for (int i = 0; i < listModel.length; i++)
+        _criarLinhaTable(listModel[i].title+","+listModel[i].data+","+listModel[i].zstatus,(i+1),listModel[i].id),
+      ],
+    ):SizedBox(width: 1,);
+  }
+
+  _criarLinhaTable(String listaNomes,int index,String id) {
+    return TableRow(
+      children: listaNomes.split(',').map((name) {
+        return
+          GestureDetector(
+        child:
+          Container(
+          alignment: Alignment.center,
+          child: Text(
+            name,
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                fontSize: 14.0,
+                color: (index<1?HexColor(Constants.red):HexColor(Constants.blue))
+              )
+          ),
+          padding: EdgeInsets.all(8.0),
+        ),
+          onTap: (){
+            print("Indice do alert: "+index.toString());
+            if(index>0)
+              showAlert(context,index-1);
+          },);
+      }).toList(),
+    );
+  }
+
+
+  Future<void> showAlert(BuildContext context,int index) async {
+    AlertData d = listModel.elementAt(index);
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(32.0))),
+            content:
+            Stack(
+                children: [
+            Container(
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red))),
+                        _getCloseButton(context),
+                      ]
+                    ,),
+                  SizedBox(height: 2,),
+                  detalhes(d),
+                  ]))
+                ]
+            ),
+            actions: <Widget>[
+            ],
+          );
+        });
+  }
+  _getCloseButton(context) {
+    return IconButton(
+        icon: Icon(Icons.close,color: HexColor(Constants.red)),
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+  }
+
+
   Widget listView(){
+
+    _tooltip = TooltipBehavior(enable: true);
     return ListView(
       children: <Widget>[
         for (int i = 0; i < listModel.length; i++)
           getAlert(listModel[i])
-          //getAlert(listModel[i].title, listModel[i].data, listModel[i].text, listModel[i].empresa)
       ],
     );
   }
 
+
+  Widget graph(BuildContext context) {
+    return (data.isNotEmpty?Container(
+        height: 250,
+        width: 250,
+        child:SfCircularChart(
+            title: ChartTitle(text: 'Alertas por Status',textStyle: TextStyle(
+                  fontSize: 14.0,
+                  color: HexColor(Constants.red),
+                  fontWeight: FontWeight.w600,
+                )),
+            legend: Legend(isVisible: true),
+            series: <PieSeries<_ChartData, String>>[
+              PieSeries<_ChartData, String>(
+                  explode: true,
+                  explodeIndex: 0,
+                  dataSource: data,
+                  xValueMapper: (_ChartData data, _) => data.x,
+                  yValueMapper: (_ChartData data, _) => data.y,
+                  dataLabelMapper: (_ChartData data, _) => data.y.toString(),
+                  dataLabelSettings: DataLabelSettings(isVisible: true)),
+            ]
+        )
+    ):SizedBox(width: 1,));
+  }
+
   Widget getAlert(AlertData tech){
     Color cl = Colors.green;
+    Color zc = Colors.green;
+
     var urg = tech.status;
 
     //OK (default), Not classified, Information, Warning, Average, High or Disaster
+
+    if(tech.zstatus!=null && tech.zstatus=="FALHA")
+      zc = HexColor(Constants.red);
 
     if(tech.status=="OK" || tech.status=="Not classified")
       cl = Colors.green;
     if(tech.status=="Warning" || tech.status=="Information")
       cl = Colors.yellow;
     if(tech.status=="High" || tech.status=="Disaster")
-      cl = Colors.red;
+      cl = HexColor(Constants.red);
 
     return Card(
         child:
         Container(
-            margin: EdgeInsets.all(10.0),
-            decoration: BoxDecoration(border: Border(left: BorderSide(color: cl,width: 5))),
-            padding: EdgeInsets.only(left:5.0),
+            height: 250,
+            width: 380,
+            margin: EdgeInsets.all(5.0),
+            //decoration: BoxDecoration(border: Border(left: BorderSide(color: HexColor(Constants.red),width: 5))),
+            //padding: EdgeInsets.only(left:5.0),
             child:
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Text("#", style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [Expanded(child: Text(tech.title,style: TextStyle(fontSize: 16.0)))],
                 ),
-                SizedBox(height: 5,),
+                SizedBox(height: 7,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
@@ -545,13 +705,17 @@ class _ZabbixPageState extends State<ZabbixPage> {
                     )
                     ],
                 ),
-                Row(
+                /** Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [Text(tech.empresa)],
-                ),
+                ),**/
+                SizedBox(height: 7,),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [Text((tech.status!=null?tech.status:"-"),style: TextStyle(fontWeight: FontWeight.w500))],
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(children: [Text((tech.zhost!=null?tech.zhost:"Host"),style: TextStyle(fontWeight: FontWeight.w500))],),
+                    Column(children: [Text((tech.zstatus!=null?tech.zstatus:"-"),style: TextStyle(fontWeight: FontWeight.w500,color: zc))],)
+                  ],
                 )
               ],
 
@@ -559,30 +723,80 @@ class _ZabbixPageState extends State<ZabbixPage> {
         )
     );
   }
-  Widget getAlert_(String title, String date, String event, String empresa){
+
+  Widget detalhes(AlertData tech){
+    Color zc = Colors.green;
+    if(tech.zstatus!=null && tech.zstatus=="FALHA")
+      zc = HexColor(Constants.red);
+
     return Card(
-        child: Column(
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.all(0),
-              minLeadingWidth: 10.0,
-              title: Column(mainAxisAlignment:MainAxisAlignment.start,crossAxisAlignment: CrossAxisAlignment.start,children:[Text(title, style: TextStyle(fontWeight: FontWeight.w500)),Text(empresa, style: TextStyle(fontSize: 16))]),
-              subtitle: Text(event),
-              leading: Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ),
-              trailing: Text(date, style: TextStyle(fontWeight: FontWeight.w400,color: HexColor(Constants.red))),
+      elevation: 0,
+        child:
+            Container(
+                    height: 270,
+                    width: 380,
+                    child:
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
+                        ),
+                        Row(
+                          children: [Column(children: [Text("Evento:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(child:
+                            Text(tech.title))
+                          ],
+                        ),
+                        SizedBox(height: 10,),
+                        Row(
+                          children: [Column(children: [Text("Descrição:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(child:
+                            Text(tech.text))
+                          ],
+                        ),
+                        SizedBox(height: 10,),
+                        Row(
+                          children: [Column(children: [Text("Host:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(child:
+                            Text((tech.zhost!=null?tech.zhost:"-")))
+                          ],
+                        ),
+                        SizedBox(height: 7,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(children: [Text("Status:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                            Column(children: [Text((tech.zstatus!=null?tech.zstatus:"-"),style: TextStyle(fontWeight: FontWeight.w500,color: zc))],)
+                          ],
+                        )
+                      ],
+                    )
+
             )
-          ],
-        )
+
     );
   }
 
-
+}
+class _ChartData {
+  _ChartData(this.x, this.y);
+  final String x;
+  final int y;
 }

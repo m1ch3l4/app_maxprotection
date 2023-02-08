@@ -20,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../model/ChatMessage.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/active_project_card.dart';
 import '../widgets/bottom_container.dart';
 import '../widgets/bottom_menu.dart';
@@ -157,6 +158,12 @@ class _MessagesPageState extends State<MessagesPage> {
       loading = true;
     });
     String urlApi = "";
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
 
     //0 padrao, 1 - siem, 2 - ticket, 3 - zabbix, 4- lead
     switch(widget.tipo){
@@ -184,7 +191,22 @@ class _MessagesPageState extends State<MessagesPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+    if(ssl) {
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }else{
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {

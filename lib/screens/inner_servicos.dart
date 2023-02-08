@@ -25,6 +25,7 @@ import '../model/empresa.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/active_project_card.dart';
 import '../widgets/bottom_container.dart';
 import '../widgets/constants.dart';
@@ -100,6 +101,7 @@ class _ServicosPageState extends State<ServicosPage> {
 
   List<Servico> listModel = [];
   var loading = false;
+
 
   void loadData() {
     if(mounted) {
@@ -211,6 +213,12 @@ class _ServicosPageState extends State<ServicosPage> {
     });
     String urlApi = "";
 
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
     if(isConsultor){
       if(empSel!=null)
       urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id;
@@ -219,13 +227,29 @@ class _ServicosPageState extends State<ServicosPage> {
           widget.user['company_id'].toString();
     }
 
+
+    String u = widget.user["login"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
+
     if(urlApi!="") {
-      final responseData = await http.get(Uri.parse(urlApi)).timeout(
-          Duration(seconds: 5));
+      if(ssl){
+        var client = HttpsClient().httpsclient;
+        responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+            Duration(seconds: 5));
+      }else {
+        responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+            Duration(seconds: 5));
+      }
       if (responseData.statusCode == 200) {
         setState(() {
           if (responseData.contentLength > 0) {
@@ -281,6 +305,12 @@ class _ServicosPageState extends State<ServicosPage> {
       loading = true;
     });
     String urlApi = "";
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
 
     if(isConsultor) {
       empSel = _empSearch.defaultOpt;
@@ -294,7 +324,24 @@ class _ServicosPageState extends State<ServicosPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi)).timeout(Duration(seconds: 5));    if(responseData.statusCode == 200){
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
+          Duration(seconds: 5));
+    }
+
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {
@@ -487,7 +534,7 @@ class _ServicosPageState extends State<ServicosPage> {
     );
   }
 
-  Future<String> sendMessage(String assunto) async{
+ Future<String> sendMessage(String assunto) async{
     var url =Constants.urlEndpoint+'message/app';
 
     print("url $url");

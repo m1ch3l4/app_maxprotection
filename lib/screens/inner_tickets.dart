@@ -12,6 +12,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '../model/AlertModel.dart';
 import '../utils/HexColor.dart';
+import '../utils/HttpsClient.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/slider_menu.dart';
@@ -145,10 +146,14 @@ class _TicketsPageState extends State<TicketsPage> {
     });
     String urlApi = "";
 
-    /**
-     * @GetMapping(value="alert/consultor/{id}/{tipo}/{init}/{fim}")
-     */
-    print('getData...: $dtParam1 - $dtParam2');
+    var url =Constants.urlEndpoint+'diretor/acesso';
+
+    var ssl = false;
+    var responseData = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
 
     urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/elastic/"+dtParam1+"/"+dtParam2;
 
@@ -156,7 +161,21 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    final responseData = await http.get(Uri.parse(urlApi));    if(responseData.statusCode == 200){
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+    if(ssl){
+      var client = HttpsClient().httpsclient;
+      responseData = await client.get(Uri.parse(urlApi), headers: h);
+    }else {
+      responseData = await http.get(Uri.parse(urlApi), headers: h);
+    }
+
+    if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {
