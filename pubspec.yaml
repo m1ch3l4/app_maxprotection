@@ -28,7 +28,7 @@ dependencies:
   local_auth: 1.1.0
   shared_preferences: ^2.0.6
   flutter_html: ^2.2.1
-  open_file: ^3.2.1
+  open_file_safe: ^3.2.3
   path_provider: ^2.0.9
   pdf: ^3.7.3
   just_audio: ^0.9.20
