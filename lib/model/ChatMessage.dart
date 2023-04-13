@@ -20,7 +20,9 @@ class ChatData{
     data = DateTime.parse(json['data']);
     texto = json['text'];
     tipo = json['tipo'];
-    var e = json['sender'];
-    sender = Usuario.fromJson(e);
+    if(json["sender"]!=null) {
+      var e = json['sender'];
+      sender = Usuario.fromJson(e);
+    }
   }
 }

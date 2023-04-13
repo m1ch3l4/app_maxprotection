@@ -100,6 +100,8 @@ class _MyAppState extends State<OpenTicketPage> {
   final _player = AudioPlayer();
 
   bool isLoading = false;
+  bool isTecnico = false;
+  String idTicket = "-1";
 
   /// Collects the data useful for displaying in a seek bar, using a handy
   /// feature of rx_dart to combine the 3 streams of interest into one.
@@ -134,6 +136,7 @@ class _MyAppState extends State<OpenTicketPage> {
     _empSearch.setOptions(usr.empresas);
     empSel = _empSearch.defaultOpt;
 
+    isTecnico = (usr.tipo=="T"?true:false);
     if(_empSearch.lstOptions.length <3)
       empSel = _empSearch.lstOptions.elementAt(0);
 
@@ -410,7 +413,86 @@ class _MyAppState extends State<OpenTicketPage> {
   }
 
   void abrirChamado(){
-    _asyncFileUpload(widget.user["id"]);
+    if(isTecnico){
+      _OpenTicket(widget.user["id"]);
+    }else {
+      _asyncFileUpload(widget.user["id"]);
+    }
+  }
+
+  _OpenTicket(String text) async{
+    setState(() {
+      isLoading=true;
+    });
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    var ssl = false;
+    var response = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
+    Map params = {
+      'cliente': text,
+      'org' : empSel.id,
+      'descricao':'Abertura de chamado pelo SecurityApp'
+    };
+
+    //encode Map para JSON(string)
+    var body = json.encode(params);
+
+    var url =Constants.urlEndpoint+'tech/open';
+
+    if(ssl) {
+      var client = HttpsClient().httpsclient;
+      response = await client.post(Uri.parse(url),
+          headers: {
+            "Content-Type":"application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Authorization": basicAuth
+          },
+          body: body).timeout(Duration(seconds: 20));
+    }else {
+      response = await http.post(Uri.parse(url),
+          headers: {
+            "Content-Type":"application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Authorization": basicAuth
+          },
+          body: body).timeout(Duration(seconds: 20));
+    }
+    print("Response..InnerOpenTicket..Code "+response.statusCode.toString());
+    print("Response..InnerOpenTicket.."+response.body);
+
+    if(response.statusCode == 200){
+      if(response.body!=null){
+        Map<String,dynamic> mapResponse = json.decode(response.body);
+        idTicket = mapResponse['id'].toString();
+        await _updateTicket();
+      }else{
+        Message.showMessage("Não foi possível abrir o ticket.\nEntre em contato com o nosso suporte.");
+      }
+      setState(() {
+        isLoading=false;
+      });
+    }else{
+      Message.showMessage("Não foi possível abrir o seu chamado.\nEntre em contato com o suporte.");
+      setState(() {
+        isLoading=false;
+      });
+    }
   }
 
   _asyncFileUpload(String text) async{
@@ -478,7 +560,6 @@ class _MyAppState extends State<OpenTicketPage> {
       });
     }
 
-
     if(ssl){
       responseString = response.data;
     }else {
@@ -494,6 +575,84 @@ class _MyAppState extends State<OpenTicketPage> {
     }else{
       Message.showMessage("Erro ao enviar o chamado para o servidor.\nPor favor entre em contato com nosso suporte.");
     }
+  }
+
+  _updateTicket() async{
+    setState(() {
+      isLoading=true;
+    });
+
+    String u = widget.user["login"]+"|"+widget.user["password"];
+    String p = widget.user["password"];
+    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    var ssl = false;
+    var request  = null;
+    var response = null;
+    var responseData = null;
+    var responseString = null;
+
+    if(Constants.protocolEndpoint == "https://")
+      ssl = true;
+
+    Map<String, String> h = {
+      "Authorization": basicAuth,
+    };
+
+    var url =Constants.urlEndpoint+'tech/updateTicket';
+    File file = File(recordFilePath);
+
+    print("updateTicket...arquivo..."+recordFilePath);
+
+    if(ssl){
+      Dio dio = HttpsClient().dioClient;
+
+      var len = await file.length();
+
+      var formData = FormData.fromMap({
+        "idticket":idTicket,
+        "file":await multipart.MultipartFile.fromFile(recordFilePath,filename:'file.mp3')
+      });
+
+      response = await dio.post(url,
+          data: formData,
+          options: Options(headers: {
+            Headers.contentLengthHeader: len,
+            "Authorization": basicAuth,
+          } // set content-length
+          ));
+      setState(() {
+        isLoading=false;
+      });
+    }else {
+      request = http.MultipartRequest("POST", Uri.parse(url));
+      request.headers.addAll(h);
+      //add text fields
+      request.fields["idticket"] = idTicket;
+      //create multipart using filepath, string or bytes
+      var mp3 = await http.MultipartFile.fromPath("file", file.path);
+      //add multipart to request
+      request.files.add(mp3);
+      response = await request.send();
+      setState(() {
+        isLoading=false;
+      });
+    }
+    if(ssl){
+      responseString = response.data;
+    }else {
+      responseData = await response.stream.toBytes();
+      responseString = String.fromCharCodes(responseData);
+    }
+    print("resposta do update...."+responseString.toString());
+    if(responseString.toString().contains("Erro")){
+     Message.showMessage("Falha ao enviar arquivo de aúdio para Nuvem.\nEntre em contato com o nosso suporte.");
+    }else {
+      Message.showMessage(
+          "Chamado enviado para servidor.\nEm breve entrará listagem da empresa.");
+      delete();
+    }
+    
+    idTicket="-1";
   }
 
   void resumeRecord() {

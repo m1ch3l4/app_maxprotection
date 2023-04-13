@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:app_maxprotection/api/CallTecnicoApi.dart';
 import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/RoleModel.dart';
+import 'package:app_maxprotection/screens/inner_user.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:collection/collection.dart';
@@ -80,9 +81,13 @@ class MyHomePage extends StatefulWidget{
 
   final String title;
   final Map<String, dynamic> user;
+  static _MyHomePageState state;
 
   @override
-  _MyHomePageState createState() => new _MyHomePageState();
+  _MyHomePageState createState() {
+    state = new _MyHomePageState();
+    return state;
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage>{
@@ -116,9 +121,6 @@ class _MyHomePageState extends State<MyHomePage>{
       loading = false;
     });
   }
-
-
-
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
@@ -160,6 +162,9 @@ class _MyHomePageState extends State<MyHomePage>{
 
     String urlApi = "";
 
+
+    print("dashboardRefresh..."+widget.user["tipo"]);
+
     if(widget.user['tipo']=="C") {
       urlApi = Constants.urlEndpoint + "dashboard/consultor/" +
           widget.user['id'].toString();
@@ -183,6 +188,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
     String u = widget.user["login"]+"|"+widget.user["password"];
     String p = widget.user["password"];
+    print("credenciais..."+u);
     String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
 
     Map<String, String> h = {
@@ -281,6 +287,7 @@ class _MyHomePageState extends State<MyHomePage>{
         Map<String, dynamic> mapResponse = jsonDecode(source);
         Usuario refresh = Usuario.fromJson(mapResponse);
         Usuario doSistema = Usuario.fromSharedPref(widget.user);
+        refresh.senha = p;
 
         Role rAtual = doSistema.role;
         Role rNova = refresh.role;
@@ -348,6 +355,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
   void dispose(){
     BackButtonInterceptor.remove(myInterceptor);
+    alarm.cancel();
     super.dispose();
   }
 
@@ -426,6 +434,12 @@ class _MyHomePageState extends State<MyHomePage>{
     ));
   }
 
+  void cadastro(){
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => (InnerUser()),
+    ));
+  }
+
   Widget _header(double width){
     return TopContainer(
       height: 208,
@@ -463,8 +477,9 @@ class _MyHomePageState extends State<MyHomePage>{
                   icon: const Icon(Icons.person_outline_outlined, color:Colors.white,size: 20.0),
                   tooltip: 'Perfil',
                   onPressed: () {
-                    print("perfil");
-                    Message.showMessage("Em construção");
+                    cadastro();
+                    //print("perfil");
+                    //Message.showMessage("Em construção");
                   },
                 ),
                 Text(
@@ -508,7 +523,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     ),
                     GestureDetector(
                       child: Text(
-                        dashboard.open.toString(),
+                        dashboard.novo.toString(),
                         textAlign: TextAlign.start,
                         style: TextStyle(
                           fontSize: 24.0,
@@ -605,16 +620,25 @@ class _MyHomePageState extends State<MyHomePage>{
       Message.showMessage(resp.msg);
     }else {
       Usuario u = resp.result;
-      if(u.phone!=null){
-        Message.showMessage("Ligando para "+u.name+", telefone: "+u.phone);
-        String ph = "0"+u.phone.replaceAll(RegExp('[^0-9]'), ''); // 25/08/2022 - adicionando o ZERO pela questão da operadora...
-        if(ph.length>10) {
-          FlutterPhoneDirectCaller.callNumber(ph);
-        }else{
-          Message.showMessage("O número de telefone parece estar incorreto: \n"+ph); //considerando um número de celular com dd
+      if(u.id!="-1") {
+        if (u.phone != null) {
+          Message.showMessage(
+              "Ligando para " + u.name + ", telefone: " + u.phone);
+          String ph = "0" + u.phone.replaceAll(RegExp('[^0-9]'),
+              ''); // 25/08/2022 - adicionando o ZERO pela questão da operadora...
+          if (ph.length > 10) {
+            FlutterPhoneDirectCaller.callNumber(ph);
+          } else {
+            Message.showMessage(
+                "O número de telefone parece estar incorreto: \n" +
+                    ph); //considerando um número de celular com dd
+          }
+        } else {
+          Message.showMessage(
+              "Telefone do técnico de plantão não foi informado!");
         }
       }else{
-        Message.showMessage("Telefone do técnico de plantão não foi informado!");
+        Message.showMessage("Fora do horário de Plantão.\nPor favor entre em contato com o nosso suporte.");
       }
     }
     });
@@ -806,16 +830,23 @@ class _MyHomePageState extends State<MyHomePage>{
                 textColor: Colors.white,
                 child: Text('OK'),
                 onPressed: () {
-                  ChangePassApi.sendMessageDiretor(widget.user["id"], valueText).then((resp){
-                    if(resp.ok){
-                      Message.showMessage("Mensagem enviada com sucesso!");
-                    }else{
-                      Message.showMessage("Problemas ao enviar mensagem!\nTente novamente em instantes.");
-                    }
-                  });
+                  if(_textFieldController.value.text!="") {
+                    ChangePassApi.sendMessageDiretor(
+                        widget.user["id"], valueText).then((resp) {
+                      if (resp.ok) {
+                        Message.showMessage("Mensagem enviada com sucesso!");
+                      } else {
+                        Message.showMessage(
+                            "Problemas ao enviar mensagem!\nTente novamente em instantes.");
+                      }
+                    });
+                  }else{
+                    Message.showMessage("Escreva a mensagem que deseja enviar ao Diretor.");
+                  }
                   setState(() {
                     codeDialog = valueText;
                     valueText="";
+                    _textFieldController.text = "";
                     Navigator.pop(context);
                   });
                 },

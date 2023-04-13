@@ -84,7 +84,7 @@ class LoginApi{
 
       if(response.statusCode == 200){
 
-        //mapResponse.forEach((k,v) => print("got key $k with $v"));
+        mapResponse.forEach((k,v) => print("got key $k with $v"));
 
         final usuario = Usuario.fromJson(mapResponse);
         if(usuario.id=="-1"){

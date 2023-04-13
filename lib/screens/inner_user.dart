@@ -7,10 +7,14 @@ import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'dart:async';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '../api/ChangPassApi.dart';
+import '../model/empresa.dart';
+import '../model/usuario.dart';
+import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../widgets/bottom_menu.dart';
@@ -21,11 +25,11 @@ import '../widgets/top_container.dart';
 import 'home_page.dart';
 
 
-void main() => runApp(new InnerPwd());
+void main() => runApp(new InnerUser());
 
-class InnerPwd extends StatelessWidget {
+class InnerUser extends StatelessWidget {
 
-  static const routeName = '/password';
+  static const routeName = '/user';
   SharedPref sharedPref = SharedPref();
 
   @override
@@ -40,7 +44,7 @@ class InnerPwd extends StatelessWidget {
             theme: new ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: new PwdPage(title: 'Mudar Senha', user: snapshot.data),
+            home: new UserPage(title: 'Seus Dados Pessoais', user: snapshot.data),
           ) : CircularProgressIndicator());
         },
       ),
@@ -48,18 +52,18 @@ class InnerPwd extends StatelessWidget {
   }
 }
 
-class PwdPage extends StatefulWidget {
-  PwdPage({Key key, this.title,this.user}) : super(key: key);
+class UserPage extends StatefulWidget {
+  UserPage({Key key, this.title,this.user}) : super(key: key);
 
   final String title;
   final Map<String, dynamic> user;
 
 
   @override
-  _PwdPageState createState() => new _PwdPageState();
+  _UserPageState createState() => new _UserPageState();
 }
 
-class _PwdPageState extends State<PwdPage> {
+class _UserPageState extends State<UserPage> {
 
   final double _initFabHeight = 90.0;
   double _fabHeight = 0;
@@ -73,9 +77,20 @@ class _PwdPageState extends State<PwdPage> {
   bool _validate = false;
   // Initially password is obscure
   bool _obscureText = true;
-  String senha, confsenha;
-
+  String nome;
+  String login;
+  String fone;
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  Usuario usr;
+
+  EmpresasSearch _empSearch = new EmpresasSearch();
+  Empresa empSel;
+
+  var maskFormatter = new MaskTextInputFormatter(
+      mask: '(##)#####-####',
+      filter: { "#": RegExp(r'[0-9]') },
+      type: MaskAutoCompletionType.lazy
+  );
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
@@ -93,7 +108,9 @@ class _PwdPageState extends State<PwdPage> {
     BackButtonInterceptor.add(myInterceptor);
     consultant = (widget.user["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
-
+    nome = widget.user["name"];
+    login = widget.user["login"];
+    fone = widget.user["phone"];
   }
 
   // Toggles the password show status
@@ -113,7 +130,16 @@ class _PwdPageState extends State<PwdPage> {
 
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
-    _fcmInit.configureMessage(context, "password");
+    _fcmInit.configureMessage(context, "usuario");
+
+    usr = Usuario.fromSharedPref(widget.user);
+    usr.empresas.add(_empSearch.defaultValue);
+    _empSearch.setOptions(usr.empresas);
+    empSel = _empSearch.defaultOpt;
+
+    if(_empSearch.lstOptions.length <3)
+      empSel = _empSearch.lstOptions.elementAt(0);
+
     return Scaffold(
         key: _scaffoldKey,
         //backgroundColor: HexColor(Constants.grey),
@@ -132,7 +158,7 @@ class _PwdPageState extends State<PwdPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('password',widget.user,textTheme),
+          child: SliderMenu('usuario',widget.user,textTheme),
         )
     );
   }
@@ -146,7 +172,7 @@ class _PwdPageState extends State<PwdPage> {
       padding: EdgeInsets.all(10.0),
       child: Row(children: [
         Icon(Icons.warning_amber_outlined,color:HexColor(Constants.red),size: 40.0),
-        Expanded(child: Text('Ao alterar sua senha você será desconectado e deverá efetuar login novamente.',
+        Expanded(child: Text('Ao alterar qualquer informação você será desconectado e deverá efetuar login novamente.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15.0,
@@ -186,34 +212,54 @@ class _PwdPageState extends State<PwdPage> {
     return new Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
-        new TextFormField(
+        Text('Nome'),
+        TextFormField(
+          style: TextStyle(color: HexColor(Constants.red)),
+          initialValue: nome,
           decoration: new InputDecoration(
-              hintText: 'Nova Senha',
-          contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-          maxLength: 12,
-          validator: _validarSenha,
-          onChanged: (String val){
-            senha = val;
-          },
-          onSaved: (String val) {
-            senha = val;
-          },
-          obscureText: _obscureText,
-        ),
-        new IconButton(
-          onPressed: _toggle,
-          icon: Icon(Icons.remove_red_eye_sharp),
-          color: HexColor(Constants.red),),
-        new TextFormField(
-          decoration: new InputDecoration(hintText: 'Confirme a senha',
             contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-          maxLength: 12,
-          validator: _validarConfSenha,
-          onSaved: (String val) {
-            confsenha = val;
+            onSaved: (String val) {
+              nome = val;
+            },
+          onChanged: (String val){
+            nome = val;
           },
-          obscureText: _obscureText,
+          validator: _validarNome,
         ),
+        Text('Login/E-mail'),
+        TextFormField(
+          style: TextStyle(color: HexColor(Constants.red)),
+          initialValue: login,
+          decoration: new InputDecoration(
+            contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
+            onSaved: (String val) {
+              login = val;
+            },
+            onChanged: (String val){
+              login = val;
+            },
+          validator: _validarLogin,
+        ),
+        Text('Celular/WhatsApp'),
+        TextFormField(
+          inputFormatters: [
+            maskFormatter
+          ],
+          style: TextStyle(color: HexColor(Constants.red)),
+          initialValue: fone,
+          decoration: new InputDecoration(
+            contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
+          onSaved: (String val) {
+            fone = val;
+          },
+          onChanged: (String val){
+            fone = val;
+          },
+          validator: _validarFone,
+        ),
+        (widget.user["tipo"]!="C"?empresasToShow()
+        :
+        SizedBox(height:0)),
         new SizedBox(height: 15.0),
         new RaisedButton(
           onPressed: _sendForm,
@@ -223,35 +269,73 @@ class _PwdPageState extends State<PwdPage> {
     );
   }
 
-  String _validarSenha(String value) {
+  String _validarLogin(String value) {
     RegExp regex =
-    RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{12,}$');
-    /** if (value.length == 0) {
-      return "Informe a senha";
-    } else if(value.length != 12){
-      return "A senha deve ter 12 caracteres";
-    }**/
+    RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
     if(!regex.hasMatch(value)){
-      return "A senha deve ter 12 caracteres incluindo pelo menos 1 letra maiúscula, número e caracter especial";
+      return "Informe um e-mail válido.";
     }
     return null;
   }
 
-  String _validarConfSenha(String value) {
-    if (value!=senha) {
-      return "A senha e a confirmação devem ser iguais";
+  String _validarNome(String value) {
+    if(value.length==0){
+      return "Esse campo não pode ficar em branco.";
     }
     return null;
+  }
+  String _validarFone(String value) {
+    if(value.length<14){
+      return "Informe um número de celular válido.";
+    }
+    return null;
+  }
+
+
+  Widget empresasToShow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        DropdownButton<Empresa>(
+          icon: const Icon(Icons.arrow_downward),
+          iconSize: 24,
+          elevation: 16,
+          style: TextStyle(color: HexColor(Constants.red)),
+          underline: Container(
+            height: 2,
+            color: HexColor(Constants.blue),
+          ),
+          onChanged: (Empresa newValue) {
+            setState(() {
+              empSel = newValue;
+              _empSearch.setDefaultOpt(newValue);
+            });
+          },
+          items: _empSearch.lstOptions.map((Empresa bean) {
+            return  DropdownMenuItem<Empresa>(
+                value: bean,
+                child: SizedBox(width: 310.0,child: Text(bean.name,overflow: TextOverflow.ellipsis,)));}
+          ).toList(),
+          value: empSel,
+        ),
+      ],
+    );
   }
 
   _sendForm() {
+    int changes=0;
+    print(usr.name+"|"+usr.login+"|"+usr.phone);
     if (_key.currentState.validate()) {
-      // Sem erros na validação
       _key.currentState.save();
-      print("Senha $senha");
-      print("Confsenha $confsenha");
-      changePass(widget.user['id'].toString(), senha);
+      if(usr.name!=nome)changes++;
+      if(usr.login!=login)changes++;
+      if(usr.phone!=fone)changes++;
+      if(changes>0)
+        changeUser();
+      else
+        Message.showMessage("Você não modificou nenhum atributo...");
     } else {
+      changes=0;
       print("Diz q. não está correto...");
       // erro de validação
       setState(() {
@@ -260,15 +344,15 @@ class _PwdPageState extends State<PwdPage> {
     }
   }
 
-  Future<String> changePass(String iduser,String newpass) {
-    return ChangePassApi.changePass(widget.user["login"],widget.user["password"],iduser, newpass,consultant).then((resp) {
+  Future<String> changeUser() {
+    return ChangePassApi.changeUser(usr,nome,login,fone).then((resp) {
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Message.showMessage("Não foi possível alterar sua senha!");
         return 'user not exists';
       }else {
 
-        Message.showMessage("Senha Alterada com sucesso!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
+        Message.showMessage("Seus dados foram alterados!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
 
         MyHomePage.state.logoff();
 
@@ -301,7 +385,7 @@ class _PwdPageState extends State<PwdPage> {
                     },
                   ),
                   Expanded(child: Text(
-                    'Preferências do Usuário',
+                    'Dados Cadastrais',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 18.0,

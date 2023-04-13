@@ -1,3 +1,4 @@
+import 'package:app_maxprotection/screens/inner_openbytext.dart';
 import 'package:app_maxprotection/screens/inner_openticket.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,6 +20,7 @@ class BottomMenu extends StatelessWidget{
   late double width;
   late Map<String, dynamic> usr;
   bool isConsultor=false;
+  bool isTecnico = false;
 
   BottomMenu(BuildContext context, ScrollController _sc, double _width, Map<String, dynamic> user){
     this.ctx = context;
@@ -27,6 +29,8 @@ class BottomMenu extends StatelessWidget{
     usr = user;
     if(usr["tipo"]=="C")
       isConsultor=true;
+    if(usr["tipo"]=="T")
+      isTecnico = true;
   }
 
 
@@ -132,6 +136,7 @@ class BottomMenu extends StatelessWidget{
                             ),
                             Row(
                               children: <Widget>[
+                                (isTecnico?
                                 ActiveProjectsCard(
                                   r:false,
                                   ctx:context,
@@ -141,7 +146,21 @@ class BottomMenu extends StatelessWidget{
                                   icon: Icon(Icons.mic,
                                       color: HexColor(Constants.red), size: 20.0),
                                   title: 'Abrir Chamado por Voz',
-                                ),
+                                ):SizedBox(height: 0,)),
+                              ],
+                            ),
+                            Row(
+                              children: <Widget>[
+                                (isTecnico?
+                                ActiveProjectsCard(
+                                  r:false,
+                                  ctx:context,
+                                  action: InnerOpenTicketbytext(),
+                                  cardColor: Colors.white,
+                                  icon: Icon(Icons.menu_book,
+                                      color: HexColor(Constants.red), size: 20.0),
+                                  title: 'Abrir Chamado por Texto',
+                                ):SizedBox(height: 0,)),
                               ],
                             )
                           ]))]),

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:url_launcher/url_launcher.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api/api_login.dart';
@@ -157,7 +157,21 @@ class LoginScreenState extends State<LoginScreen> {
                     ),
                     SizedBox(height: 30,),
                     _formUI(),
-                    SizedBox(height: 70,),
+                    SizedBox(height: 5,),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      child: new InkWell(
+                          child: new Text('Esqueceu a senha?',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              )),
+                          onTap: () => _launchURL('https://app.maxprotection.com.br')
+                      ),
+                    ),
+                    SizedBox(height: 60,),
                     ElevatedButton(
                         child: Text(
                             "Entrar",
@@ -341,5 +355,7 @@ class LoginScreenState extends State<LoginScreen> {
     // TODO: implement createState
     throw UnimplementedError();
   }
+  void _launchURL(_url) async =>
+      await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
 }
 

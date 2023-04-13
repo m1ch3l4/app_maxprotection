@@ -208,6 +208,8 @@ class _MessagesPageState extends State<MessagesPage> {
     }
     if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
+      print("source...");
+      print(source);
       final data = jsonDecode(source);
       setState(() {
         for(Map i in data){
@@ -279,7 +281,7 @@ class _MessagesPageState extends State<MessagesPage> {
     return ListView(
       children: <Widget>[
       for (int i = 0; i < listModel.length; i++)
-        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo:""), listModel[i].data, listModel[i].texto, listModel[i].tipo, listModel[i].sender.name)
+        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo:""), listModel[i].data, listModel[i].texto, listModel[i].tipo, (listModel[i].sender!=null?listModel[i].sender.name:"-"))
       ],
     );
   }

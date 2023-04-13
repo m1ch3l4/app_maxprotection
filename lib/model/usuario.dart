@@ -25,7 +25,7 @@ class Usuario extends ChangeNotifier{
   Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T",this.interno=false});
 
   Usuario.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    id = (json['id']!=null?json["id"]:0);
     name = json['name'];
     login = json['login'];
     senha = json['password'];
@@ -87,6 +87,7 @@ class Usuario extends ChangeNotifier{
     pmElastic = json['pmElastic'];
     pmZabbix = json['pmZabbix'];
     pmTickets = json['pmMoviedesk'];
+    phone = json['phone'];
     tipo = json["tipo"];
     var j = json["role"];
     role = Role.fromJson(j);
@@ -119,6 +120,7 @@ class Usuario extends ChangeNotifier{
     data['pm_elastic'] = this.pmElastic;
     data['pm_zabbix'] = this.pmZabbix;
     data['pm_tickets'] = this.pmTickets;
+    data['phone'] = this.phone;
     data["tipo"] = this.tipo;
     data["role"] = this.role.toJson();
     data['empresas'] =  this.empresas != null ? this.empresas.map((i) => i.toJson()).toList() : null;

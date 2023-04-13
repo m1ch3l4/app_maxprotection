@@ -30,6 +30,8 @@ class DashboardData{
     close = json['close'];
     waiting = json['waiting'];
     novo = (json['novo']!=null?json['novo']:0);
+    novo += waiting;
+    novo += open;
     msgLead = (json['msgLead']!=null?json['msgLead']:0);
     msgSiem = (json['msgSiem']!=null?json['msgSiem']:0);
     msgZabbix = (json['msgZabbix']!=null?json['msgZabbix']:0);

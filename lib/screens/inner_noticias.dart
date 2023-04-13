@@ -98,6 +98,9 @@ class _NoticiasPageState extends State<NoticiasPage> {
     String p = widget.user["password"];
     String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
 
+    print("...u.:"+u);
+    print("...p.:"+p);
+
     Map<String, String> h = {
       "Authorization": basicAuth,
     };

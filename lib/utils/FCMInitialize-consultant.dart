@@ -271,7 +271,7 @@ class FCMInitConsultor{
             topics.add('techsupport' + emp.id);
           }
         });
-        if(user["tipo"]=="T") {
+        if(user["tipo"]=="T" && user["interno"]) {
           _firebaseMessaging.subscribeToTopic("plantao" + user["id"]);
           topics.add('plantao'+user['id']);
         }
@@ -345,7 +345,7 @@ class FCMInitConsultor{
     if(message.title!="titulo") {
       showDialog(
           context: ctx,
-          builder: (BuildContext context) {
+          builder: (BuildContext bdctx) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(32.0))),
@@ -365,8 +365,9 @@ class FCMInitConsultor{
                   onPressed: () {
                     removeMessageRead(message.id);
                     PushApi.changePass(user["id"], message.id).then((value){
-                      Navigator.of(context).pop();
-                      goto(message,context);
+                      //Navigator.of(bdctx).pop();
+                      Navigator.of(ctx).pop();
+                      goto(message,bdctx);
                     } );
                   },
                 ),
