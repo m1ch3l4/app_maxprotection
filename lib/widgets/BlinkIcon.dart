@@ -13,7 +13,7 @@ class _BlinkIconState extends State<BlinkIcon> with SingleTickerProviderStateMix
   @override
   void initState() {
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
-    _colorAnimation = ColorTween(begin: Colors.white, end: HexColor(Constants.red))
+    _colorAnimation = ColorTween(begin: Colors.white, end: HexColor(Constants.grey))
         .animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -31,7 +31,8 @@ class _BlinkIconState extends State<BlinkIcon> with SingleTickerProviderStateMix
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return Icon(Icons.email_outlined, size: 20, color: _colorAnimation.value,);
+        return Icon(Icons.people_outline,color: _colorAnimation.value);
+        //return Icon(Icons.email_outlined, size: 20, color: _colorAnimation.value,);
       },
     );
   }

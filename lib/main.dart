@@ -6,12 +6,19 @@ import 'package:app_maxprotection/transition_route_observer.dart';
 import 'package:app_maxprotection/utils/HexColor.dart';
 import 'package:app_maxprotection/widgets/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:device_preview/device_preview.dart';
 import 'utils/SharedPref.dart';
+
+Future<void> _messageHandler(RemoteMessage message) async {
+  print('APP_MAX...background message ${message.notification.body}');
+}
 
 var usr = null;
 void main() {
@@ -20,25 +27,32 @@ void main() {
 
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.white, // navigation bar color
-    statusBarColor: HexColor(Constants.red), // status bar color
+    statusBarColor: Colors.transparent, // status bar color
   ));
 
   WidgetsFlutterBinding.ensureInitialized();
-  //initializeFirebase().then(_)=> runApp(MyApp()));
-  //return runApp(MyApp());
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   SharedPreferences.getInstance().then((instance) => runMyApp(instance));
-
-
 }
 
 Future runMyApp(SharedPreferences inst) async{
   usr = inst.get("usuario");
-  //print("usuario..."+usr.toString());
-  initializeFirebase().then((_) => runApp(MyApp()));
-}
-
-Future initializeFirebase() async {
+  print("usuario..."+usr.toString());
   await Firebase.initializeApp();
+  runApp(MyApp());
+  /**runApp(
+    DevicePreview(
+      enabled: true,
+      tools: [
+        ...DevicePreview.defaultTools,
+      ],
+      builder: (context) => MyApp(),
+    ),
+  );**/
 }
 
 class MyApp extends StatelessWidget {
@@ -103,6 +117,7 @@ class MyApp extends StatelessWidget {
       title: 'Security App',
       theme: ThemeData(
         // brightness: Brightness.dark,
+        unselectedWidgetColor: Colors.white,
         primarySwatch: bgColor,
         accentColor: accentColor,
         textSelectionTheme: TextSelectionThemeData(cursorColor: greyColor),
@@ -111,37 +126,36 @@ class MyApp extends StatelessWidget {
         // fontFamily: 'SourceSansPro',
         textTheme: TextTheme(
           headline1: TextStyle(
-            fontFamily: 'OpenSans',
+            fontFamily: 'Metropolis',
             fontSize: 14.0,
             // fontWeight: FontWeight.w400,
             color: Colors.white,
           ),
           headline3: TextStyle(
-            fontFamily: 'OpenSans',
+            fontFamily: 'Metropolis',
             fontSize: 10.0,
             // fontWeight: FontWeight.w400,
             color: Colors.white,
           ),
           button: TextStyle(
             // OpenSans is similar to NotoSans but the uppercases look a bit better IMO
-            fontFamily: 'OpenSans',
+            fontFamily: 'Metropolis',
           ),
           caption: TextStyle(
-            fontFamily: 'NotoSans',
+            fontFamily: 'Metropolis',
             fontSize: 12.0,
             fontWeight: FontWeight.normal,
             color: accentColor,
           ),
-          headline2: TextStyle(fontFamily: 'Quicksand',fontSize: 14.0),
-          headline4: TextStyle(fontFamily: 'Quicksand'),
-          headline5: TextStyle(fontFamily: 'NotoSans'),
-          headline6: TextStyle(fontFamily: 'NotoSans'),
-          subtitle1: TextStyle(fontFamily: 'NotoSans', fontSize: 14.0,color:accentColor),
-          bodyText1: TextStyle(fontFamily: 'NotoSans'),
-          bodyText2: TextStyle(fontFamily: 'NotoSans'),
-          subtitle2: TextStyle(fontFamily: 'NotoSans'),
-          overline: TextStyle(fontFamily: 'NotoSans',color:accentColor),
-
+          headline2: TextStyle(fontFamily: 'Metropolis',fontSize: 14.0),
+          headline4: TextStyle(fontFamily: 'Metropolis'),
+          headline5: TextStyle(fontFamily: 'Metropolis'),
+          headline6: TextStyle(fontFamily: 'Metropolis'),
+          subtitle1: TextStyle(fontFamily: 'Metropolis', fontSize: 14.0,color:Colors.white),
+          bodyText1: TextStyle(fontFamily: 'Metropolis'),
+          bodyText2: TextStyle(fontFamily: 'Metropolis'),
+          subtitle2: TextStyle(fontFamily: 'Metropolis'),
+          overline: TextStyle(fontFamily: 'Metropolis'),
         ),
       ),
       //home: InnerTickets(),

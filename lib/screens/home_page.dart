@@ -6,17 +6,20 @@ import 'dart:io';
 import 'package:app_maxprotection/api/CallTecnicoApi.dart';
 import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/RoleModel.dart';
-import 'package:app_maxprotection/screens/inner_user.dart';
+import 'package:app_maxprotection/utils/HomeSearchDelegate.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
+import 'package:app_maxprotection/utils/Logoff.dart';
+import 'package:app_maxprotection/widgets/BlockButtonWidget.dart';
+import 'package:app_maxprotection/widgets/HexColor.dart';
+import 'package:app_maxprotection/widgets/TopHomeWidget.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:collection/collection.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
-import 'package:app_maxprotection/screens/inner_servicos.dart';
-import 'package:app_maxprotection/screens/inner_tecnicos.dart';
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
 import 'package:app_maxprotection/screens/ticketsview-consultor.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:app_maxprotection/widgets/BlinkIcon.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
@@ -30,13 +33,10 @@ import '../model/empresa.dart';
 import '../model/usuario.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
-import '../utils/HexColor.dart';
 import '../utils/Message.dart';
-import '../widgets/active_project_card.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
-import '../widgets/row_card.dart';
 import '../widgets/search_box.dart';
 import '../widgets/slider_menu.dart';
 
@@ -45,6 +45,7 @@ import 'package:http/http.dart' as http;
 import '../widgets/top_container.dart';
 import 'inner_elastic.dart';
 import 'inner_noticias.dart';
+import 'inner_user.dart';
 import 'inner_zabbix.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -64,9 +65,6 @@ class HomePage extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
             home: new MyHomePage(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data),
           ) : CircularProgressIndicator());
         },
@@ -104,6 +102,7 @@ class _MyHomePageState extends State<MyHomePage>{
   bool isConsultor = false;
   String perfil = "Analista";
   Timer alarm;
+  double tam = 0.0;
 
   DashboardData get dashboardDados=>dashboard;
 
@@ -122,13 +121,26 @@ class _MyHomePageState extends State<MyHomePage>{
     });
   }
 
+  List<String> searchTerms = ["zabbix","siem","tickets","senha","dados","abrir","falar","fale","leads","noticias","servuços"];
+
+  void searchExecute(String query){
+    print("queryTerm..."+query);
+    List<String> matchQuery = [];
+    for (var fruit in searchTerms) {
+      if (fruit.toLowerCase().contains(query.toLowerCase())) {
+        matchQuery.add(fruit);
+      }
+    }
+    print(">>>>"+matchQuery.toString());
+  }
+
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
     return true;
   }
 
 
-  void initFCM(){
+  Future<void> initFCM() async {
     EmpresasSearch _empSearch = new EmpresasSearch();
     List<Empresa> lstEmpresas = [];
     var a = widget.user;
@@ -144,6 +156,7 @@ class _MyHomePageState extends State<MyHomePage>{
     FCMInitConsultor _fcmInit = new FCMInitConsultor();
     _fcmInit.setConsultant(a);
   }
+
 
   Future<Null> getDashboardData() async{
     var ssl = false;
@@ -225,13 +238,13 @@ class _MyHomePageState extends State<MyHomePage>{
       }else{
         loading = false;
         Message.showMessage("A sua credencial não é mais válida!");
-        logoff();
+        Logoff.logoff();
       }
     }else{
       if(responseData!=null && responseData.statusCode==401){
         Message.showMessage("As suas credenciais não são mais válidas!");
         sleep(Duration(seconds:8));
-        logoff();
+        Logoff.logoff();
       }
       loading = false;
       dashboard = new DashboardData.data(0,0,0,0,0,0);
@@ -294,12 +307,13 @@ class _MyHomePageState extends State<MyHomePage>{
 
         if (!refresh.hasAccess && refresh.tipo == "T") {
           Message.showMessage("A sua credencial não é mais válida!");
-          logoff();
+          Logoff.logoff();
         }
 
+        double width = MediaQuery.of(context).size.width;
         if (rAtual.nome != rNova.nome) {
           setState(() {
-            mnu = SliderMenu('index', refresh.toJson(), textTheme);
+            mnu = SliderMenu('index', refresh.toJson(), textTheme,(width*0.5));
             prefs.setString('usuario', json.encode(refresh));
           });
         }
@@ -326,7 +340,7 @@ class _MyHomePageState extends State<MyHomePage>{
         }
       } else {
         Message.showMessage("A sua credencial não é mais válida!");
-        logoff();
+        Logoff.logoff();
       }
     }
     }catch(error, exception){
@@ -365,21 +379,10 @@ class _MyHomePageState extends State<MyHomePage>{
   double _fabHeight = 0;
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
-
+  //double width = 150.0;
   TextEditingController _textFieldController = TextEditingController();
   String valueText="";
   String codeDialog="";
-
-  Text subheading(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-          color: Colors.blue,
-          fontSize: 20.0,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2),
-    );
-  }
 
   void updateState(double pos){
     _fabHeight = pos * (_panelHeightOpen - _panelHeightClosed) + _initFabHeight;
@@ -392,23 +395,31 @@ class _MyHomePageState extends State<MyHomePage>{
     _fcmInit.configureMessage(context, "elastic");
 
     double width = MediaQuery.of(context).size.width;
+
+    tam = MediaQuery.of(context).size.height;
+
+    print("tamanho da tela: "+tam.toString());
+
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
-    mnu = SliderMenu('home',widget.user,textTheme);
+    mnu = SliderMenu('home',widget.user,textTheme,width);
     return Scaffold(
+      appBar: AppBar(backgroundColor: HexColor(Constants.blue), toolbarHeight: 0,),
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
         body:
         SlidingUpPanel(
+          color: HexColor(Constants.grey),
           maxHeight: _panelHeightOpen,
           minHeight: _panelHeightClosed,
           borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
+              topLeft: Radius.circular(20.0),
+              topRight: Radius.circular(20.0)),
           onPanelSlide: (double pos) => updateState(pos),
           panelBuilder: (sc) => _panel(sc,width,context),
           body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         ),
         drawer:  Drawer(
+          width: width*0.6,
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
@@ -420,10 +431,31 @@ class _MyHomePageState extends State<MyHomePage>{
   Widget getMain(double width){
     return SafeArea(
       child: Column(
-        children: <Widget>[
-          _header(width),
-          _body(width),
-        ],
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+              Stack(
+                children: [
+                  _header(width),
+                  Positioned(child: SearchBox(
+                      cardColor: Colors.white,
+                      title: "Pesquisar",
+                      usr: widget.user,
+                    width: width*0.9,
+                    f:searchExecute,
+                    searchDelegate: HomeSearchDelegate(isConsultor),
+                  ),
+                    top:188,
+                    left: width*0.05,
+                  ),
+                  Container(
+                    height:tam,
+                    padding:  EdgeInsets.only(top: 220),
+                    child: _body(width),
+                  )
+                ],
+              )
+              ]
       ),
     );
   }
@@ -444,29 +476,34 @@ class _MyHomePageState extends State<MyHomePage>{
     return TopContainer(
       height: 208,
       width: width,
+      color: HexColor(Constants.blue),
       child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Row(
-              //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [SizedBox(height: 10,)],),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 IconButton(
-                  icon: const Icon(Icons.menu, color:Colors.white,size: 30.0),
+                  icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
                     _scaffoldKey.currentState.openDrawer();
                   },
                 ),
-                SizedBox(width:5),
-                Text(
-                  'Max Protection | '+perfil,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 22.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
+                Spacer(),
+                Image.asset("images/lg.png",width: 150,height: 69,),
+                Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.notifications_none, color:Colors.white,size: 20.0),
+                  tooltip: 'Abrir Menu',
+                  onPressed: () {
+                    _scaffoldKey.currentState.openDrawer();
+                  },
+                ),
               ],
             ),
             Row(
@@ -482,21 +519,20 @@ class _MyHomePageState extends State<MyHomePage>{
                     //Message.showMessage("Em construção");
                   },
                 ),
-                Text(
-                  'Olá, '+widget.user['name'].toString(),
-                  textAlign: TextAlign.start,
+               Expanded(child: Text(
+                  'Olá, '+widget.user['name'].toString()+" | "+perfil,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18.0,
+                    fontSize: 14.0,
                     color: Colors.white,
                     fontWeight: FontWeight.w400,
                   ),
-                ),
+                )),
                 IconButton(
                   icon: const Icon(Icons.exit_to_app_outlined, color:Colors.white,size: 20.0),
                   tooltip: 'Sair',
                   onPressed: () {
-                    confirmarLogoff(context);
-                    //exit(0);
+                    Logoff.confirmarLogoff(context);
                   },
                 )
               ],
@@ -509,14 +545,16 @@ class _MyHomePageState extends State<MyHomePage>{
               color: Colors.white,
             ),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Column(
                   children: [
                     Text(
-                      'Seus tickets abertos',
+                      ' Seus tickets abertos',
                       textAlign: TextAlign.start,
                       style: TextStyle(
-                        fontSize: 16.0,
+                        fontSize: 14.0,
                         color: Colors.white,
                         fontWeight: FontWeight.w400,
                       ),
@@ -526,7 +564,7 @@ class _MyHomePageState extends State<MyHomePage>{
                         dashboard.novo.toString(),
                         textAlign: TextAlign.start,
                         style: TextStyle(
-                          fontSize: 24.0,
+                          fontSize: 18.0,
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
@@ -546,7 +584,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     'Ver todos',
                     textAlign: TextAlign.start,
                     style: TextStyle(
-                      fontSize: 16.0,
+                      fontSize: 14.0,
                       color: Colors.white,
                       fontWeight: FontWeight.w400,
                     ),
@@ -562,54 +600,9 @@ class _MyHomePageState extends State<MyHomePage>{
                   },
                 )
               ],
-            ),
-            //Spacer(flex:2),
-            SearchBox(
-                cardColor: Colors.white,
-                title: "Fale Conosco",
-                iconsufix: Icon(Icons.send_outlined, color: Colors.white, size: 18.0),
-              usr: widget.user
-            ),
+            )
           ]),
     );
-  }
-
-  confirmarLogoff(BuildContext context) {  // se
-    AlertDialog alert;
-    Widget cancelButton = FlatButton(
-      child: Text("Cancelar"),
-      onPressed:  () {
-        Navigator.of(context, rootNavigator: true).pop('dialog');
-      },
-    );
-    Widget launchButton = FlatButton(
-      child: Text("Quero sair!"),
-      onPressed:  () {
-        logoff();
-      },
-    );  // set up the AlertDialog
-    alert = AlertDialog(
-      title: Text("ATENÇÃO"),
-      content: Text("Ao Sair você fará logoff no App e precisará fazer login novamente. Tem certeza que deseja sair?"),
-      actions: [
-        cancelButton,
-        launchButton,
-      ],
-    );  // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
-  }
-
-  logoff() async {
-      SharedPreferences preferences = await SharedPreferences.getInstance();
-      await preferences.clear();
-      await FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
-      await FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
-      exit(0);
   }
 
   callTecnico() async{
@@ -645,18 +638,68 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   Widget _body(double width){
-    return Expanded(
-      child: SingleChildScrollView(
+    return //Expanded(
+      SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Container(
+              width: width,
               color: Colors.transparent,
-              padding: EdgeInsets.symmetric(
-                  horizontal: 20.0, vertical: 10.0),
+              /**padding: EdgeInsets.only(
+                  left:width*0.1,right:width*0.1),**/
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  SizedBox(height: 25,),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Spacer(),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,icon:Icon(Icons.phone_forwarded,color: Colors.white),title: "Fale com o Diretor",ctx: context,r:true,
+                        onclickF: ()=>faleComDiretor(context),),
+                      Spacer(),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,title: "Leads",ctx: context,r:true,
+                        onclickF: ()=>InnerMessages(4),
+                          icon: (dashboard.msgLead>0?BlinkIcon():Icon(Icons.people_outline,color: Colors.white)),
+                          disableBlink: (){this.diableBlink();},
+                      ),
+                      Spacer()
+                    ],
+                  ),
+                  SizedBox(height: 20,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS\nABERTOS",ctx: context,image: "images/tkaberto.png",action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),r:false),
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS EM\nATENDIMENTO",ctx: context,image: "images/tkatendimento.png", action:(isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),r:false),
+                      Spacer()
+                    ],
+                  ),
+                  SizedBox(height:10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "SIEM",ctx: context,image: "images/siem.png",action: InnerElastic(null,null),r:false),
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "ZABBIX",ctx: context,image: "images/zabbix.png", action: InnerZabbix(null,null),r:false),
+                      Spacer()
+                    ],
+                  ),
+                  SizedBox(height:10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nTICKETS",ctx: context,image: "images/message.png",action:InnerMessages(2),r:false),
+                      Spacer(),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nSIEM",ctx: context,image: "images/message.png",action:InnerMessages(1),r:false),
+                      Spacer()
+                    ],
+                  )
+                  /** Row(
                     children: <Widget>[
                       ActiveProjectsCard(
                         ctx:context,
@@ -788,18 +831,18 @@ class _MyHomePageState extends State<MyHomePage>{
                         r:true,
                         onclickF: ()=>faleComDiretor(context),
                         cardColor: Colors.white,
-                        icon: Icon(Icons.call_outlined, color: HexColor(Constants.red),size:20.0),
+                        icon: Icon(Icons.message, color: HexColor(Constants.red),size:20.0),
                         title: 'Fale com o Diretor',
                       ),
                     ],
                   )),
-                  buildTileNoticia(width),
+                  ,buildTileNoticia(width),**/
                 ],
               ),
             ),
           ],
         ),
-      ),
+      //),
     );
   }
 
@@ -811,47 +854,81 @@ class _MyHomePageState extends State<MyHomePage>{
           return AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(32.0))),
-            title: Text('Fale com o Diretor'),
-            content: TextField(
-              maxLines: 5,
-              onChanged: (value) {
-                setState(() {
-                  valueText = value;
-                });
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children:[Text('Fale com o Diretor', style: TextStyle(color: HexColor(Constants.blueTxt))),
+            GestureDetector(
+              onTap: (){
+                Navigator.of(context).pop();
               },
-              controller: _textFieldController,
-              decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16.0),borderSide: BorderSide(width: 1, color: HexColor(Constants.red)))
-                  ,hintText: "Mensagem"),
+              child: Align(
+                alignment: Alignment.topRight,
+                child:
+                CircleAvatar(
+                    radius: 16,
+                    backgroundColor: HexColor(Constants.grey),
+                  child:CircleAvatar(
+                  radius: 14.0,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.close, color: Colors.red),
+                )),
+              ),
             ),
+            ]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("A sua mensagem será enviada para o e-mail do Diretor",style: TextStyle(color:HexColor(Constants.red),fontSize: 16.0, fontWeight: FontWeight.bold),textAlign: TextAlign.start),
+                SizedBox(height: 10.0,),
+                TextField(
+                  maxLines: 5,
+                  onChanged: (value) {
+                    setState(() {
+                      valueText = value;
+                    });
+                  },
+                  controller: _textFieldController,
+                  decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16.0),borderSide: BorderSide(width: 2, color: HexColor(Constants.blueTxt)))
+                      ,hintText: ""),
+                ),
+              ],
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actionsPadding: EdgeInsets.only(left:13, right:13),
             actions: <Widget>[
-              FlatButton(
-                color: HexColor(Constants.red),
-                textColor: Colors.white,
-                child: Text('OK'),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: HexColor(Constants.red),
+                  minimumSize: Size.fromHeight(40), // NEW
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.0)
+                  ),
+                ),
+                child: Text("ENVIAR", style:TextStyle(color:Colors.white)),
                 onPressed: () {
                   if(_textFieldController.value.text!="") {
-                    ChangePassApi.sendMessageDiretor(
-                        widget.user["id"], valueText).then((resp) {
-                      if (resp.ok) {
-                        Message.showMessage("Mensagem enviada com sucesso!");
-                      } else {
-                        Message.showMessage(
-                            "Problemas ao enviar mensagem!\nTente novamente em instantes.");
-                      }
-                    });
+                  ChangePassApi.sendMessageDiretor(
+                  widget.user["id"], valueText).then((resp) {
+                  if (resp.ok) {
+                  Message.showMessage("Mensagem enviada com sucesso!");
+                  } else {
+                  Message.showMessage(
+                  "Problemas ao enviar mensagem!\nTente novamente em instantes.");
+                  }
+                  });
                   }else{
-                    Message.showMessage("Escreva a mensagem que deseja enviar ao Diretor.");
+                  Message.showMessage("Escreva a mensagem que deseja enviar ao Diretor.");
                   }
                   setState(() {
-                    codeDialog = valueText;
-                    valueText="";
-                    _textFieldController.text = "";
-                    Navigator.pop(context);
+                  codeDialog = valueText;
+                  valueText="";
+                  _textFieldController.text = "";
+                  Navigator.pop(context);
                   });
-                },
+          },
               ),
-
+              SizedBox(height: 20,)
             ],
           );
         });

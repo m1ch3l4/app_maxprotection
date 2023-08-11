@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:app_maxprotection/utils/EmpresasSearch.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:app_maxprotection/widgets/closePopup.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -23,12 +24,13 @@ import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
+import '../widgets/searchempresa_wdt.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
 
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 
 class InnerElastic extends StatelessWidget {
@@ -50,9 +52,7 @@ class InnerElastic extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
+
             home: new ElasticPage(title: 'Alertas SIEM', user: snapshot.data, eid:eid, aid: aid),
           ) : CircularProgressIndicator());
         },
@@ -105,13 +105,18 @@ class _ElasticPageState extends State<ElasticPage> {
 
   Empresa empSel;
 
-  static List<DropdownMenuItem<Empresa>> _data = [];
+  searchEmpresa widgetSearchEmpresa;
 
   List<_ChartData> data = [];
   TooltipBehavior _tooltip;
   HashMap<String,int> dados;
 
   bool firstLoad = true;
+
+  Color clLOW = HexColor(Constants.blue);
+  Color clMEDIUM = HexColor(Constants.darkGrey);
+  Color clHIGH = HexColor(Constants.red);
+  Color clWarning = Colors.yellow;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
@@ -225,7 +230,7 @@ class _ElasticPageState extends State<ElasticPage> {
   Future<Null> getData() async{
     setState(() {
       firstLoad = false;
-      loading = true;
+      //loading = true;
     });
     String urlApi = "";
 
@@ -234,6 +239,8 @@ class _ElasticPageState extends State<ElasticPage> {
 
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
+
+    empSel = widgetSearchEmpresa.state.empSel;
 
     //TODO: aqui fazer a condicão se é consultour ou cliente
     if(widget.user["tipo"]=="C")
@@ -296,7 +303,17 @@ class _ElasticPageState extends State<ElasticPage> {
 
         loading = false;
       });
-      dados.forEach((k,v) => data.add(_ChartData(k, v)));
+      //dados.forEach((k,v) => data.add(_ChartData(k, v)));
+      dados.forEach((k,v){
+        if(k=="WARNING")
+          data.add(_ChartData(k, v, clWarning));
+        if(k=="LOW")
+          data.add(_ChartData(k, v, clLOW));
+        if(k=="AVERAGE")
+          data.add(_ChartData(k, v, clMEDIUM));
+        if(k=="HIGH")
+          data.add(_ChartData(k, v, clHIGH));
+      });
     }else{
       loading = false;
     }
@@ -346,76 +363,9 @@ class _ElasticPageState extends State<ElasticPage> {
     return gd;
   }
 
-  void loadData() {
-    if(mounted) {
-      setState(() {
-        loading = true;
-      });
-      _data = [];
-      for (Empresa bean in _empSearch.lstOptions) {
-        _data.add(
-            new DropdownMenuItem(
-                value: bean,
-                child: Text(bean.name, overflow: TextOverflow.fade,)));
-      }
-      loading = false;
-    }
-  }
-
-
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
     return true;
-  }
-
-  Widget empresasToShow() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Column(
-          children: [Text('  Empresas Monitoradas:',
-            textAlign: TextAlign.start,
-            style: TextStyle(
-              fontSize: 14.0,
-              color: HexColor(Constants.red),
-              fontWeight: FontWeight.w600,
-            ),
-          )],
-        ),
-        Column(
-          children: [SizedBox(width: 10,)],
-        ),
-        Flexible(
-          fit: FlexFit.loose,
-          child: Column(
-            children: [
-              DropdownButton<Empresa>(
-                  value: empSel,
-                  isExpanded: true,
-                  icon: const Icon(Icons.arrow_downward),
-                  iconSize: 24,
-                  elevation: 16,
-                  style: TextStyle(color: HexColor(Constants.red)),
-                  underline: Container(
-                    height: 2,
-                    color: HexColor(Constants.blue),
-                  ),
-                  onChanged: (Empresa newValue) {
-                    setState(() {
-                      empSel = newValue;
-                      _empSearch.setDefaultOpt(newValue);
-                      listModel = [];
-                      getData();
-                    });
-                  },
-                  items: _data
-              )],
-          ),
-        )
-
-      ],
-    );
   }
 
   void initState() {
@@ -430,7 +380,8 @@ class _ElasticPageState extends State<ElasticPage> {
 
     if(widget.user["tipo"]=="C") {
       isConsultor = true;
-      loadData();
+      widgetSearchEmpresa =
+          searchEmpresa(onchangeF: () => getData(), context: context);
       initialEnterpriseData();
     }else {
       getData();
@@ -457,7 +408,7 @@ class _ElasticPageState extends State<ElasticPage> {
     _fcmInit.configureMessage(context, "elastic");
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
+        backgroundColor: HexColor(Constants.grey),
         body:
         SlidingUpPanel(
           maxHeight: _panelHeightOpen,
@@ -470,7 +421,7 @@ class _ElasticPageState extends State<ElasticPage> {
           body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         ),
         drawer:  Drawer(
-          child: SliderMenu('elastic',widget.user,textTheme),
+          child: SliderMenu('elastic',widget.user,textTheme,(width*0.5)),
         )
     );
   }
@@ -498,22 +449,24 @@ class _ElasticPageState extends State<ElasticPage> {
   Widget getMain(double width){
     return SafeArea(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          _header(width),
-          rangeDate(),
-          (isConsultor?empresasToShow():SizedBox(height: 1,)),
-          Divider(
-            height: 5,
-            thickness: 1,
-            indent: 5,
-            endIndent: 5,
-            color: HexColor(Constants.grey),
-          ),
-          graph(context),
-          ((isConsultor && firstLoad)?_initialBody():_body())
-          //_body(),
-        ],
-      ),
+        Stack(
+        children: [
+        headerAlertas(_scaffoldKey, widget.user, context, width, 200, "Alertas Siem"),
+    Container(
+      alignment: Alignment.center,
+    padding: EdgeInsets.only(top:170),
+    child: (isConsultor?widgetSearchEmpresa:SizedBox(height: 1,)),
+    )
+    ],
+    ),
+    rangeDate(),
+    graph(context),
+    _body()
+    ],
+    )
     );
   }
 
@@ -528,188 +481,153 @@ class _ElasticPageState extends State<ElasticPage> {
     ));
   }
 
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Text(
-                    widget.title,
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  SizedBox(width: 80,)
-                ],
-              ),
-            ),
-
-          ]),
-    );
-  }
 
   Widget rangeDate(){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        SizedBox(width: 12,),
-        Text(
-          'Período:',
-          textAlign: TextAlign.start,
-          style: TextStyle(
-            fontSize: 14.0,
-            color: HexColor(Constants.red),
-            fontWeight: FontWeight.w600,
+    return Container(
+        height: 59,
+        margin: EdgeInsets.only(left:6.0,right: 6.0, top:10.0),
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color:HexColor(Constants.red),width:5),
+            right: BorderSide(color:HexColor(Constants.red),width:5),
           ),
+          color:HexColor(Constants.firtColumn),
         ),
-        SizedBox(width: 3,),
-        Container(
-            decoration: BoxDecoration(
-              color: HexColor(Constants.red),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            width: 137,
-            child:TextField(
-              enableInteractiveSelection: false,
-              controller: txt,
-              readOnly: true,
-              style: TextStyle(color: HexColor(Constants.red)),
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal:2),
-                fillColor: Colors.white,filled: true,
-                border: InputBorder.none,
-                suffixIcon:  IconButton(
-                  icon: Icon(Icons.arrow_drop_down),
-                  onPressed: ()=>_selectDate(context),
-                ),
-              ),
-            )),
-        SizedBox(width: 5,),
-        Container(
-            width: 137,
-            decoration: BoxDecoration(
-              color: HexColor(Constants.red),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child:TextField(
-              enableInteractiveSelection: false,
-              readOnly: true,
-              controller: txt2,
-              style: TextStyle(color: HexColor(Constants.red)),
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal:2),
-                fillColor: Colors.white,filled: true,
-                border: InputBorder.none,
-                suffixIcon:  IconButton(
-                  icon: Icon(Icons.arrow_drop_down),
-                  onPressed: ()=>_selectDate2(context),
-                ),
-              ),
-            ))
-      ],
-    );
-  }
-
-  Widget listView(){
-    return ListView(
-      children: <Widget>[
-        for (int i = 0; i < listModel.length; i++)
-          getAlert(listModel[i])
-          //getAlert(listModel[i].title, listModel[i].data, listModel[i].text, listModel[i].empresa)
-      ],
-    );
-  }
-
-  void _launchURL(_url) async =>
-      await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
-
-
-  Widget getAlert(AlertData tech){
-    Color cl = Colors.green;
-    var urg = tech.status;
-
-    if(tech.status=="LOW")
-      cl = Colors.green;
-    if(tech.status=="MEDIUM")
-      cl = Colors.yellow;
-    if(tech.status=="HIGH")
-      cl = HexColor(Constants.red);
-
-    return Card(
-            child:
+        child:
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Container(
-                margin: EdgeInsets.all(10.0),
-                decoration: BoxDecoration(border: Border(left: BorderSide(color: cl,width: 5))),
-                padding: EdgeInsets.only(left:5.0),
+                padding: EdgeInsets.only(right: 10,left: 5),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(width: 10,),
+                    Text(
+                      'Período:',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        color: HexColor(Constants.red),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    //SizedBox(width:15,),
+                  ],
+                )
+            ),
+            Spacer(),
+            Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                width: 125,
                 child:
                 Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text("De",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start)
+                        ],
+                      ),
+                      Row(
+                          children: [
+                            Expanded(
+                                flex:1,
+                                child:
+                                TextField(
+                                  enableInteractiveSelection: false,
+                                  controller: txt,
+                                  readOnly: true,
+                                  style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
+                                  textAlignVertical: TextAlignVertical.top,
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                    fillColor: Colors.white,filled: true,
+                                    border: InputBorder.none,
+                                    prefixIcon: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 16,),
+                                    prefixIconConstraints: BoxConstraints(
+                                        maxWidth: 20,
+                                        maxHeight: 20
+                                    ),
+                                    suffixIcon:  IconButton(
+                                      icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red), size:16),
+                                      onPressed: ()=>_selectDate(context),
+                                    ),
+                                    suffixIconConstraints: BoxConstraints(
+                                        maxWidth: 25,
+                                        maxHeight: 25
+                                    ),
+                                  ),
+                                ))]),
+                    ])
+            ),
+            SizedBox(width: 4,),
+            Container(
+                width: 125,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child:
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Expanded(child: Text(tech.title,style: TextStyle(fontWeight: FontWeight.w500)))],
-                    ),
-                    SizedBox(height: 7,),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Expanded(child:Text(tech.text,style: TextStyle(fontSize: 16.0)))],
-                    ),
-                    SizedBox(height: 7,),
-                    /**Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [Text(tech.empresa)],
-                    ),**/
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          children: [Text(tech.total)],
-                        ),
-                        Column(children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500))])
-                     ]
+                        Text("Até",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start,)
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(child: TextField(
+                          enableInteractiveSelection: false,
+                          readOnly: true,
+                          controller: txt2,
+                          style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            fillColor: Colors.white,filled: true,
+                            border: InputBorder.none,
+                            prefix: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 14,),
+                            prefixIconConstraints: BoxConstraints(
+                                maxWidth: 20,
+                                maxHeight: 20
+                            ),
+                            suffixIcon:  IconButton(
+                              icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red),size:16),
+                              onPressed: ()=>_selectDate2(context),
+                            ),
+                            suffixIconConstraints: BoxConstraints(
+                                maxWidth: 25,
+                                maxHeight: 25
+                            ),
+                          ),
+                        ))
+                      ],
                     )
                   ],
-
                 )
             )
-        );
+          ],
+        ));
   }
-
-
-
   criaTabela() {
     return listModel.isNotEmpty?Table(
       defaultColumnWidth: FractionColumnWidth(.33),
       border: TableBorder(
         horizontalInside: BorderSide(
-          color: HexColor(Constants.red),
+          color: HexColor(Constants.grey),
           style: BorderStyle.solid,
-          width: 1.0,
+          width: 8.0,
         ),
       ),
       children: [
@@ -721,32 +639,81 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   _criarLinhaTable(String listaNomes,int index,String id) {
+    List<String> itens = listaNomes.split(",");
+
     return TableRow(
-      children: listaNomes.split(',').map((name) {
-        return
-          GestureDetector(
-            child:
-            Container(
-              alignment: Alignment.center,
-              child: Text(
-                  name,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                      fontSize: 14.0,
-                      color: (index<1?HexColor(Constants.red):HexColor(Constants.blue))
-                  )
-              ),
-              padding: EdgeInsets.all(8.0),
-            ),
-            onTap: (){
-              print("Indice do alert: "+index.toString());
-              if(index>0)
-                showAlert(context,index-1);
-            },);
-      }).toList(),
+        decoration: BoxDecoration(
+          color:(index>0?HexColor(Constants.firtColumn):HexColor(Constants.grey)),
+        ),
+        children: [
+          for(int i=0;i<itens.length;i++)
+            (index>0?rowContent(itens[i], i, (itens.length-1), index,id):rowHeather(itens[i], i, index, id))
+        ]
     );
   }
 
+  Widget rowHeather(String columnValue, int column, int index,id){
+    return GestureDetector(
+      child:
+      Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5.0),
+              color: HexColor(Constants.grey)
+          ),
+          padding: (column>1?EdgeInsets.only(left:2.0,right: 2.0):EdgeInsets.only(right: 2.0)),
+          child: Text(
+              columnValue,
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                fontSize: 16.0,
+                color: HexColor(Constants.red),
+                fontWeight: FontWeight.bold,
+              )
+          ),
+          margin: EdgeInsets.only(bottom:5.0)
+      ),
+      onTap: (){
+        print("Indice do alert: "+index.toString());
+      },);
+  }
+  Widget rowContent(String columnValue, int column, int tam, int index,id){
+    return GestureDetector(
+      child:
+      Container(
+          height: 45,
+          decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color:(column<1?HexColor(Constants.red):Colors.transparent),width: (column<1?5:0)),
+                right: BorderSide(color:(column==tam?HexColor(Constants.red):Colors.transparent),width: (column==tam?5:0)),
+              )
+          ),
+          child:
+          Container(
+              height: 45,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20.0),
+                  color:(column<1?HexColor(Constants.firtColumn):Colors.white)
+              ),
+              padding: EdgeInsets.all(4.0),
+              margin: (column>0?EdgeInsets.only(left:1.0,right: 1.0):EdgeInsets.only(right: 1.0)),
+              child:
+              Text(
+                  columnValue,
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                    fontSize: 15.0,
+                    color: HexColor(Constants.blue),
+                    fontWeight: FontWeight.bold,
+                  )
+              )
+          )),
+      onTap: (){
+        print("Indice do alert: "+index.toString());
+        showAlert(context,index-1);
+      },);
+  }
 
   Future<void> showAlert(BuildContext context,int index) async {
     AlertData d = listModel.elementAt(index);
@@ -762,17 +729,17 @@ class _ElasticPageState extends State<ElasticPage> {
                       width: MediaQuery.of(context).size.width,
                       child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          //crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red))),
-                                _getCloseButton(context),
+                                closePopup()
                               ]
                               ,),
-                            SizedBox(height: 2,),
+                            SizedBox(height:20,),
                             detalhes(d),
                           ]))
                 ]
@@ -783,25 +750,17 @@ class _ElasticPageState extends State<ElasticPage> {
         });
   }
 
-  _getCloseButton(context) {
-    return IconButton(
-        icon: Icon(Icons.close,color: HexColor(Constants.red)),
-        onPressed: (){
-          Navigator.pop(context);
-        }
-    );
-  }
-
   Widget graph(BuildContext context) {
     return (data.isNotEmpty?Container(
         height: 250,
         width: 250,
+        constraints: BoxConstraints(
+            minHeight: 180,
+            maxHeight: 180
+        ),
+        color:HexColor(Constants.grey),
         child:SfCircularChart(
-            title: ChartTitle(text: 'Alertas por Status',textStyle: TextStyle(
-              fontSize: 14.0,
-              color: HexColor(Constants.red),
-              fontWeight: FontWeight.w600,
-            )),
+            margin: EdgeInsets.zero,
             legend: Legend(isVisible: true),
             series: <PieSeries<_ChartData, String>>[
               PieSeries<_ChartData, String>(
@@ -811,6 +770,7 @@ class _ElasticPageState extends State<ElasticPage> {
                   xValueMapper: (_ChartData data, _) => data.x,
                   yValueMapper: (_ChartData data, _) => data.y,
                   dataLabelMapper: (_ChartData data, _) => data.y.toString(),
+                  pointColorMapper: (_ChartData data,_) => data.color,
                   dataLabelSettings: DataLabelSettings(isVisible: true)),
             ]
         )
@@ -818,44 +778,47 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   Widget detalhes(AlertData tech){
-    Color cl = Colors.green;
-    var urg = tech.status;
-
-    if(tech.status=="LOW")
-      cl = Colors.green;
-    if(tech.status=="MEDIUM")
-      cl = Colors.yellow;
-    if(tech.status=="HIGH")
-      cl = HexColor(Constants.red);
-
+    print("ocorrencias...."+tech.total);
     return Card(
         elevation: 0,
         child:
         Container(
-            height: 250,
             width: 380,
+            constraints: BoxConstraints(
+                minHeight: 150,
+                //maxHeight: 300
+            ),
             child:
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [Text(tech.data, style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],
-                ),
-                Row(
-                  children: [Column(children: [Text("Evento:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  children: [
+                    Column(children: [Text("Evento:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: HexColor(Constants.red)))],),
+                    Spacer(),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(tech.data, style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
+                      ],)
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    Expanded(child:
-                    Text(tech.title))
+                    Expanded(
+                        child:
+                        Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children:[
+                              Text(tech.title,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
+                            ])),
                   ],
                 ),
-                SizedBox(height: 10,),
+                SizedBox(height: 15,),
                 Row(
-                  children: [Column(children: [Text("Descrição:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  children: [Column(children: [Text("Descrição:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: HexColor(Constants.red)))],),
                   ],
                 ),
                 Row(
@@ -865,24 +828,23 @@ class _ElasticPageState extends State<ElasticPage> {
                     Text(tech.text))
                   ],
                 ),
-                SizedBox(height: 10,),
+                SizedBox(height: 15,),
                 Row(
-                  children: [Column(children: [Text("N.Ocorrencias:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
+                  children: [Column(children: [Text("N.Ocorrencias:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: HexColor(Constants.red)))],),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text((tech.total!=null?tech.total:"-")))
+                    Text((tech.total!=null&&tech.total!="null"?tech.total:"-")))
                   ],
                 ),
-                SizedBox(height: 7,),
+                SizedBox(height: 15,),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(children: [Text("Status:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.w500,color: HexColor(Constants.red)))],),
-                    Column(children: [Text((tech.status!=null?tech.status:"-"),style: TextStyle(fontWeight: FontWeight.w500,color: cl))],)
+                  children: [Text("Status:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: HexColor(Constants.red)))]),
+                Row(
+                    children: [Text((tech.status!=null?tech.status:"-"),style: TextStyle(fontWeight: FontWeight.normal,color: HexColor(Constants.blue))),
                   ],
                 ),
               ],
@@ -894,7 +856,8 @@ class _ElasticPageState extends State<ElasticPage> {
 
 }
 class _ChartData {
-  _ChartData(this.x, this.y);
+  _ChartData(this.x, this.y,this.color);
   final String x;
   final int y;
+  final Color color;
 }

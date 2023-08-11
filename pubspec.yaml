@@ -7,8 +7,10 @@ environment:
   sdk: ">=2.14.0 <3.0.0"
 
 dependencies:
+  device_preview: ^1.1.0
   flutter:
     sdk: flutter
+
 
   flutter_localizations:
     sdk: flutter
@@ -20,8 +22,10 @@ dependencies:
   http: ^0.13.1
   url_launcher: ^6.0.3
   equatable: ^2.0.0
-  firebase_core: ^1.10.0
-  firebase_messaging: ^11.1.0
+  firebase_analytics: ^8.0.2
+  firebase_core: ^1.1.0
+  firebase_core_platform_interface: 4.5.1
+  firebase_messaging: ^10.0.9
   fluttertoast: ^8.0.8
   contactus: ^1.1.9
   mask_text_input_formatter: ^2.1.0
@@ -36,13 +40,17 @@ dependencies:
   record_mp3: ^3.0.0
   permission_handler: ^8.1.6
   rxdart: ^0.27.3
-  flutter_local_notifications: ^9.6.0
+  flutter_local_notifications: 9.5.0
   localstorage: ^4.0.0+1
   flutter_phone_direct_caller: ^2.1.1
-  back_button_interceptor: ^6.0.1
+  back_button_interceptor: ^6.0.0
   new_version: ^0.3.0
-  syncfusion_flutter_charts: ^20.3.61
+  syncfusion_flutter_charts: 20.3.58
   dio: ^4.0.6
+  speech_to_text: 5.6.1
+  audio_waveforms: ^1.0.4
+  file_picker: ^4.5.0
+  image_picker: 0.8.4
 
 dependency_overrides:
   path_provider_android: 2.0.11
@@ -59,12 +67,40 @@ flutter:
     - images/icon.png
     - images/icon2.png
     - images/icon.webp
+    - images/Fundo.png
+    - images/fundoin.png
+    - images/lg.png
     - assets/images/
     - assets/images/ic_share.png
     - assets/alert.mp3
     - assets/bell.mp3
+    - images/siem.png
+    - images/tkaberto.png
+    - images/tkatendimento.png
+    - images/zabbix.png
+    - images/zabbixr.png
+    - images/zabbixinv.png
+    - images/message.png
+    - images/profilepic.png
+    - images/check.png
+    - images/controlbg.png
+    - images/mic.png
+    - images/molde.png
+    - images/pdf.png
+    - assets/audios/audio1.mp3
+    - assets/audios/audio2.mp3
+    - assets/audios/audio3.mp3
+    - assets/audios/audio4.mp3
 
   fonts:
+    - family: Metropolis
+      fonts:
+        - asset: assets/fonts/Metropolis-Regular.otf
+        - asset: assets/fonts/Metropolis-Bold.otf
+        - asset: assets/fonts/Metropolis-Black.otf
+        - asset: assets/fonts/Metropolis-Light.otf
+        - asset: assets/fonts/Metropolis-Medium.otf
+        - asset: assets/fonts/Metropolis-Thin.otf
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf

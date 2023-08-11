@@ -122,7 +122,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('preferences',widget.user,textTheme),
+          child: SliderMenu('preferences',widget.user,textTheme,(width*0.5)),
         )
     );
   }

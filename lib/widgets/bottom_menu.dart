@@ -1,11 +1,8 @@
 import 'package:app_maxprotection/screens/inner_openbytext.dart';
-import 'package:app_maxprotection/screens/inner_openticket.dart';
-import 'package:app_maxprotection/utils/Message.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:new_version/new_version.dart';
 
+import '../screens/inner_openticket.dart';
 import '../screens/ticketlist-consultor.dart';
 import '../screens/ticketsview-consultor.dart';
 import '../utils/HexColor.dart';
@@ -71,7 +68,7 @@ class BottomMenu extends StatelessWidget{
                   width: 30,
                   height: 5,
                   decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.all(Radius.circular(12.0))),
                 ),
               ],
@@ -97,7 +94,7 @@ class BottomMenu extends StatelessWidget{
                       )
                   ),
                   SizedBox(width:20),
-                  Icon(Icons.arrow_upward,
+                  Icon(Icons.keyboard_arrow_up,
                       color: HexColor(Constants.red), size: 30.0),
                 ],
               ),
@@ -136,7 +133,7 @@ class BottomMenu extends StatelessWidget{
                             ),
                             Row(
                               children: <Widget>[
-                                (isTecnico?
+                                //(isTecnico?
                                 ActiveProjectsCard(
                                   r:false,
                                   ctx:context,
@@ -146,7 +143,7 @@ class BottomMenu extends StatelessWidget{
                                   icon: Icon(Icons.mic,
                                       color: HexColor(Constants.red), size: 20.0),
                                   title: 'Abrir Chamado por Voz',
-                                ):SizedBox(height: 0,)),
+                                ),//:SizedBox(height: 0,)),
                               ],
                             ),
                             Row(

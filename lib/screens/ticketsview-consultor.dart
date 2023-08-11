@@ -15,6 +15,7 @@ import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
 import '../widgets/slider_menu.dart';
 import 'home_page.dart';
 
@@ -43,9 +44,6 @@ class TicketsviewConsultor extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
             home: new TicketsPage(title: 'Tickets MoviDesk', user: snapshot.data, tipo:tipo),
           ) : CircularProgressIndicator());
         },
@@ -66,6 +64,7 @@ class TicketsPage extends StatefulWidget {
 }
 
 class _TicketsPageState extends State<TicketsPage> {
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   var loading = false;
   EmpresasSearch _empSearch = new EmpresasSearch();
   List<Empresa> lstEmpresa;
@@ -77,6 +76,7 @@ class _TicketsPageState extends State<TicketsPage> {
   bool ultimo = false;
   int tamanho = 10;
   int ultimoIndex = 0;
+  double tam = 0.0;
   
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
@@ -208,38 +208,21 @@ class _TicketsPageState extends State<TicketsPage> {
     _fcmInit.configureMessage(context, "tickets");
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    double width = MediaQuery.of(context).size.width;
 
+    tam = MediaQuery.of(context).size.height;
+
+    print("Tamanho da tela..."+tam.toString());
     return new Scaffold(
-      appBar: AppBar(title: Text(widget.title),
-        backgroundColor: HexColor(Constants.red),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.home,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(FadePageRoute(
-                builder: (context) => HomePage(),
-              ));
-            },
-          )
-        ],
-      ),
-      drawer: Drawer(
-        // Add a ListView to the drawer. This ensures the user can scroll
-        // through the options in the drawer if there isn't enough vertical
-        // space to fit everything.
-        child: SliderMenu('tickets',widget.user,textTheme),
-      ),
-      body:  Container(
-        padding: EdgeInsets.fromLTRB(10,10,10,0),
-        width: double.maxFinite,
-        child: loading ? Center (child: CircularProgressIndicator()) : getMain(),
-      ),
+        key: _scaffoldKey,
+        backgroundColor: HexColor(Constants.grey),
+        body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
+        drawer:  Drawer(
+          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+        )
     );
   }
-  Widget getMain(){
+  /**Widget getMain(){
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -247,20 +230,43 @@ class _TicketsPageState extends State<TicketsPage> {
         //listView(),
       ],
     );
+  }**/
+
+  Widget getMain(double width){
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Stack(
+              children: [
+                headerAlertas(_scaffoldKey, widget.user, context, width, 185, "Tickets MoviDesk"),
+      Container(
+          width: width*.98,
+          height: MediaQuery.of(context).size.height-100,
+          padding:  EdgeInsets.only(left:5,top:200),
+          child: listView())
+              ])],
+      ),
+    );
   }
 
   Widget listView(){
-    return Expanded(child: ListView(
+    //return Expanded(child:
+    return ListView(
+      shrinkWrap: true,
       children: <Widget>[
         for(var i=0;i<lstEmpresa.length;i++)
-          getAlert(lstEmpresa[i])
+          getAlert(lstEmpresa[i], i)
       ],
-    ));
+    //)
+    );
   }
 
   Widget lazyListView(){
-    return Expanded(child:
-    ListView.builder(
+    //return Expanded(child:
+    return ListView.builder(
+      shrinkWrap: true,
       controller: _controller,
       itemCount: loading ? loaded.length + 1 : loaded.length,
       itemBuilder: (context, index) {
@@ -268,16 +274,32 @@ class _TicketsPageState extends State<TicketsPage> {
           return Center(
               child: CircularProgressIndicator()
           );
-        return getAlert(loaded[index]);
+        return getAlert(loaded[index],index);
       },
-    )
+    //)
     );
   }
 
-  Widget getAlert(Empresa emp){
+  Widget getAlert(Empresa emp, int i){
     GestureDetector gd;
     //print("widget.tipo ");print(widget.tipo);
     //print("Empresa: ");print(emp.id);
+    Color par = HexColor(Constants.red);
+    Color impar = HexColor(Constants.blue);
+    Color cl = par;
+    Color clTexto = impar;
+
+
+    print("Empresa..."+emp.toString());
+
+    if(i%2>0) {
+      cl = impar;
+      clTexto = par;
+    }else {
+      cl = par;
+      clTexto = impar;
+    }
+
     switch(widget.tipo){
       case 0:
         gd = GestureDetector(
@@ -290,15 +312,28 @@ class _TicketsPageState extends State<TicketsPage> {
             },
             child:
             Card(
-                color: HexColor(Constants.grey),
-                child: Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Column(
+                child:
+                ClipPath(
+                    clipper: ShapeBorderClipper(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(3))),
+                    child:
+                    Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(color: cl, width: 5),
+                          ),
+                        ),
+                        //margin: EdgeInsets.all(12.0),
+                        padding: EdgeInsets.all(5.0),
+                        //height: 300,
+                        child:
+                        Column(
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Text(emp.novo>0?"Novo":"",style:TextStyle(color: HexColor(Constants.red)))
+                              Text(emp.novo!=null&&emp.novo>0?"Novo":"",style:TextStyle(color: clTexto))
                             ],
                           ),
                           Row(
@@ -310,12 +345,12 @@ class _TicketsPageState extends State<TicketsPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color: HexColor(Constants.red)))
+                              Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color:clTexto))
                             ],
                           )
                         ]
                     )
-                ))
+                )))
         );
         break;
       case 1:

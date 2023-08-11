@@ -3,23 +3,19 @@ import 'dart:io';
 
 import 'package:app_maxprotection/api/PushConfirmApi.dart';
 import 'package:app_maxprotection/model/TechSupportModel.dart';
-import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/inner_elastic.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
-import 'package:app_maxprotection/screens/inner_noticias.dart';
-import 'package:app_maxprotection/screens/inner_zabbix.dart';
-import 'package:app_maxprotection/screens/ticket-detail.dart';
-import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'dart:convert';
 
+import '../screens/inner_noticias.dart';
+import '../screens/inner_zabbix.dart';
+import '../screens/ticket-detail.dart';
 import '../screens/ticketlist-consultor.dart';
-import '../screens/ticketsview-consultor.dart';
 import '../widgets/custom_route.dart';
-import 'perfil.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -50,7 +46,7 @@ Future<void> stopAlertSound() async{
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
+  print("*****Handling a background message: ${message.messageId}");
   print(message.data["type"]); //Verificar a configuração de alert de som por tipo de mensagem
   saveToLocalStorage(message);
   isTecnico(message);
@@ -117,8 +113,9 @@ class FCMInitConsultor{
   List<String> topics = [];
 
   FCMInitConsultor._internal() {
-    if(_firebaseMessaging==null)
+    if(_firebaseMessaging==null) {
       _firebaseMessaging = FirebaseMessaging.instance;
+    }
   }
 
   void unRegisterAll() async {
@@ -140,54 +137,78 @@ class FCMInitConsultor{
 
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
+      announcement: false,
       badge: true,
+      carPlay: false,
+      criticalAlert: false,
       provisional: false,
       sound: true,
     );
 
+    setListeners();
+    /**
+    print('User granted permission: ${settings.authorizationStatus}');
+
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
-
-
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler
-      );
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        /** messageFCM.text = message.notification?.body;
-        messageFCM.title = message.notification?.title;
-        messageFCM.enterprise = message.data['eid'];
-        messageFCM.aid = message.data['aid'];**/
-
-        messageFCM = convertMessage(message);
-
-        if (Platform.isAndroid) {
-          messageFCM.type = message.data['type'];
-        } else if (Platform.isIOS) {
-          messageFCM.type = message.data['type'];
-        }
-        //goto(message.data['type'], ctx);
-        if(user["tipo"]=="T"){
-          showMessage(messageFCM);
-        }else{
-          showSimpleMessage(messageFCM);
-        }
-
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage mes) {
-        stopAlertSound();
-        String tipo = mes.data["type"];
-        String eid = mes.data["eid"];
-        messageFCM = convertMessage(mes);
-        goto(messageFCM, ctx);
-      });
-
-    } else {
+      print("notificationShow");
+  } else {
       print('User declined or has not accepted permission');
-    }
-
+      await Permission.notification.isDenied.then((value) {
+        if (value) {
+          Permission.notification.request();
+        }else{
+          setListeners();
+        }
+      });
+    }**/
   }
+
+  setListeners(){
+    FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler
+    );
+
+    checkPermission();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+
+      messageFCM = convertMessage(message);
+
+      if (Platform.isAndroid) {
+        messageFCM.type = message.data['type'];
+      } else if (Platform.isIOS) {
+        messageFCM.type = message.data['type'];
+      }
+      //goto(message.data['type'], ctx);
+      if(user["tipo"]=="T"){
+        showMessage(messageFCM);
+      }else{
+        showSimpleMessage(messageFCM);
+      }
+
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage mes) {
+      stopAlertSound();
+      String tipo = mes.data["type"];
+      String eid = mes.data["eid"];
+      messageFCM = convertMessage(mes);
+      goto(messageFCM, ctx);
+    });
+  }
+
+
+  Future<bool> checkPermission() async {
+    if (!await Permission.notification.isGranted) {
+      PermissionStatus status = await Permission.notification.request();
+      if (status != PermissionStatus.granted) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 
   Map<String, dynamic> get getUsr=>user;
 
@@ -223,7 +244,7 @@ class FCMInitConsultor{
     await storage.deleteItem(id);
   }
 
-  void setConsultant(Map<String, dynamic> usr){
+  Future<void> setConsultant(Map<String, dynamic> usr) {
     user = usr;
     isTecnico=false;
 
@@ -261,7 +282,18 @@ class FCMInitConsultor{
 
     if(user["tipo"]=="C" || user["tipo"]=="T"){
       print("FCMInit...assumindo que é consultor ou técnico...");
-        lst.forEach((emp) {
+      lst.map((item) {
+        if(item.id!="0"){
+          _firebaseMessaging.subscribeToTopic('elastic' + item.id);
+          topics.add('elastic'+item.id);
+          _firebaseMessaging.subscribeToTopic('zabbix' + item.id);
+          topics.add('zabbix' + item.id);
+          _firebaseMessaging.subscribeToTopic('techsupport' + item.id);
+          topics.add('techsupport' + item.id);
+        }
+      }).toList();
+
+      /** lst.forEach((emp) {
           if(emp.id!="0") {
             _firebaseMessaging.subscribeToTopic('elastic' + emp.id);
             topics.add('elastic'+emp.id);
@@ -270,7 +302,7 @@ class FCMInitConsultor{
             _firebaseMessaging.subscribeToTopic('techsupport' + emp.id);
             topics.add('techsupport' + emp.id);
           }
-        });
+        }); **/
         if(user["tipo"]=="T" && user["interno"]) {
           _firebaseMessaging.subscribeToTopic("plantao" + user["id"]);
           topics.add('plantao'+user['id']);
@@ -298,6 +330,7 @@ class FCMInitConsultor{
   }
 
   void showSimpleMessage(MessageData message){
+    print("*******RECEBEU Notificacao. showSimpleMessage: "+message.text);
     if(message.title!="titulo") {
       showDialog(
           context: ctx,
@@ -342,6 +375,7 @@ class FCMInitConsultor{
   }
 
   void showMessage(MessageData message){
+    print("*******RECEBEU Notificacao. showMessage: "+message.text);
     if(message.title!="titulo") {
       showDialog(
           context: ctx,

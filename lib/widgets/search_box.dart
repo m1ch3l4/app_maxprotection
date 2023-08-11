@@ -1,87 +1,168 @@
 // @dart=2.9
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 
 import '../utils/HexColor.dart';
+import '../utils/HomeSearchDelegate.dart';
 import '../utils/Message.dart';
 import 'constants.dart';
 
 import 'package:http/http.dart' as http;
 
-class SearchBox extends StatelessWidget {
+class SearchBox extends StatefulWidget {
+
   final Color cardColor;
   final String title;
-  final Icon iconsufix;
-  TextEditingController txtSearch = TextEditingController();
   final Map<String, dynamic> usr;
+  final double width;
+  final Function f;
+  final SearchDelegate searchDelegate;
 
   SearchBox({
     this.cardColor,
     this.title,
-    this.iconsufix,
-    this.usr
+    this.usr,
+    this.width,
+    this.f,
+    this.searchDelegate
   });
+
+  _searchBox createState() => _searchBox();
+
+}
+class _searchBox extends State<SearchBox>{
+  TextEditingController txtSearch = TextEditingController();
+  SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
+
+  Future<void> _showSearch(BuildContext context) async {
+    await showSearch(
+      context: context,
+      delegate: widget.searchDelegate,
+      query: txtSearch.value.text,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  /// This has to happen only once per app
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  /// Each time to start a speech recognition session
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  /// Manually stop the active speech recognition session
+  /// Note that there are also timeouts that each platform enforces
+  /// and the SpeechToText plugin supports setting timeouts on the
+  /// listen method.
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  /// This is the callback that the SpeechToText plugin calls when
+  /// the platform returns recognized words.
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = result.recognizedWords;
+      print("texto reconhecido...."+_lastWords);
+      txtSearch.text = _lastWords;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        //margin: EdgeInsets.symmetric(vertical: 5.0),
-        //padding: EdgeInsets.only(bottom: 15.0),
-        height: 48,
+      alignment: Alignment.center,
+        height: 40,
+        width: widget.width,
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(10.0),
+          color: HexColor(Constants.red),
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            BoxShadow(
+              color: HexColor(Constants.red),
+              blurRadius: 1.0, // soften the shadow
+              spreadRadius: 1.0, //extend the shadow
+              offset: Offset(
+                1.0, // Move to right 5  horizontally
+                1.0, // Move to bottom 5 Vertically
+              ),
+            )
+          ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           //mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SizedBox(width: 7),
-                Expanded(child: TextField(
+                SizedBox(child: TextField(
+                  //textAlignVertical: TextAlignVertical.center,
                   controller: txtSearch,
                   style: TextStyle(color: HexColor(Constants.red)),
                   //controller: _controller,
                   decoration: InputDecoration(
-                    hintText: title,
+                    contentPadding: EdgeInsets.only(top:2,left:10),
+                    hintText: widget.title,
                     fillColor: Colors.white,filled: true,
-                    border: InputBorder.none,
-                    /**border: new OutlineInputBorder(
+                    hintStyle: TextStyle(color:HexColor(Constants.red),fontSize: 13),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.search,color: HexColor(Constants.red),size: 18,),
+                      onPressed: () {
+                        _showSearch(context);
+                      },
+                    ),
+                    border: new OutlineInputBorder(
                       borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(10.0),
-                        topLeft: Radius.circular(10.0)
+                        bottomLeft: Radius.circular(20.0),
+                        topLeft: Radius.circular(20.0),
+                        bottomRight: Radius.circular(20.0),
+                        topRight: Radius.circular(20.0)
                       ),
-                    ),**/
+                    ),
                   ),
-
-                )),
+                ),height: 40,width: widget.width*0.9,),
                 GestureDetector(
                   onTap: () {
-                    if(txtSearch.value.text.isNotEmpty) {
-                      Future<String> ret = sendMessage();
-                      ret.then((value) {
-                        Message.showMessage(value);
-                        txtSearch.clear();
-                      }).catchError((error) {
-                        print(error);
-                      });
-                    }
+                    widget.f(txtSearch.value.text);
                   },
                   child: Container(
-                  height: 48,
-                  width: 40,
+                  height: 40,
+                  width: widget.width*0.1,
                   decoration: new BoxDecoration(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(20.0),
                     color: HexColor(Constants.red),
-                    border: Border.all(color:Colors.white,width: 1)
+                    //border: Border.all(color:Colors.white,width: 1)
                   ),
-                  child: iconsufix,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(!_speechToText.isNotListening?Icons.mic_off:Icons.mic_none_rounded,color: Colors.white,),
+                    onPressed: (){
+                      print("speech to text? "+_speechToText.isNotListening.toString());
+                      _speechToText.isNotListening ? _startListening() : _stopListening();
+                    },
+                  ),
                 )),
               ],
             ),
@@ -90,6 +171,20 @@ class SearchBox extends StatelessWidget {
       );
   }
 
+  /**
+   *  if(txtSearch.value.text.isNotEmpty) {
+      Future<String> ret = sendMessage();
+      ret.then((value) {
+      Message.showMessage(value);
+      txtSearch.clear();
+      }).catchError((error) {
+      print(error);
+      });
+      }
+
+   */
+
+  /**
   Future<String> sendMessage() async{
     var url =Constants.urlEndpoint+'message/app';
 
@@ -121,4 +216,6 @@ class SearchBox extends StatelessWidget {
     print("++++++++++++++++");
     return response.body;
   }
+**/
+
 }

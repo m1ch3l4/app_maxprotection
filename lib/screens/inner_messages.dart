@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_maxprotection/model/MessageModel.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:app_maxprotection/widgets/simpleheader.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,7 @@ import '../widgets/bottom_container.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
@@ -113,23 +115,13 @@ class _MessagesPageState extends State<MessagesPage> {
     _fcmInit.configureMessage(context, "messages");
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => _panel(sc,width,context),
-          body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
-        ),
+        backgroundColor: HexColor(Constants.grey),
+        body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         drawer:  Drawer(
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('messages',widget.user,textTheme),
+          child: SliderMenu('messages',widget.user,textTheme,(width*0.5)),
         )
     );
   }
@@ -138,18 +130,16 @@ class _MessagesPageState extends State<MessagesPage> {
   Widget getMain(double width){
     return SafeArea(
       child: Column(
-        children: <Widget>[
-          _header(width),
-          Divider(
-            height: 5,
-            thickness: 1,
-            indent: 5,
-            endIndent: 5,
-            color: HexColor(Constants.grey),
-          ),
-          _body(),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Stack(
+          children:[
+          simpleHeader(_scaffoldKey,context,width),
+           Container(padding:EdgeInsets.only(top:100,left:10,right: 10),height: MediaQuery.of(context).size.height-50, child:_body())
+          ])
         ],
-      ),
+      )
     );
   }
 
@@ -225,130 +215,124 @@ class _MessagesPageState extends State<MessagesPage> {
 
 
   Widget _body(){
-    return Expanded(
-        child: listView());
+    return SingleChildScrollView(child:listView());
   }
 
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Text(
-                    'Minhas Mensagens',
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  SizedBox(width: 80,)
-                ],
-              ),
-            ),
-
-          ]),
-    );
-  }
-
-  /**
-   * for (int i=0; i<5; i++)
-      getAlert('titulo', day.add(Duration(days:i)),
-      (i%2<1?"Gostaria de receber mais informações sobre o SonicWall":"Um consultor entrará em contato no seu telefone!"),
-      (i%2<1?"":"MaxProtection"))
-   */
-  Widget listView(){
+    Widget listView(){
     DateTime day = DateTime.now().subtract(Duration(days:5));
     return ListView(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       children: <Widget>[
       for (int i = 0; i < listModel.length; i++)
-        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo:""), listModel[i].data, listModel[i].texto, listModel[i].tipo, (listModel[i].sender!=null?listModel[i].sender.name:"-"))
+        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo:""), listModel[i].data, listModel[i].texto, listModel[i].tipo, (listModel[i].sender!=null?listModel[i].sender.name:"-"),i)
       ],
     );
   }
 
-  Widget getAlert(String title, DateTime date, String event, String justify, String sender){
+  Widget getAlert(String title, DateTime date, String event, String justify, String sender, int i){
+    Color par = HexColor(Constants.red);
+    Color impar = HexColor(Constants.blue);
+    Color cl = par;
+    Color clTexto = impar;
+    if(i%2>0) {
+      cl = impar;
+      clTexto = par;
+    }else {
+      cl = par;
+      clTexto = impar;
+    }
+
+    String valid = "";
+    DateTime hoje = DateTime.now();
+    final difference = hoje.difference(date).inDays;
+    if(difference<1)
+      valid = "Novo";
+    else
+      valid = difference.toString()+"d";
+
     DateFormat dayOfWeek = DateFormat('EEEE',"pt_BR");
-    return Card(
-        child: Column(
+    return
+      Card(
+          margin: EdgeInsets.all(15),
+          child:
+          ClipPath(
+          clipper: ShapeBorderClipper(
+          shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(5))),
+    child:
+    Container(
+    decoration: BoxDecoration(
+    border: Border(
+    left: BorderSide(color: cl, width: 10),
+    ),
+    ),
+    //margin: EdgeInsets.all(12.0),
+    padding: EdgeInsets.all(12.0),
+    //height: 300,
+    child:
+    Column(
+    mainAxisAlignment: MainAxisAlignment.start,
           children: [
             SizedBox(height: 20,),
             Row(
-              //mainAxisAlignment: (justify!=""?MainAxisAlignment.end:MainAxisAlignment.start),
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children:[
+              Column(
+                children: [
+                  Text(simpleDate.format(date),style:TextStyle(color:cl,fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Icon(Icons.more_horiz,color: cl,)
+                ],
+              )
+            ],
+            ),
+            Row(
               children: [
                 Column(
-                mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Padding(padding: EdgeInsets.only(left:5),
-                    child: Text(sender,style: TextStyle(
+                    Text(sender,style: TextStyle(
                       fontSize: 14.0,
-                      color: Colors.black45,
-                      fontWeight: FontWeight.w400,)),)
+                      color: clTexto
+                      ,fontWeight: FontWeight.bold))
                     ],
-                ),
+                )]),
+            Row(
+              children: [
+                Expanded(child:
                 Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Padding(padding: EdgeInsets.only(right: 5),
-                    child: Text(simpleDate.format(date)+" | "+dayOfWeek.format(date),style: TextStyle(
-                      fontSize: 14.0,
-                      color: Colors.black45,
-                      fontWeight: FontWeight.w400,)))
-                    ],
+                  children: [Text(removeAllHtmlTags(event),style: TextStyle(color:clTexto),)],
+                )),
+                Column(
+                  children: [Text(valid,style:TextStyle(color:clTexto))],
                 )
               ],
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.all(0),
-              minLeadingWidth: 10.0,
-              title: Text(title.toUpperCase()),
+            )
+            /**ListTile(
+              contentPadding: EdgeInsets.zero,
+              //minLeadingWidth: 10.0,
+              title: Text(title.toUpperCase(),style:TextStyle(color:clTexto)),
               subtitle: Html(data: event,
                   onLinkTap: (url, RenderContext context, Map<String, String> attributes, element) {
                     _launchURL(url);
                   }),
-              leading: (justify=="" ?
-              Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ):SizedBox(width: 1,)),
-              trailing: (justify!=""? Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ):SizedBox(width: 1,)),
-            )
+            )**/
           ],
-        )
+        ))));
+  }
+
+  String removeAllHtmlTags(String htmlText) {
+    RegExp exp = RegExp(
+        r"<[^>]*>",
+        multiLine: true,
+        caseSensitive: true
     );
+
+    return htmlText.replaceAll(exp, '');
   }
 
   void _launchURL(_url) async =>
@@ -356,85 +340,6 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
     return BottomMenu(ctx,sc,width,widget.user);
-    /** return MediaQuery.removePadding(
-        context: ctx,
-        removeTop: true,
-        child: ListView(
-          controller: sc,
-          children: <Widget>[
-            SizedBox(
-              height: 12.0,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  width: 30,
-                  height: 5,
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.all(Radius.circular(12.0))),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 5.0,
-            ),
-            BottomContainer(
-              height: 30,
-              width: width,
-              child:
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                      'Mais Serviços',
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        color: HexColor(Constants.red),
-                        fontWeight: FontWeight.w400,
-                      )
-                  ),
-                  SizedBox(width:20),
-                  Icon(Icons.arrow_upward,
-                      color: HexColor(Constants.red), size: 30.0),
-                ],
-              ),
-            ),
-            Column(
-                children: <Widget>[
-                  Container(
-                      color: HexColor(Constants.grey),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20.0, vertical: 10.0),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                ActiveProjectsCard(
-                                  cardColor: Colors.white,
-                                  icon: Icon(Icons.support,
-                                      color: HexColor(Constants.red), size: 20.0),
-                                  title: 'Tickets Abertos',
-                                ),
-                                SizedBox(width: 20.0),
-                                ActiveProjectsCard(
-                                  cardColor: Colors.white,
-                                  icon:Icon(Icons.watch_later_outlined,
-                                      color: HexColor(Constants.red), size: 20.0),
-                                  title: 'Tickets em Atendimento',
-                                ),
-                              ],
-                            ),
-                          ]))]),
-            SizedBox(
-              height: 5,
-            ),
-          ],
-        ));**/
   }
 
 }

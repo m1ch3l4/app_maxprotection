@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:725434711469:android:c31c6bc38e29b9578eb524",
         "android_client_info": {
-          "package_name": "br.com.maxprotection.security_news.client"
+          "package_name": "br.com.maxprotection"
         }
       },
       "oauth_client": [
@@ -43,9 +43,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:725434711469:android:40ca404611ae518d8eb524",
+        "mobilesdk_app_id": "1:725434711469:android:b11d0d783d30cb1c8eb524",
         "android_client_info": {
-          "package_name": "br.com.maxprotection.security_news.consultor"
+          "package_name": "br.com.maxprotection.fcm_teste"
         }
       },
       "oauth_client": [
@@ -79,7 +79,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:725434711469:android:40ca404611ae518d8eb524",
+        "mobilesdk_app_id": "1:725434711469:android:c2c59b595787053c8eb524",
         "android_client_info": {
           "package_name": "br.com.maxprotection.security_news"
         }

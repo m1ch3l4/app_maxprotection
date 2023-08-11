@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/usuario.dart';
 import '../utils/HttpsClient.dart';
+import '../utils/perfil.dart';
 import '../widgets/constants.dart';
 import 'api_response.dart';
 import 'package:http/http.dart' as http;
@@ -132,10 +134,12 @@ class ChangePassApi{
       }
       print("${response.statusCode}");
 
-      Map<String,dynamic> mapResponse = json.decode(response.body);
+      Map<String,dynamic> mapResponse = jsonDecode(Utf8Decoder().convert(response.bodyBytes));
 
       if(response.statusCode == 200){
         final usuario = Usuario.fromJson(mapResponse);
+        usuario.senha=usr.senha;
+
         return ApiResponse.ok(usuario);
       }else{
         return ApiResponse.error("Erro");

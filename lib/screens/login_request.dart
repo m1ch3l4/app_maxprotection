@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import '../utils/HexColor.dart';
 import '../utils/HttpsClient.dart';
 import '../utils/Message.dart';
+import '../widgets/RadialButton.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/top_container.dart';
@@ -45,220 +46,223 @@ class LoginRequestState extends State<LoginRequest> {
 
   }
 
-
-  Text subheading(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-          color: Colors.blue,
-          fontSize: 20.0,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HexColor(Constants.red),
       resizeToAvoidBottomInset: false,
-      body: getMain(context) ,
-    );
+      body: Container(
+        constraints: const BoxConstraints.expand(),
+    decoration: BoxDecoration(
+      color: HexColor(Constants.blueRequestLogin)
+    ),
+    child:
+      getMain(context)
+      ),
+    backgroundColor: Colors.transparent,);
   }
   Widget getMain(BuildContext context){
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
-    
+
     return Column(
       children: <Widget>[
-        _header(width,(height*0.85)),
-        _body(width, (height*0.15)),
+        _header(width,(height*0.15)),
+        Spacer(),
+        _body(width, (height*0.80)),
       ],
     );
   }
 
   Widget _header(double width, double height){
     return TopContainer(
+      padding: EdgeInsets.zero,
       height: height,
       width: width,
       child:
       Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            SizedBox(height: 25,),
-            Row(
-              //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Image.asset("images/icon2.png",width: 40,height: 40,),
-                SizedBox(width:5),
-                Text(
-                  'Max Protection',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 22.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-              ],
-            ),
-            SizedBox(height: 20,),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Expanded(child:
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Informe Nome, Celular e E-mail cadastrados na MaxProtection.',
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 22.0,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w400,
-                      ),
+            SizedBox(height: 35,),
+            Container(
+              color: HexColor(Constants.red),
+              padding: EdgeInsets.symmetric(vertical: 12),
+              margin: EdgeInsets.zero,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(width:10),
+                  InkWell(child: new Icon(Icons.arrow_back,color: Colors.white,),onTap:()=>backToWelcome(context)),
+                  SizedBox(width:5),
+                  Text(
+                    'Cadastro',
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 18.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
-                    SizedBox(height: 25,),
-                    _formUI(),
-                    SizedBox(height: 45,),
-                    ElevatedButton(
-                        child: Text(
-                            "Enviar mensagem",
-                            style: TextStyle(fontSize: 14)
-                        ),
-                        style: ButtonStyle(
-                            minimumSize: MaterialStateProperty.all(Size(width*0.9, 50)),
-                            foregroundColor: MaterialStateProperty.all<Color>(HexColor(Constants.red)),
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(color: HexColor(Constants.red))
-                                )
-                            )
-                        ),
-                        onPressed: (){
-                          if (_key.currentState!.validate()) {
-                            print('_sendForm');
-                          _sendForm(context);
-                          }else{
-                            print('diz que ainda não é valido....');
-                          }
-                        },
-                    )
-                  ],
-                ))
-              ],
+                  ),
+                  Spacer(),
+                  InkWell(child: new Icon(Icons.more_vert,color: Colors.white,),onTap:()=>print("back"))
+                ],
+              ),
             ),
           ]),
     );
   }
 
   Widget _formUI() {
+    double width = MediaQuery.of(context).size.width;
     return new Form(
         key: _key,
-        child: Column(
-      children: <Widget>[
-        new TextFormField(
-          controller: nomeCtrl,
-          cursorColor: Colors.white,
-          style: TextStyle(color: Colors.white),
-          decoration: new InputDecoration(hintText: 'Nome Completo',
-              hintStyle: TextStyle(color: Colors.white),
-              enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-                ),
-                border: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white),
-                ),errorStyle: TextStyle(color: Colors.white)),
-          maxLength: 40,
-            validator: (value){
-              String patttern = r'(^[a-zA-Z ]*$)';
-              RegExp regExp = new RegExp(patttern);
-              if (value!.length == 0) {
-                return "Informe o nome";
-              } else if (!regExp.hasMatch(value)) {
-                return "O nome deve conter caracteres de a-z ou A-Z";
-              }
-              return null;
-            }
-        ),
-        new TextFormField(
-            cursorColor: Colors.white,
-            style: TextStyle(color: Colors.white),
-            controller: celularCtrl,
-            inputFormatters:[celularFormat],
-            decoration: new InputDecoration(hintText: 'Celular',hintStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),errorStyle: TextStyle(color: Colors.white)),
-            keyboardType: TextInputType.phone,
-            maxLength: 14,
-            validator: (value){
-              String patttern = r'(^[0-9]*$)';
-              RegExp regExp = new RegExp(patttern);
-              if (value?.length == 0) {
-                return "Informe o celular";
-              } else if(value?.length != 14){
-                return "O celular deve ter 14 dígitos";
-              }
-              return null;
-            }
+        child: Container(
+          margin: EdgeInsets.only(left: 15,right:15),
+            child:Column(
+          children: <Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.start,children:[Text("Nome Completo",style: TextStyle(color:Colors.white))]),
+            new TextFormField(
+                controller: nomeCtrl,
+                cursorColor: Colors.white,
+                style: TextStyle(color: Colors.white),
+                decoration: new InputDecoration(
+                    prefixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child:Icon(Icons.person,color:HexColor(Constants.greyContainer))),
+                    hintText: 'Nome Completo', contentPadding: EdgeInsets.only(top:20),
+                    hintStyle: TextStyle(color: HexColor(Constants.greyContainer)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.greyContainer)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),errorStyle: TextStyle(color: HexColor(Constants.grey))),
+                maxLength: 40,
+                validator: (value){
+                  String patttern = r'(^[a-zA-Z ]*$)';
+                  RegExp regExp = new RegExp(patttern);
+                  if (value!.length == 0) {
+                    return "Informe o nome";
+                  } else if (!regExp.hasMatch(value)) {
+                    return "O nome deve conter caracteres de a-z ou A-Z";
+                  }
+                  return null;
+                }
             ),
-        new TextFormField(
-            cursorColor: Colors.white,
-            controller: emailCtrl,
-            style: TextStyle(color: Colors.white),
-            decoration: new InputDecoration(hintText: 'Email', hintStyle: TextStyle(color: Colors.white),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-              errorStyle: TextStyle(color: Colors.white)
+            Row(mainAxisAlignment: MainAxisAlignment.start,children:[Text("Email",style: TextStyle(color:Colors.white))]),
+            new TextFormField(
+              cursorColor: Colors.white,
+              controller: emailCtrl,
+              style: TextStyle(color: Colors.white),
+              decoration: new InputDecoration(hintText: 'Email',contentPadding: EdgeInsets.only(top:20), hintStyle: TextStyle(color: HexColor(Constants.greyContainer)),
+                  prefixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child:Icon(Icons.mail,color:HexColor(Constants.greyContainer))),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: HexColor(Constants.greyContainer)),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: HexColor(Constants.grey)),
+                  ),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(color: HexColor(Constants.grey)),
+                  ),
+                  errorStyle: TextStyle(color: HexColor(Constants.grey))
+              ),
+              keyboardType: TextInputType.emailAddress,
+              maxLength: 40,
+              validator: (value){
+                String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                RegExp regExp = new RegExp(pattern);
+                if(value==null || value.isEmpty){
+                  return "Preencha o seu e-mail";
+                }else {
+                  if (!regExp.hasMatch(value)) {
+                    return "Email inválido";
+                  }
+                }
+                return null;
+              },),
+            Row(mainAxisAlignment: MainAxisAlignment.start,children:[Text("Celular",style: TextStyle(color:Colors.white))]),
+            new TextFormField(
+                cursorColor: Colors.white,
+                style: TextStyle(color: Colors.white),
+                controller: celularCtrl,
+                inputFormatters:[celularFormat],
+                decoration: new InputDecoration(hintText: '(DDD) 00000-0000',contentPadding: EdgeInsets.only(top:20),hintStyle: TextStyle(color: HexColor(Constants.greyContainer)),
+                    prefixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child:Icon(Icons.phone_android,color:HexColor(Constants.greyContainer))),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.greyContainer)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),errorStyle: TextStyle(color: HexColor(Constants.grey))),
+                keyboardType: TextInputType.phone,
+                maxLength: 14,
+                validator: (value){
+                  String patttern = r'(^[0-9]*$)';
+                  RegExp regExp = new RegExp(patttern);
+                  if (value?.length == 0) {
+                    return "Informe o celular";
+                  } else if(value?.length != 14){
+                    return "O celular deve ter 14 dígitos";
+                  }
+                  return null;
+                }
             ),
-            keyboardType: TextInputType.emailAddress,
-            maxLength: 40,
-          validator: (value){
-            String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-            RegExp regExp = new RegExp(pattern);
-            if(value==null || value.isEmpty){
-              return "Preencha o seu e-mail";
-            }else {
-              if (!regExp.hasMatch(value)) {
-                return "Email inválido";
-              }
-            }
-            return null;
-          },),
-            getOptions()
-      ],
-    ));
+            Row(mainAxisAlignment: MainAxisAlignment.start,children:[Text("Confirme o Celular",style: TextStyle(color:Colors.white))]),
+            new TextFormField(
+                cursorColor: Colors.white,
+                style: TextStyle(color: Colors.white),
+                controller: celularCtrl,
+                inputFormatters:[celularFormat],
+                decoration: new InputDecoration(hintText: '(DDD) 00000-0000', contentPadding: EdgeInsets.only(top:20),hintStyle: TextStyle(color: HexColor(Constants.greyContainer)),
+                    prefixIcon: Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child:Icon(Icons.phone_android,color:HexColor(Constants.greyContainer))),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.greyContainer)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: HexColor(Constants.grey)),
+                    ),errorStyle: TextStyle(color: HexColor(Constants.grey))),
+                keyboardType: TextInputType.phone,
+                maxLength: 14,
+                validator: (value){
+                  String patttern = r'(^[0-9]*$)';
+                  RegExp regExp = new RegExp(patttern);
+                  if (value?.length == 0) {
+                    return "Informe o celular";
+                  } else if(value?.length != 14){
+                    return "O celular deve ter 14 dígitos";
+                  }
+                  return null;
+                }
+            ),
+            getOptions(width),
+          ],
+        )));
   }
 
-  Widget getOptions(){
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+  Widget getOptions(double width){
+    return Container(
+      width: width,
+      child:Column(
       children: [
         RadioListTile<SingingCharacter>(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
           tileColor: Colors.white,
           activeColor: Colors.white,
           title: Text(opcaoLogin,style: TextStyle(color: Colors.white)),
@@ -271,6 +275,8 @@ class LoginRequestState extends State<LoginRequest> {
           },
         ),
         RadioListTile<SingingCharacter>(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
           tileColor: Colors.white,
           activeColor: Colors.white,
           title: Text(opcaoSuporte,style: TextStyle(color: Colors.white)),
@@ -283,7 +289,7 @@ class LoginRequestState extends State<LoginRequest> {
           },
         )
       ],
-    );
+    ));
   }
 
 
@@ -369,46 +375,45 @@ class LoginRequestState extends State<LoginRequest> {
       width: width,
       height: height,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        //crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           Container(
-              color: HexColor(Constants.red),
               padding: EdgeInsets.symmetric(
                   horizontal: 20.0, vertical: 5.0),
               child: Column(children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  children: <Widget>[
                     Expanded(child:
                     Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children:[
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 40.0),
-                            tooltip: 'Ver todos',
-                            onPressed: () {
-                              Navigator.of(context).push(FadePageRoute(
-                                builder: (context)=>WelcomeScreen(),
-                              ));
-                            },
-                          ),
-                          SizedBox(height: 5,),
-                          Text(
-                              'Voltar',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 14, color: Colors.white))
-                        ])
-                    )
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 25,),
+                        _formUI(),
+                        SizedBox(height: 45,),
+                        Container(
+                          margin: EdgeInsets.only(left: 15,right:15),
+                        child:
+                        RadialButton(buttonText: "ENVIAR ACESSO", width: width, onpressed: ()=> _sendForm(context))),
+                      ],
+                    ))
                   ],
-                )
+                ),
+                SizedBox(height: 30,)
               ],)
           ),
         ],
       ),
     );
+  }
+
+  backToWelcome(BuildContext context){
+    Navigator.of(context).push(FadePageRoute(
+      builder: (context)=>WelcomeScreen(),
+    ));
   }
 
 

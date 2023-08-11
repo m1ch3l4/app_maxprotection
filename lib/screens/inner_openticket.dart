@@ -6,10 +6,14 @@ import 'package:app_maxprotection/model/ChamadoMp3.dart';
 import 'package:app_maxprotection/model/usuario.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:app_maxprotection/utils/Message.dart';
+import 'package:app_maxprotection/widgets/searchempresa_wdt.dart';
+import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
@@ -19,6 +23,8 @@ import 'package:record_mp3/record_mp3.dart';
 import 'package:http/http.dart' as http;
 import 'package:rxdart/rxdart.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../model/Idbean.dart';
 import '../model/empresa.dart';
@@ -26,10 +32,13 @@ import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../utils/SharedPref.dart';
+import '../utils/chart_bubble.dart';
 import '../widgets/SeekBar.dart';
+import '../widgets/WaveAudio.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
@@ -52,9 +61,6 @@ class InnerOpenTicket extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
             home: new OpenTicketPage(title: 'Abrir Chamado', user: snapshot.data),
           ) : CircularProgressIndicator());
         },
@@ -91,17 +97,69 @@ class _MyAppState extends State<OpenTicketPage> {
   double _mSubscriptionDuration = 0;
   String statusText = "Pronto para gravar";
   bool isComplete = false;
+  bool isGravando = false;
   String recordFilePath;
 
   String currentTime = "", endTime = "";
   double minDuration = 0, maxDuration = 0, currentDuration = 0;
 
-
-  final _player = AudioPlayer();
+  AudioPlayer _player = AudioPlayer();
 
   bool isLoading = false;
   bool isTecnico = false;
   String idTicket = "-1";
+
+  searchEmpresa searchEmpresaWdt;
+  SeekBar _seekBar;
+
+  bool flag = true;
+  Stream<int> timerStream;
+  StreamSubscription<int> timerSubscription;
+
+  String minutesStr = '00';
+  String secondsStr = '00';
+  String hoursStr = '00';
+
+  Directory appDirectory;
+
+  WaveAudio wave;
+
+  Stream<int> stopWatchStream() {
+    StreamController<int> streamController;
+    Timer timer;
+    Duration timerInterval = Duration(seconds: 1);
+    int counter = 0;
+
+    void stopTimer() {
+      if (timer != null) {
+        timer.cancel();
+        timer = null;
+        counter = 0;
+        streamController.close();
+      }
+    }
+
+    void tick(_) {
+      counter++;
+      streamController.add(counter);
+      if (!flag) {
+        stopTimer();
+      }
+    }
+
+    void startTimer() {
+      timer = Timer.periodic(timerInterval, tick);
+    }
+
+    streamController = StreamController<int>(
+      onListen: startTimer,
+      onCancel: stopTimer,
+      onResume: startTimer,
+      onPause: stopTimer,
+    );
+
+    return streamController.stream;
+  }
 
   /// Collects the data useful for displaying in a seek bar, using a handy
   /// feature of rx_dart to combine the 3 streams of interest into one.
@@ -113,16 +171,24 @@ class _MyAppState extends State<OpenTicketPage> {
               (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
-
-
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
     return true;
   }
 
+  Future<void> requestForPermission() async {
+    await Permission.microphone.request();
+  }
+
+
   void initState() {
     super.initState();
     _fabHeight = _initFabHeight;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void updateState(double pos){
@@ -147,22 +213,15 @@ class _MyAppState extends State<OpenTicketPage> {
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "elastic");
+
+    searchEmpresaWdt = searchEmpresa(context: context,onchangeF: null,);
+
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
-          body: getMain(width),
-        ),
+        backgroundColor: HexColor(Constants.grey),
+        body: getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('openticket',widget.user,textTheme),
+          child: SliderMenu('openticket',widget.user,textTheme,(width*0.5)),
         )
     );
   }
@@ -170,189 +229,171 @@ class _MyAppState extends State<OpenTicketPage> {
   Widget getMain(double width){
     return SafeArea(
       child: Column(
-        children: <Widget>[
-          _header(width),
-          Divider(
-            height: 5,
-            thickness: 1,
-            indent: 5,
-            endIndent: 5,
-            color: HexColor(Constants.grey),
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+      Stack(
+      children: [
+          headerAlertas(_scaffoldKey, widget.user, context, width,200, "Abrir chamados por voz"),
+          Positioned(
+          child: Container(width:width,alignment:Alignment.center,child: searchEmpresaWdt),
+        top:175,
+      ),
+        _body(width)
+        ])],
+      ),
+    );
+  }
+
+  Widget _body(double width){
+    return Container(
+        padding:  EdgeInsets.only(top: 250),
+      child: Column(
+        children: [
+          recButton(),
+          SizedBox(height: 13,),
+          Text("$hoursStr.$minutesStr.$secondsStr",style:TextStyle(fontWeight:FontWeight.bold,fontSize: 24)),
+          SizedBox(height: 13,),
+          if(isComplete && recordFilePath!=null)
+            wave = WaveAudio(
+            path: recordFilePath,
+            isSender: true,
+            appDirectory: appDirectory,
           ),
-          empresasToShow(),
-          //_body(),
-          makeBody(),
+          SizedBox(height: 25,),
+          controlBar(),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [isLoading? CircularProgressIndicator(color: HexColor(Constants.red)):SizedBox(height: 1,)],
           )
         ],
-      ),
+      )
     );
   }
 
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  void startCronometer(){
+    timerStream = stopWatchStream();
+    timerSubscription = timerStream.listen((int newTick) {
+      setState(() {
+        hoursStr = ((newTick / (60 * 60)) % 60)
+            .floor()
+            .toString()
+            .padLeft(2, '0');
+        minutesStr = ((newTick / 60) % 60)
+            .floor()
+            .toString()
+            .padLeft(2, '0');
+        secondsStr =
+            (newTick % 60).floor().toString().padLeft(2, '0');
+      });
+    });
+  }
+  void stopCronometer(){
+    timerSubscription.cancel();
+    timerStream = null;
+    setState(() {
+      hoursStr = '00';
+      minutesStr = '00';
+      secondsStr = '00';
+    });
+    }
+  Widget recButton(){
+    return GestureDetector(
+        child:
+        Stack(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Text(
-                    'Abrir Chamados por Voz',
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  SizedBox(width: 40,)
-                ],
-              ),
+            Container(
+                decoration: new BoxDecoration(color: Colors.transparent),
+                alignment: Alignment.center,
+                height: 180,
+                child: Image.asset("images/mic.png",fit: BoxFit.fill,)
             ),
-
-          ]),
-    );
-  }
-
-  Widget empresasToShow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        DropdownButton<Empresa>(
-            icon: const Icon(Icons.arrow_downward),
-            iconSize: 24,
-            elevation: 16,
-            style: TextStyle(color: HexColor(Constants.red)),
-            underline: Container(
-              height: 2,
-              color: HexColor(Constants.blue),
-            ),
-            onChanged: (Empresa newValue) {
-              setState(() {
-                empSel = newValue;
-                _empSearch.setDefaultOpt(newValue);
-              });
-            },
-            items: _empSearch.lstOptions.map((Empresa bean) {
-              return  DropdownMenuItem<Empresa>(
-                  value: bean,
-                  child: SizedBox(width: 310.0,child: Text(bean.name,overflow: TextOverflow.ellipsis,)));}
-              ).toList(),
-          value: empSel,
-          ),
-      ],
-    );
-  }
-
-  Widget makeBody() {
-    //return Column(
-    //children: [
-    return Container(
-      margin: const EdgeInsets.all(3),
-      padding: const EdgeInsets.all(3),
-      height: 180,
-      width: double.infinity,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: HexColor(Constants.grey),
-        border: Border.all(
-          color: HexColor(Constants.red),
-          width: 3,
-        ),
-      ),
-      child: Column(children: [
-        Row(children: [
-          ElevatedButton.icon(
-            icon: (RecordMp3.instance.status == RecordStatus.RECORDING?Icon(Icons.fiber_manual_record): Icon(Icons.stop)),
-            onPressed: (RecordMp3.instance.status == RecordStatus.RECORDING ? stopRecord : startRecord),
-            label: Text(RecordMp3.instance.status == RecordStatus.RECORDING ? 'Parar' : 'Gravar'),
-            style: ElevatedButton.styleFrom(
-                  primary: HexColor(Constants.red)
-              )
-          ),
-          SizedBox(
-            width: 10,
-          ),
-          SizedBox(
-            width: 20,
-          ),
-          //Text('Pos: $pos  dbLevel: ${((dbLevel * 100.0).floor()) / 100}'),
-        ]),
-        Text(statusText,style: TextStyle(color: HexColor(Constants.red),fontWeight: FontWeight.w500),),
-        StreamBuilder<PositionData>(
-          stream: _positionDataStream,
-          builder: (context, snapshot) {
-            final positionData = snapshot.data;
-            return SeekBar(
-              duration: positionData?.duration ?? Duration.zero,
-              position: positionData?.position ?? Duration.zero,
-              bufferedPosition:
-              positionData?.bufferedPosition ?? Duration.zero,
-              onChangeEnd: _player.seek,
-            );
-          },
-        ),
-        Row(
-          children: [
-            (isComplete && recordFilePath!=""? makeControles()
-        : SizedBox(height: 1,))
-
+            Positioned(
+              bottom: 60, right: 148,
+              child: !isGravando? Icon(Icons.mic,size: 62, color: Colors.white,) : Icon(Icons.mic_off,size: 62, color: Colors.white,),
+              //child: _speechToText.isNotListening? Icon(Icons.mic,size: 62, color: Colors.white,) : Icon(Icons.mic_off,size: 62, color: Colors.white,),
+            )
           ],
         ),
-      ]),
-      //),
-      //],
-    );}
+    onTap: (){
+          print("Gravando? "+isGravando.toString());
+          if(!isGravando){
+            startCronometer();
+            startRecord();
+            //incrementTick();
+          }else{
+            stopCronometer();
+            stopRecord();
+          }
+      }
+          );
+  }
 
-    Widget makeControles(){
-    return Row(
-      children: [
-        ElevatedButton(
-          onPressed: abrirChamado,
-          child: Text('Abrir Chamado'),
-            style: ElevatedButton.styleFrom(
-                primary: HexColor(Constants.red)
-            )
+  Widget controlBar(){
+    return Container(
+      width: 400,
+      padding: EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("images/controlbg.png"),
+            //fit: BoxFit.fill
+          ),
         ),
-        SizedBox(width: 2,),
-        ElevatedButton.icon(
-          icon: Icon(Icons.play_arrow),
-          onPressed: play,
-          label: Text('Play'),
-          style: ElevatedButton.styleFrom(
-            primary: HexColor(Constants.red)
-          )
-        ),
-        SizedBox(width: 2,),
-        ElevatedButton.icon(
-          icon: Icon(Icons.delete_forever),
-          onPressed: delete,
-          label: Text('Delete'),
-            style: ElevatedButton.styleFrom(
-                primary: HexColor(Constants.red)
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Column(
+              children: [
+        SizedBox( //<-- SEE HERE
+            width: 30,
+            height: 30,
+            child: FittedBox(
+                child: FloatingActionButton(
+                  backgroundColor: Colors.white,
+                  onPressed: () {delete();},
+                  child: Icon(
+                    Icons.close,
+                    size: 36,
+                    color: HexColor(Constants.red),
+                  ),
+                )))]),
+            Column(
+                        children: [CircleAvatar(
+                          backgroundColor: HexColor(Constants.red),
+                          radius: 28,
+                          child: IconButton(
+                            icon:  isComplete? Icon(Icons.play_arrow): Icon(Icons.stop),
+                            iconSize: 24,
+                            color: Colors.white,
+                            onPressed: () {
+                              isComplete ? WaveAudio.state.controller.startPlayer(
+                                finishMode: FinishMode.pause,
+                              ):WaveAudio.state.controller.pausePlayer();
+                                  //play() :
+                              //pauseRecord();
+                            },
+                          ),
+                        )]),
+            Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                SizedBox( //<-- SEE HERE
+                    width: 30,
+                    height: 30,
+                    child: FittedBox(
+                        child: FloatingActionButton(
+                          backgroundColor: Colors.white,
+                          onPressed: () {abrirChamado();},
+                          child: Icon(
+                            Icons.check,
+                            size: 36,
+                            color: HexColor(Constants.blue),
+                          ),
+                        )))]
             )
+          ],
         )
-      ],
     );
-    }
+  }
 
   Future<bool> checkPermission() async {
     if (!await Permission.microphone.isGranted) {
@@ -364,25 +405,34 @@ class _MyAppState extends State<OpenTicketPage> {
     return true;
   }
 
-  void startRecord() async {
+  Future<void> startRecord() async {
+    setState(() {
+      isGravando=true;
+      isComplete=false;
+      empSel = searchEmpresaWdt.state.empSel;
+    });
     bool hasPermission = await checkPermission();
     if (hasPermission) {
       if(empSel.id !="0") {
-        statusText = "Recording...";
+        print("Recording...");
         recordFilePath = await getFilePath();
-        isComplete = false;
         RecordMp3.instance.start(recordFilePath, (type) {
-          statusText = "Record error--->$type";
-          setState(() {});
+          print("Record error--->$type");
+          setState(() {
+            print('startRecording...');
+          });
         });
       }else{
+        setState(() {
+          isGravando=false;
+          isComplete=false;
+        });
         Message.showMessage("Selecione a Empresa para qual deseja abrir o chamado!");
         return;
       }
     } else {
       statusText = "Permissão ao microfone desativada";
     }
-    setState(() {});
   }
 
   void pauseRecord() {
@@ -390,24 +440,29 @@ class _MyAppState extends State<OpenTicketPage> {
       bool s = RecordMp3.instance.resume();
       if (s) {
         statusText = "Gravando...";
-        setState(() {});
+        setState(() {
+          print('startRecord...');
+        });
       }
     } else {
       bool s = RecordMp3.instance.pause();
       if (s) {
         statusText = "Recording pause...";
-        setState(() {});
       }
     }
   }
 
   void stopRecord() {
     bool s = RecordMp3.instance.stop();
+    print("stopRecord....");
+    setState(() {
+      isComplete = true;
+      isGravando = false;
+    });
     if (s) {
       statusText = "Gravação Finalizada";
-      isComplete = true;
-
       setState(() {
+        _player.setFilePath(recordFilePath);
       });
     }
   }
@@ -645,46 +700,58 @@ class _MyAppState extends State<OpenTicketPage> {
     }
     print("resposta do update...."+responseString.toString());
     if(responseString.toString().contains("Erro")){
-     Message.showMessage("Falha ao enviar arquivo de aúdio para Nuvem.\nEntre em contato com o nosso suporte.");
+      Message.showMessage("Falha ao enviar arquivo de aúdio para Nuvem.\nEntre em contato com o nosso suporte.");
     }else {
       Message.showMessage(
-          "Chamado enviado para servidor.\nEm breve entrará listagem da empresa.");
+          "Chamado ID "+idTicket+" enviado para servidor.\nEm breve entrará listagem da empresa.");
       delete();
     }
-    
+
     idTicket="-1";
   }
 
   void resumeRecord() {
     bool s = RecordMp3.instance.resume();
+    print("resumeRecord....");
     if (s) {
       statusText = "Gravando...";
-      setState(() {});
+      setState(() {
+        //textDuration = format();
+        isComplete = true;
+      });
     }
   }
 
   void play() async{
+    print("playRecord....");
     if (recordFilePath != null && File(recordFilePath).existsSync()) {
       _player.setFilePath(recordFilePath);
       _player.play();
-      setState(() {});
+      setState(() {
+        isComplete=false;
+      });
     }
   }
 
   void delete(){
+    print("deleteRecord....");
     File f = File(recordFilePath);
     if(f!=null){
       f.deleteSync(recursive: true);
-      recordFilePath = "";
+      recordFilePath = null;
       statusText = "Gravação apagada";
     }
-    setState(() {});
+    setState(() {
+      recordFilePath = null;
+      isComplete=false;
+    });
   }
 
   int i = 0;
 
   Future<String> getFilePath() async {
     Directory storageDirectory = await getApplicationDocumentsDirectory();
+    appDirectory = storageDirectory;
     String sdPath = storageDirectory.path + "/record";
     var d = Directory(sdPath);
     if (!d.existsSync()) {

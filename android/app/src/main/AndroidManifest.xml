@@ -1,7 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="br.com.maxprotection.security_news">
-   <application
-        android:label="app_maxprotection"
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+    <application
+        android:label="Security App"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

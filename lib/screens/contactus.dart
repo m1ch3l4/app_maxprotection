@@ -13,32 +13,36 @@ class ContatcusScreen extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        backgroundColor: Colors.transparent,
         bottomNavigationBar: ContactUsBottomAppBar(
-          companyName: 'Max Protection',
+          companyName: '',
           textColor: Colors.white,
-          backgroundColor: HexColor(Constants.red),
-          email: 'contato@maxprotection.com.br',
-          textFont: 'OpenSans',
+          backgroundColor: Colors.transparent,
+          email: 'atendimento@maxprotection.com.br',
+          textFont: 'Metropolis',
         ),
-        backgroundColor: HexColor(Constants.red),
-        body: ContactUs(
-            cardColor: Colors.white,
-            textColor: HexColor(Constants.red),
-            logo: AssetImage('images/icon2.png'),
-            email: 'contato@maxprotection',
-            companyName: 'Max Protection',
+        body: Container(
+    decoration: const BoxDecoration(
+    image: DecorationImage(
+    image: AssetImage("images/Fundo.png"),fit: BoxFit.cover),),
+            child:ContactUs(
+            cardColor: HexColor(Constants.red),
+            textColor: Colors.white,
+            logo: AssetImage('images/lg.png'),
+            email: 'atendimento@maxprotection.com.br',
+            companyName: '',
             companyFontSize: 32.0,
-            companyFont: 'OpenSans',
-            companyColor: Colors.white,
-            dividerColor: Colors.white,
-            phoneNumber: '+5551999879275',
+            companyFont: 'Metropolis',
+            companyColor: Colors.transparent,
+            dividerColor: Colors.transparent,
+            phoneNumber: '+555137104050',
             website: 'https://www.maxprotection.com.br',
-            tagLine: 'Gestão de Segurança da Informação',
-            taglineColor: Colors.white,
+            //tagLine: 'Gestão de Segurança da Informação',
+            taglineColor: Colors.transparent,
             //linkedinURL: 'https://www.linkedin.com/company/maxprotectionsecuritysolutions',
             instagram: 'maxprotectionsecurity',
             facebookHandle: 'maxprotectionsolutions'),
-      ),
+      )),
     );
   }
 }

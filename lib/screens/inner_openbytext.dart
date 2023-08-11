@@ -123,7 +123,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
           body: getMain(width),
         ),
         drawer:  Drawer(
-          child: SliderMenu('opentickettext',widget.user,textTheme),
+          child: SliderMenu('opentickettext',widget.user,textTheme,(width*0.5)),
         )
     );
   }

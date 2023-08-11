@@ -1,4 +1,6 @@
 // @dart=2.9
+import 'package:app_maxprotection/utils/HexColor.dart';
+import 'package:app_maxprotection/widgets/constants.dart';
 import 'package:flutter/material.dart';
 
 class BottomContainer extends StatelessWidget {
@@ -14,7 +16,7 @@ class BottomContainer extends StatelessWidget {
     return Container(
       padding: padding!=null ? padding : EdgeInsets.symmetric(horizontal: 0.0),
       decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.transparent,
           borderRadius: BorderRadius.only(
             topRight: Radius.circular(5.0),
             topLeft: Radius.circular(5.0),

@@ -1,8 +1,10 @@
 //@dart=2.10
 import 'dart:io';
 
+import 'package:app_maxprotection/screens/noticia_detail.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
+import 'package:app_maxprotection/widgets/headerNoticias.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -37,18 +39,18 @@ class InnerNoticias extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       child: FutureBuilder(
-          future: sharedPref.read("usuario"),
-          builder: (context,snapshot){
+        future: sharedPref.read("usuario"),
+        builder: (context,snapshot){
           return (snapshot.hasData ? new MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'TI & Segurança',
-          theme: new ThemeData(
-          primarySwatch: Colors.blue,
-          ),
-          home: new NoticiasPage(title: 'Noticias', user: snapshot.data),
+            debugShowCheckedModeBanner: false,
+            title: 'TI & Segurança',
+            theme: new ThemeData(
+              primarySwatch: Colors.blue,
+            ),
+            home: new NoticiasPage(title: 'Noticias', user: snapshot.data),
           ) : CircularProgressIndicator());
-          },
-          ),
+        },
+      ),
     );
   }
 }
@@ -76,7 +78,12 @@ class _NoticiasPageState extends State<NoticiasPage> {
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
   List<NoticiaData> listModel = [];
+  List<NoticiaData> destaques = [];
+  List<NoticiaData> outros = [];
+
   var loading=false;
+
+  List<String> categorias = [];
 
   Future<Null> getData() async{
     setState(() {
@@ -118,8 +125,13 @@ class _NoticiasPageState extends State<NoticiasPage> {
       final data = jsonDecode(source);
       setState(() {
         for(Map i in data){
-          listModel.add(NoticiaData.fromJson(i));
+          NoticiaData tmp = NoticiaData.fromJson(i);
+          listModel.add(tmp);
+          if(!categorias.contains(tmp.categoria))
+            categorias.add(tmp.categoria);
         }
+        destaques = listModel.sublist(0,2);
+        outros = listModel.sublist(2);
         loading = false;
       });
     }else{
@@ -154,198 +166,224 @@ class _NoticiasPageState extends State<NoticiasPage> {
     languageCode = "pt-br";
 
     double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
 
     _fcmInit.configureMessage(context, "noticias");
+
+    double _panelPosition = 0;
+
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
-          body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
-        ),
+        backgroundColor: HexColor(Constants.blue),
+        body:loading ? Center (child: CircularProgressIndicator()) : getMain(width,height),
         drawer:  Drawer(
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('messages',widget.user,textTheme),
+          child: SliderMenu('noticias',widget.user,textTheme,(width*0.5)),
         )
     );
   }
 
-  Widget getMain(double width){
+  Widget getMain(double width, double height){
     return SafeArea(
-      child: Column(
-        children: <Widget>[
-          _header(width),
-          Divider(
-            height: 5,
-            thickness: 1,
-            indent: 5,
-            endIndent: 5,
-            color: HexColor(Constants.grey),
-          ),
-          _body(),
-        ],
+      child:
+      Stack(children:[
+        Positioned(
+        bottom:0,
+        child: Container(width:width,color: HexColor(Constants.grey),child: SizedBox(height: height*0.5,),),
       ),
+      Column(
+        children: <Widget>[
+         headerNoticias(_scaffoldKey, context, width,verTodas),
+         Container(
+           margin: EdgeInsets.only(top:10.0,bottom:10.0),
+            padding: EdgeInsets.only(left:10.0,right: 10.0),
+            child: _categorias(),
+            height: height*0.04,
+          ),
+          Container(
+            height:height*0.3,
+            child: _body(),
+          ),
+          Row(
+            children: [Text("    RECENTES",style: TextStyle(color: HexColor(Constants.blueTxt)),)],),
+          Container(
+            alignment: Alignment.bottomCenter,
+            height: height*0.27,
+            child: listOthers(),
+          )
+        ],
+      )])
     );
   }
   Widget _body(){
-    return Expanded(
-        child: listView());
+    return ListView.builder(
+      itemCount: destaques.length,
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (context,index) =>getNoticia(destaques[index]),
+          );
   }
 
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Expanded(child: Text(
-                    'Notícias de TI & Segurança',
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  )),
-                  SizedBox(width: 60,)
-                ],
-              ),
-            ),
-
-          ]),
-    );
-  }
-
-  Widget listView(){
+  Widget _categorias(){
     return ListView(
-      children: getChildren(),
+      scrollDirection: Axis.horizontal,
+      children: childCategory(),
     );
   }
-
-  List<Widget> getChildren(){
-    final df = new DateFormat('yyyy-MM-dd');
-    final DateTime now = DateTime.now();
-    final String formatada = df.format(now);
-    List<Widget> lista = List<Widget>();
-    if(listModel.length>0){
-      for (int i = 0; i < listModel.length; i++)
-        lista.add(getNoticia(listModel[i].titulo, listModel[i].data, listModel[i].texto,listModel[i].url));
-    }else{
-      lista.add(getNoticia("Sem Notícias", formatada, "Nenhuma notícia cadastrada",""));
+  List<Widget> childCategory(){
+    List<Widget> list = [];
+    for(int i=0;i<categorias.length;i++){
+      list.add(buttonCategoria(categorias[i], i));
+      list.add(SizedBox(width: 10,));
     }
-
-    return lista;
+    return list;
   }
-  Widget getNoticia(String title, String date, String text, String url){
-    DateFormat dayOfWeek = DateFormat('EEEE',languageCode);
-    DateTime dia = DateTime.parse(date);
-    return Card(
-        child: Column(
+
+  Widget buttonCategoria(String item, int i){
+    return GestureDetector(
+        child:
+        Container(
+        width: 120,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              colors: [HexColor(Constants.innerRed),HexColor(Constants.red)]
+          ),
+          color: HexColor(Constants.red),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 20,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [SizedBox(width: 18,),Text(simpleDate.format(dia)+" | "+dayOfWeek.format(dia),style: TextStyle(
-                fontSize: 14.0,
-                color: Colors.black45,
-                fontWeight: FontWeight.w400,
-              ))],
-            ),
-            ListTile(
-                title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text(text),
-                leading: Container(
-                  width: 12,
-                  decoration: BoxDecoration(
-                      color: HexColor(Constants.red),
-                      borderRadius:BorderRadius.only(
-                          topLeft: Radius.circular(3.0),
-                          bottomLeft: Radius.circular(3.0))
-            ))),
-            ListTile(
-                title: Text((url!=""?"Leia Mais":""),style: TextStyle(fontSize: 12.0)),
-                onTap: (){
-                  _launchURL(url);
-                }
-            )
+            Text(item.toUpperCase(), style:TextStyle(color:Colors.white)),
           ],
         )
+    ),
+      onTap: (){
+          filtroNoticia(i);
+      },
     );
+  }
+
+  Widget listOthers(){
+        return    ListView(
+              children: getOthers(),
+            );
+  }
+  List<Widget> getOthers(){
+    List<Widget> list=[];
+    for(int i=0;i<outros.length;i++){
+      list.add(
+        GestureDetector(
+            onTap: (){Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => noticiaDetail(outros[i]), // <-- document instance
+                ));},
+          child:
+          Container(
+            height: 40,
+            width: 260,
+            margin: EdgeInsets.all(10.0),
+            //padding: EdgeInsets.only(left: 10.0,top:10.0),
+            child:
+            Row(
+                children: [
+                Container(
+                height: 40,
+                width: 60,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                    color: HexColor(Constants.greyContainer)
+                ),margin: EdgeInsets.only(right: 10),
+                  child: (outros[i].imageFile!=null?Image.network (
+                      outros[i].imageFile,
+                      fit:BoxFit.cover):SizedBox(height: 1,)),
+                ),
+            Text(outros[i].categoria,style: TextStyle(color:HexColor(Constants.blueTxt)))]),
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color: HexColor(Constants.greyContainer),
+                    width: 1.0,
+                    style: BorderStyle.solid
+                ),
+                borderRadius: BorderRadius.circular(10))
+      )));
+    }
+    return list;
+  }
+
+  verTodas(){
+    setState(() {
+      destaques = listModel.sublist(0,2);
+      outros = listModel.sublist(2);
+    });
+  }
+  filtroNoticia(int i){
+    String cat = categorias[i];
+    List<NoticiaData> filtrada = [];
+
+    listModel.forEach((element) {
+      if(element.categoria == cat)
+        filtrada.add(element);
+    });
+
+    setState(() {
+      if(filtrada.length<1){
+        destaques=[];
+        outros=[];
+      }
+      if(filtrada.length>2) {
+        destaques = filtrada.sublist(0, 2);
+        outros = filtrada.sublist(2);
+      }else{
+        destaques = filtrada;
+        outros = [];
+      }
+    });
+  }
+  Widget getNoticia(NoticiaData noticia){
+    DateFormat dayOfWeek = DateFormat('EEEE',languageCode);
+    DateTime dia = DateTime.parse(noticia.data);
+    return GestureDetector(
+      onTap: (){Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => noticiaDetail(noticia), // <-- document instance
+          ));},
+    child:
+    Container(
+          margin: EdgeInsets.all(5.0),
+          padding: EdgeInsets.all(20),
+          //color: HexColor(Constants.greyContainer),
+          height: 550,
+          width: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20.0),
+              image:(noticia.imageFile!=null?DecorationImage(
+
+                image: Image.network(noticia.imageFile).image,
+                fit: BoxFit.cover,
+              ):DecorationImage(image:Image.asset("images/Fundo.png").image,opacity:85, fit: BoxFit.fill)),
+            color: HexColor(Constants.greyContainer)
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [Expanded(child: Text(noticia.titulo,softWrap:true,style: TextStyle(
+                  fontSize: 24.0,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                )))],
+              )
+            ],
+          ),
+        ));
   }
   void _launchURL(_url) async =>
       await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);
-
-  Widget getAlert(String title, DateTime date, String event, String justify){
-    DateFormat dayOfWeek = DateFormat('EEEE',languageCode);
-    return Card(
-        child: Column(
-          children: [
-            SizedBox(height: 20,),
-            Row(
-              mainAxisAlignment: (justify!=""?MainAxisAlignment.end:MainAxisAlignment.start),
-              children: [Text(simpleDate.format(date)+" | "+dayOfWeek.format(date),style: TextStyle(
-                fontSize: 14.0,
-                color: Colors.black45,
-                fontWeight: FontWeight.w400,
-              ))],
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.all(0),
-              minLeadingWidth: 10.0,
-              title: Text(""),
-              subtitle: Text(event),
-              leading: (justify=="" ?
-              Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ):SizedBox(width: 1,)),
-              trailing: (justify!=""? Container(
-                width: 12,
-                decoration: BoxDecoration(
-                    color: HexColor(Constants.red),
-                    borderRadius:BorderRadius.only(
-                        topLeft: Radius.circular(3.0),
-                        bottomLeft: Radius.circular(3.0))
-                ),
-              ):SizedBox(width: 1,)),
-            )
-          ],
-        )
-    );
-  }
-
-
 
 }

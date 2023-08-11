@@ -26,10 +26,13 @@ import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../utils/HttpsClient.dart';
+import '../widgets/RadialButton.dart';
 import '../widgets/active_project_card.dart';
 import '../widgets/bottom_container.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
+import '../widgets/searchempresa_wdt.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
@@ -93,7 +96,7 @@ class _ServicosPageState extends State<ServicosPage> {
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
   static EmpresasSearch _empSearch = EmpresasSearch();
-  
+
   Empresa empSel;
 
   static List<DropdownMenuItem<Empresa>> _data = [];
@@ -102,6 +105,7 @@ class _ServicosPageState extends State<ServicosPage> {
   List<Servico> listModel = [];
   var loading = false;
 
+  searchEmpresa widgetSearchEmpresa;
 
   void loadData() {
     if(mounted) {
@@ -140,6 +144,8 @@ class _ServicosPageState extends State<ServicosPage> {
     }else{
       loadData();
       isConsultor = true;
+      widgetSearchEmpresa =
+          searchEmpresa(onchangeF: () => getData(), context: context);
     }
     _fabHeight = _initFabHeight;
   }
@@ -152,64 +158,38 @@ class _ServicosPageState extends State<ServicosPage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
-
-   /** _empSearch.addListener(() {
-      print('detectou a mudança...');
-      loadData();
-    });**/
-
     languageCode = Localizations.localeOf(context).languageCode;
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "messages");
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => _panel(sc,width,context),
-          body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
-        ),
+        body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         drawer:  Drawer(
-          // Add a ListView to the drawer. This ensures the user can scroll
-          // through the options in the drawer if there isn't enough vertical
-          // space to fit everything.
-          child: SliderMenu('messages',widget.user,textTheme),
+          child: SliderMenu('servicos',widget.user,textTheme,(width*0.6)),
         )
     );
   }
 
-  Widget showContrato(){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        SizedBox(width: 12,),
-        Text(
-          'Ver contrato com a Max Protection:',
-         textAlign: TextAlign.start,
-           style: TextStyle(
-            fontSize: 14.0,
-            color: HexColor(Constants.red),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(width: 3,),
-        new RaisedButton(
-          onPressed: getContrato,
-          child: new Text('Exibir',style:TextStyle(color: HexColor(Constants.red), fontWeight: FontWeight.w700, fontSize: 14.0)),
-        )
-      ],
+  Widget showContrato(double width){
+    return Container(
+      width: width,
+      alignment: Alignment.center,
+      margin: EdgeInsets.only(top:20,bottom: 20),
+      child: GestureDetector(child:Container(
+          margin: EdgeInsets.zero,
+          padding: EdgeInsets.zero,
+          decoration: new BoxDecoration(color: Colors.transparent),
+          alignment: Alignment.center,
+          height: 120,
+          child: Image.asset("images/pdf.png")
+      ),
+        onTap: getContrato),
     );
   }
   Future<Null> getContrato() async{
     setState(() {
-      loading = true;
+      //loading = true;
     });
     String urlApi = "";
 
@@ -221,14 +201,14 @@ class _ServicosPageState extends State<ServicosPage> {
 
     if(isConsultor){
       if(empSel!=null)
-      urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id;
+        urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id;
     }else {
       urlApi = Constants.urlEndpoint + "enterprise/showcontrato/" +
           widget.user['company_id'].toString();
     }
 
 
-    String u = widget.user["login"];
+    String u = widget.user["login"]+"|"+widget.user["password"];
     String p = widget.user["password"];
     String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
 
@@ -283,26 +263,30 @@ class _ServicosPageState extends State<ServicosPage> {
   Widget getMain(double width){
     return SafeArea(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          _header(width),
-            (isConsultor?empresasToShow():SizedBox(height: 1,)),
-          showContrato(),
-          Divider(
-            height: 5,
-            thickness: 1,
-            indent: 5,
-            endIndent: 5,
-            color: HexColor(Constants.grey),
-          ),
-          _body(),
+          Stack(
+              children: [
+                headerAlertas(_scaffoldKey, widget.user, context, width, 195, "Serviços Contratados"),
+                Container(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.only(top:170),
+                  child: (isConsultor?widgetSearchEmpresa:SizedBox(height: 1,)),
+                ),
+              ]),
+          showContrato(width*0.8),
+          _body(width*0.95)
         ],
       ),
     );
+
   }
 
   Future<Null> getData() async{
     setState(() {
-      loading = true;
+      //loading = true;
+      listModel = [];
     });
     String urlApi = "";
     var ssl = false;
@@ -344,164 +328,167 @@ class _ServicosPageState extends State<ServicosPage> {
     if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
-      setState(() {
+      //setState(() {
         for(Map i in data){
           var serv = Servico.fromJson(i);
           listModel.add(serv);
         }
-        loading = false;
+
+      setState(() {
+        print("total...."+listModel.length.toString());
+        loading=false;
       });
+        //loading = false;
+      //});
     }else{
       loading = false;
     }
   }
 
-  Widget empresasToShow() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-            Column(
-              children: [Text('Empresas Monitoradas:',
-                textAlign: TextAlign.start,
-            style: TextStyle(
-            fontSize: 14.0,
-            color: HexColor(Constants.red),
-            fontWeight: FontWeight.w600,
-            ),
-            )],
-            ),
-            Column(
-            children: [SizedBox(width: 10,)],
-            ),
-        Flexible(
-          fit: FlexFit.loose,
-          child: Column(
-            children: [
-              DropdownButton<Empresa>(
-                value: empSel,
-                isExpanded: true,
-                icon: const Icon(Icons.arrow_downward),
-                iconSize: 24,
-                elevation: 16,
-                style: TextStyle(color: HexColor(Constants.red)),
-                underline: Container(
-                  height: 2,
-                  color: HexColor(Constants.blue),
-                ),
-                onChanged: (Empresa newValue) {
-                  setState(() {
-                    empSel = newValue;
-                    _empSearch.setDefaultOpt(newValue);
-                    listModel = [];
-                    getData();
-                  });
-                },
-                items: _data
-              )],
-          ),
-        )
+  Widget _body(double width){
+    return
+      Container(
+        height: MediaQuery.of(context).size.height-410,
+        width: width,
+          child:     SingleChildScrollView(
+        child: criaTabela(),
+      ));
+  }
 
-          ],
+  criaTabela() {
+    return listModel.isNotEmpty?
+    SingleChildScrollView(child:Table(
+      columnWidths: {
+          0: FixedColumnWidth(105.0),// fixed to 100 width
+          1: FlexColumnWidth(),
+          2: FixedColumnWidth(90.0),//fixed to 100 width
+      },
+      //defaultColumnWidth: IntrinsicColumnWidth(),
+      border: TableBorder(
+        horizontalInside: BorderSide(
+          color: HexColor(Constants.grey),
+          style: BorderStyle.solid,
+          width: 12.0,
+        ),
+      ),
+      children: [
+        for (int i = 0; i < listModel.length; i++)
+          _criarLinhaTable(listModel[i].titulo,listModel[i].descricao,listModel[i].contratado,listModel[i].id,i)
+      ],
+    ))
+        :SizedBox(width: 1,);
+  }
+
+  _criarLinhaTable(String titulo, String descricao, bool contatado,String id, int i) {
+return TableRow(
+        children: [
+          col1(titulo,contatado),
+          col2(descricao,contatado),
+          colCheck(contatado, titulo, id, i)
+        ]
+    );
+  }
+
+  Widget col1(String title, bool isContrato){
+    return Container(
+        height:70,
+        decoration: BoxDecoration(
+          //borderRadius: BorderRadius.circular(10),
+            border: Border(
+              left: BorderSide(color:(isContrato?HexColor(Constants.red):HexColor(Constants.blue)),width: 5),
+            )
+        ),
+        child:
+        Container(
+            height:70,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20.0),
+                color:HexColor(Constants.firtColumn)
+            ),
+            padding: EdgeInsets.all(4.0),
+            margin: EdgeInsets.only(right: 1.0),
+            child:
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children:[
+                Icon(Icons.miscellaneous_services_outlined,color:isContrato?HexColor(Constants.red):HexColor(Constants.blue)),
+                Expanded(child:
+                Text(
+                  title,
+                  textAlign: TextAlign.start,
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: 13.0,
+                    color: isContrato?HexColor(Constants.red):HexColor(Constants.blue),
+                    fontWeight: FontWeight.bold,
+                  )
+              ))
+        ])));
+  }
+  Widget col2(String desc, bool isContrato){
+    return
+        Container(
+          height:70,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20.0),
+                color:Colors.white
+            ),
+            padding: EdgeInsets.all(5.0),
+            margin: EdgeInsets.only(left:1.0,right: 1.0),
+            child:
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children:[
+                  Expanded(child:
+            Text(
+                desc,
+                style: TextStyle(
+                  fontSize: 13.0,
+                  color: isContrato?HexColor(Constants.red):HexColor(Constants.blue),
+                  fontWeight: FontWeight.normal
+                )
+            ))])
         );
   }
-
-  Widget _body(){
-    return Expanded(
-        child: listView());
-  }
-
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Text(
-                    'Serviços Contratados',
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  SizedBox(width: 80,)
-                ],
-              ),
-            ),
-
-          ]),
-    );
-  }
-
-  /**
-   * for (int i=0; i<5; i++)
-      getAlert('titulo', day.add(Duration(days:i)),
-      (i%2<1?"Gostaria de receber mais informações sobre o SonicWall":"Um consultor entrará em contato no seu telefone!"),
-      (i%2<1?"":"MaxProtection"))
-   */
-  Widget listView(){
-    DateTime day = DateTime.now().subtract(Duration(days:5));
-    return ListView(
-      children: <Widget>[
-        Row(children: [SizedBox(width: 12,),Text(
-          'Serviços contratados:',
-          textAlign: TextAlign.start,
-          style: TextStyle(
-            fontSize: 16.0,
-            color: HexColor(Constants.red),
-            fontWeight: FontWeight.w600,
+  Widget colCheck(bool isContrato, String title, String id, int index){
+    return
+      Container(
+          height:70,
+          decoration: BoxDecoration(
+            //borderRadius: BorderRadius.circular(10),
+              border: Border(
+                right: BorderSide(color:(isContrato?HexColor(Constants.red):HexColor(Constants.blue)),width: 5),
+              )
           ),
-        )],),
-        for (int i = 0; i < listModel.length; i++)
-          getAlert(listModel[i].id,listModel[i].titulo, listModel[i].descricao, listModel[i].contratado)
-      ],
-    );
-  }
-
-  Widget getAlert(String id, String title, String descricao, bool contratado){
-    return Card(
-        child: Column(
-          children: [
-            CheckboxListTile(
-              title: Text(title),
-              subtitle: Text(descricao),
-              secondary: const Icon(Icons.miscellaneous_services_outlined),
-              autofocus: false,
-              activeColor: HexColor(Constants.red),
-              checkColor: Colors.white,
-              selected: contratado,
-              value: contratado,
-              onChanged: (bool value) {
-                setState(() {
-                  if(value && !isConsultor){
-                    maisInfoServico(id,title);
-                  }
-                });
-              },
-            ),
-            SizedBox(height: 20,)
-          ],
-        )
-    );
+          child:
+          Container(
+              height:70,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20.0),
+                  color:Colors.white
+              ),
+              padding: EdgeInsets.all(4.0),
+              margin: EdgeInsets.only(left:1.0,right: 1.0),
+              child:
+              CheckboxListTile(
+                autofocus: false,
+                activeColor: HexColor(Constants.red),
+                checkColor: Colors.white,
+                selected: isContrato,
+                value: isContrato,
+                onChanged: (bool value) {
+                  setState(() {
+                    if(value && !isConsultor){
+                      maisInfoServico(id,title);
+                    }
+                  });
+                },
+              )
+          ));
   }
 
   void maisInfoServico(id, title){
@@ -513,28 +500,28 @@ class _ServicosPageState extends State<ServicosPage> {
       content: Text("Gostaria que um de nossos consultores entrasse em contato para falar mais sobre "+title+"?"),
       actions: [
         FlatButton(
-        onPressed: () {
-          sendMessage("Quero receber mais informações sobre "+title);
-          Navigator.pop(dialogContext, false);
-        }, // passing false
-    child: Text('Sim, por favor.'),
-    ),
-    FlatButton(
-    onPressed: () => Navigator.pop(dialogContext, true), // passing true
-    child: Text('Não, obrigada.'),
-    ),
+          onPressed: () {
+            sendMessage("Quero receber mais informações sobre "+title);
+            Navigator.pop(dialogContext, false);
+          }, // passing false
+          child: Text('Sim, por favor.'),
+        ),
+        FlatButton(
+          onPressed: () => Navigator.pop(dialogContext, true), // passing true
+          child: Text('Não, obrigada.'),
+        ),
       ],
     );  // show the dialog
     showDialog(
-      context: context,
-      builder: (context) {
-        dialogContext = context;
-        return alert;
-      }
+        context: context,
+        builder: (context) {
+          dialogContext = context;
+          return alert;
+        }
     );
   }
 
- Future<String> sendMessage(String assunto) async{
+  Future<String> sendMessage(String assunto) async{
     var url =Constants.urlEndpoint+'message/app';
 
     print("url $url");

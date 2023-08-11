@@ -1,6 +1,7 @@
 //@dart=2.10
 import 'dart:io';
 
+import 'package:app_maxprotection/utils/Logoff.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
@@ -17,9 +18,12 @@ import '../model/usuario.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/perfil.dart';
+import '../widgets/RadialButton.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
@@ -85,6 +89,9 @@ class _UserPageState extends State<UserPage> {
 
   EmpresasSearch _empSearch = new EmpresasSearch();
   Empresa empSel;
+  bool changeLogin=false;
+
+  MaskTextInputFormatter celularFormat = MaskTextInputFormatter(mask: "(##)#####-####",filter: { "#": RegExp(r'[0-9]') },type: MaskAutoCompletionType.lazy);
 
   var maskFormatter = new MaskTextInputFormatter(
       mask: '(##)#####-####',
@@ -108,6 +115,8 @@ class _UserPageState extends State<UserPage> {
     BackButtonInterceptor.add(myInterceptor);
     consultant = (widget.user["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
+
+    print(widget.user.toString());
     nome = widget.user["name"];
     login = widget.user["login"];
     fone = widget.user["phone"];
@@ -141,24 +150,17 @@ class _UserPageState extends State<UserPage> {
       empSel = _empSearch.lstOptions.elementAt(0);
 
     return Scaffold(
+        appBar: AppBar(backgroundColor: HexColor(Constants.blue), toolbarHeight: 0,),
+        backgroundColor: HexColor(Constants.grey),
+        resizeToAvoidBottomInset: false,
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
-          body: getMain(width),
-        ),
+        body: getMain(width),
         drawer:  Drawer(
+          width: width*0.6,
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('usuario',widget.user,textTheme),
+          child: SliderMenu('usuario',widget.user,textTheme,(width*0.5)),
         )
     );
   }
@@ -172,7 +174,7 @@ class _UserPageState extends State<UserPage> {
       padding: EdgeInsets.all(10.0),
       child: Row(children: [
         Icon(Icons.warning_amber_outlined,color:HexColor(Constants.red),size: 40.0),
-        Expanded(child: Text('Ao alterar qualquer informação você será desconectado e deverá efetuar login novamente.',
+        Expanded(child: Text('Ao alterar o campo e-mail você será desconectado e deverá efetuar login novamente.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15.0,
@@ -185,6 +187,22 @@ class _UserPageState extends State<UserPage> {
 
   Widget getMain(double width){
     return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Stack(
+              children: [
+                headerAlertas(_scaffoldKey, widget.user, context, width, 185, "Dados Cadastrais"),
+                Container(
+                    width: width*.98,
+                    height: MediaQuery.of(context).size.height-100,
+                    padding:  EdgeInsets.only(left:10,top:200),
+                    child: _body(MediaQuery.of(context).size.width))
+              ])],
+      ),
+    );
+    /**return SafeArea(
       child: Column(
         children: <Widget>[
           _header(width),
@@ -199,28 +217,140 @@ class _UserPageState extends State<UserPage> {
           _body(),
         ],
       ),
-    );
+    );**/
   }
-  Widget _body(){
-    return new Form(
+  Widget _body(double width){
+    return Column(children:[Container(
+      width: width*0.9,
+        child:new Form(
       key: _key,
-      child: _formUI(),
-    );
+      child: _formUI(width),
+    )),
+    Spacer(),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children: [RadialButton(buttonText: "Salvar", width: width*0.8, onpressed: ()=> _sendForm())],)]);
   }
 
-  Widget _formUI() {
+  Widget _formUI(double width) {
+    Color clTitle = HexColor(Constants.red);
+    Color clField = HexColor(Constants.blue);
     return new Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: <Widget>[
-        Text('Nome'),
+        Row(mainAxisAlignment: MainAxisAlignment.start,crossAxisAlignment:CrossAxisAlignment.start,children:[SizedBox(width: 13,),Text("Nome Completo",style: TextStyle(color:clTitle,fontWeight: FontWeight.bold))]),
+        SizedBox(height: 2,),
+        new TextFormField(
+            initialValue: nome,
+            onSaved: (String val) {
+              nome = val;
+            },
+            onChanged: (String val){
+              nome = val;
+            },
+            validator: _validarNome,
+            cursorColor: Colors.white,
+            style: TextStyle(color: clTitle),
+            decoration: new InputDecoration(
+              counterStyle: TextStyle(color:clTitle),
+                prefixIcon: Padding(
+                    padding: const EdgeInsets.only(right: 20,left:10),
+                    child:Icon(Icons.person,color:clTitle)),
+                hintText: 'Nome Completo',
+                hintStyle: TextStyle(color: clTitle),
+                enabledBorder: OutlineInputBorder(
+                borderSide:
+                BorderSide(width: 2, color: clTitle), //<-- SEE HERE
+                borderRadius: BorderRadius.circular(15.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(width:2,color: clTitle),
+                borderRadius: BorderRadius.circular(15.0),
+                ),
+                border: OutlineInputBorder(
+                borderSide: BorderSide(width:2,color: clTitle),
+                borderRadius: BorderRadius.circular(15.0),
+                ),errorStyle: TextStyle(color: clTitle)),
+            maxLength: 40,
+        ),
+        Row(mainAxisAlignment: MainAxisAlignment.start,children:[SizedBox(width: 13,),Text("Email",style: TextStyle(color:clTitle,fontWeight: FontWeight.bold))]),
+        SizedBox(height: 2,),
+        new TextFormField(
+          cursorColor: Colors.white,
+          initialValue: login,
+          style: TextStyle(color: clTitle),
+          decoration: new InputDecoration(hintText: 'Email', hintStyle: TextStyle(color: clTitle),
+              counterStyle: TextStyle(color:clTitle),
+              prefixIcon: Padding(
+                  padding: const EdgeInsets.only(right: 20,left:10),
+                  child:Icon(Icons.mail,color:clTitle)),
+              enabledBorder: OutlineInputBorder(
+                borderSide:
+                BorderSide(width: 2, color: clTitle), //<-- SEE HERE
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(width:2,color: clTitle),
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(width:2,color: clTitle),
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              errorStyle: TextStyle(color: clTitle)
+          ),
+          keyboardType: TextInputType.emailAddress,
+          maxLength: 40,
+            onSaved: (String val) {
+              login = val;
+            },
+            onChanged: (String val){
+              login = val;
+            },
+            validator: _validarLogin
+            ,),
+        Row(mainAxisAlignment: MainAxisAlignment.start,children:[SizedBox(width: 13,),Text("Celular",style: TextStyle(color:clTitle,fontWeight: FontWeight.bold))]),
+        SizedBox(height: 2,),
+        new TextFormField(
+            cursorColor: Colors.white,
+            initialValue: fone,
+            style: TextStyle(color: clTitle),
+            inputFormatters:[celularFormat],
+            decoration: new InputDecoration(hintText: '(DDD) 00000-0000',hintStyle: TextStyle(color: clTitle),
+                counterStyle: TextStyle(color:clTitle),
+                prefixIcon: Padding(
+                    padding: const EdgeInsets.only(right: 20,left:10),
+                    child:Icon(Icons.phone_android,color:clTitle)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                  BorderSide(width: 2, color: clTitle), //<-- SEE HERE
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(width:2,color: clTitle),
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width:2,color: clTitle),
+                  borderRadius: BorderRadius.circular(15.0),
+                ),errorStyle: TextStyle(color: clTitle)),
+            keyboardType: TextInputType.phone,
+            maxLength: 14,
+          onSaved: (String val) {
+            fone = val;
+          },
+          onChanged: (String val){
+            fone = val;
+          },
+          validator: _validarNome,
+        ),
+        /**Text('Nome'),
         TextFormField(
           style: TextStyle(color: HexColor(Constants.red)),
           initialValue: nome,
           decoration: new InputDecoration(
             contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-            onSaved: (String val) {
-              nome = val;
-            },
+          onSaved: (String val) {
+            nome = val;
+          },
           onChanged: (String val){
             nome = val;
           },
@@ -232,12 +362,12 @@ class _UserPageState extends State<UserPage> {
           initialValue: login,
           decoration: new InputDecoration(
             contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-            onSaved: (String val) {
-              login = val;
-            },
-            onChanged: (String val){
-              login = val;
-            },
+          onSaved: (String val) {
+            login = val;
+          },
+          onChanged: (String val){
+            login = val;
+          },
           validator: _validarLogin,
         ),
         Text('Celular/WhatsApp'),
@@ -258,13 +388,9 @@ class _UserPageState extends State<UserPage> {
           validator: _validarFone,
         ),
         (widget.user["tipo"]!="C"?empresasToShow()
-        :
+            :
         SizedBox(height:0)),
-        new SizedBox(height: 15.0),
-        new RaisedButton(
-          onPressed: _sendForm,
-          child: new Text('Enviar',style:TextStyle(color: HexColor(Constants.red), fontWeight: FontWeight.w700, fontSize: 14.0)),
-        )
+        new SizedBox(height: 15.0),**/
       ],
     );
   }
@@ -324,11 +450,14 @@ class _UserPageState extends State<UserPage> {
 
   _sendForm() {
     int changes=0;
-    print(usr.name+"|"+usr.login+"|"+usr.phone);
+    print(nome+"|"+login+"|"+fone);
     if (_key.currentState.validate()) {
       _key.currentState.save();
       if(usr.name!=nome)changes++;
-      if(usr.login!=login)changes++;
+      if(usr.login!=login) {
+        changes++;
+        changeLogin=true;
+      }
       if(usr.phone!=fone)changes++;
       if(changes>0)
         changeUser();
@@ -346,60 +475,29 @@ class _UserPageState extends State<UserPage> {
 
   Future<String> changeUser() {
     return ChangePassApi.changeUser(usr,nome,login,fone).then((resp) {
+      SharedPref sharedPref = SharedPref();
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
-        Message.showMessage("Não foi possível alterar sua senha!");
+        Message.showMessage("Não foi possível alterar seus dados!");
         return 'user not exists';
       }else {
+        if(changeLogin) {
+          Message.showMessage(
+              "Seus dados foram alterados!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
+          Logoff.logoff();
+        }else{
+          Message.showMessage("Seus dados foram alterados com sucesso!");
+          //TODO = replace widget
+          final usuario = resp.result;
 
-        Message.showMessage("Seus dados foram alterados!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
-
-        MyHomePage.state.logoff();
-
+          Perfil.setTecnico(usuario.tipo == "T" ? true : false);
+          sharedPref.save('usuario', usuario);
+          sharedPref.save(
+              'tecnico', (usuario.tipo == "T" ? "true" : "false"));
+        }
         return 'senha alterada';
       }
     });
-  }
-
-  Widget _header(double width){
-    return TopContainer(
-      height: 80,
-      width: width,
-      child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 0, vertical: 5.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
-                    tooltip: 'Voltar',
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
-                        builder: (context) => HomePage(),
-                      ));
-                    },
-                  ),
-                  Expanded(child: Text(
-                    'Dados Cadastrais',
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  )),
-                  SizedBox(width: 60,)
-                ],
-              ),
-            ),
-
-          ]),
-    );
   }
 
 }
