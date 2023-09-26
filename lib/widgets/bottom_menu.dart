@@ -18,16 +18,19 @@ class BottomMenu extends StatelessWidget{
   late Map<String, dynamic> usr;
   bool isConsultor=false;
   bool isTecnico = false;
+  double screenh=0.0;
 
   BottomMenu(BuildContext context, ScrollController _sc, double _width, Map<String, dynamic> user){
     this.ctx = context;
     this.sc = _sc;
     this.width = _width;
     usr = user;
+    print("tipo..."+user["tipo"]);
     if(usr["tipo"]=="C")
       isConsultor=true;
     if(usr["tipo"]=="T")
       isTecnico = true;
+    screenh = MediaQuery.of(context).size.height;
   }
 
 
@@ -93,24 +96,29 @@ class BottomMenu extends StatelessWidget{
                         fontWeight: FontWeight.w400,
                       )
                   ),
-                  SizedBox(width:20),
+                  SizedBox(width:10),
                   Icon(Icons.keyboard_arrow_up,
-                      color: HexColor(Constants.red), size: 30.0),
+                      color: HexColor(Constants.red), size: 24.0),
                 ],
               ),
             ),
             Column(
+              mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Container(
+                    alignment: Alignment.center,
                       color: HexColor(Constants.grey),
                       padding: EdgeInsets.symmetric(
-                          horizontal: 20.0, vertical: 10.0),
+                          horizontal: 15.0, vertical: 10.0),
                       child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 ActiveProjectsCard(
+                                  width: (screenh<700?width*0.38:width*0.42),
                                   ctx:context,
                                   r:false,
                                   action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
@@ -119,8 +127,9 @@ class BottomMenu extends StatelessWidget{
                                       color: HexColor(Constants.red), size: 20.0),
                                   title: 'Tickets Abertos',
                                 ),
-                                SizedBox(width: 20.0),
+                                SizedBox(width: (screenh<700?width*0.04:width*0.06)),
                                 ActiveProjectsCard(
+                                  width: (screenh<700?width*0.38:width*0.42),
                                   ctx:context,
                                   r:false,
                                   action: (isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),
@@ -131,35 +140,39 @@ class BottomMenu extends StatelessWidget{
                                 ),
                               ],
                             ),
+                            if(isTecnico)
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
-                                //(isTecnico?
                                 ActiveProjectsCard(
                                   r:false,
                                   ctx:context,
+                                  width: (screenh<700?width*0.38:width*0.9),
                                   //action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
                                   action: InnerOpenTicket(),
                                   cardColor: Colors.white,
                                   icon: Icon(Icons.mic,
                                       color: HexColor(Constants.red), size: 20.0),
                                   title: 'Abrir Chamado por Voz',
-                                ),//:SizedBox(height: 0,)),
+                                )
                               ],
                             ),
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
-                                (isTecnico?
                                 ActiveProjectsCard(
                                   r:false,
                                   ctx:context,
+                                  width: (screenh<700?width*0.38:width*0.9),
+                                  //action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
                                   action: InnerOpenTicketbytext(),
                                   cardColor: Colors.white,
-                                  icon: Icon(Icons.menu_book,
+                                  icon: Icon(Icons.keyboard,
                                       color: HexColor(Constants.red), size: 20.0),
                                   title: 'Abrir Chamado por Texto',
-                                ):SizedBox(height: 0,)),
+                                )
                               ],
-                            )
+                            ),
                           ]))]),
             SizedBox(
               height: 5,

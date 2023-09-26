@@ -95,9 +95,7 @@ class _TicketsPageState extends State<TicketsPage> {
 
     urlApi = Constants.urlEndpoint+"tech/full/"+tk.id;
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -137,7 +135,14 @@ class _TicketsPageState extends State<TicketsPage> {
         });
       }
     }else{
-      Message.showMessage("Link inacessível!\nTente novamente mais tarde.");
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        setState(() {
+          loading=false;
+        });
+      }else {
+        Message.showMessage("Link inacessível!\nTente novamente mais tarde.");
+      }
       loading = false;
     }
   }
@@ -155,7 +160,7 @@ class _TicketsPageState extends State<TicketsPage> {
 
   void initState() {
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     getData(widget.ticket);
   }
 
@@ -175,7 +180,7 @@ class _TicketsPageState extends State<TicketsPage> {
     double width = MediaQuery.of(context).size.width;
     _fcmInit.configureMessage(context, "tickets");
     double _panelHeightOpen = MediaQuery.of(context).size.height * .25;
-
+    double h = MediaQuery.of(context).size.height;
 
     return new Scaffold(
       /**appBar: AppBar(title: Text(widget.title),
@@ -207,7 +212,7 @@ class _TicketsPageState extends State<TicketsPage> {
             topRight: Radius.circular(20.0)),
         onPanelSlide: (double pos) => updateState(pos),
         panelBuilder: (sc) => _panel(sc,width,context),
-        body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
+        body: loading ? Center (child: CircularProgressIndicator()) : getMain(width,h),
       ),
       drawer: Drawer(
         child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
@@ -221,7 +226,7 @@ class _TicketsPageState extends State<TicketsPage> {
     ));
   }
 
-  Widget getMain(double width){
+  Widget getMain(double width, double h){
     return SafeArea(
       child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -229,9 +234,9 @@ class _TicketsPageState extends State<TicketsPage> {
           children: <Widget>[
                 headerTkDetail(_scaffoldKey,context, width,detail.title,detail.type,detail.id,goBack),
                 Container(
-                  width: width*.98,
-                  height: MediaQuery.of(context).size.height-100,
-                  padding:  EdgeInsets.only(left:5),
+                  width: width,
+                  height: MediaQuery.of(context).size.height-(h<700?195:105),
+                  //padding:  EdgeInsets.only(left:5),
                   child: getDetail(),
                 )
           ]
@@ -240,14 +245,13 @@ class _TicketsPageState extends State<TicketsPage> {
   }
   Widget getDetail(){
     return
-      SingleChildScrollView(
+      ListView(
           scrollDirection: Axis.vertical,
-          child:
-          Column(
-            children: [
-              //getTipo(detail.type),
+          children: [
+          //Column(
+            //children: [
               Container(
-                margin: EdgeInsets.only(top:10.0),
+                margin: EdgeInsets.only(top:10.0, left:20.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [Text("Solicitante",style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))],
@@ -255,7 +259,7 @@ class _TicketsPageState extends State<TicketsPage> {
               ),
               getSolicitante(),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -263,14 +267,14 @@ class _TicketsPageState extends State<TicketsPage> {
                   )),
               getServico(),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [Text("Categoria",style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))],
                   )),
               getCategoria(),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -278,7 +282,7 @@ class _TicketsPageState extends State<TicketsPage> {
                   )),
               getUrgencia(),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -286,28 +290,28 @@ class _TicketsPageState extends State<TicketsPage> {
                   )),
               getCc(),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: [Expanded(child: Text(detail.title,style: TextStyle(fontSize:16, fontWeight: FontWeight.w500)))],
+                    children: [Flexible(child: Text(detail.title,style: TextStyle(fontSize:14, fontWeight: FontWeight.w500)))],
                   )),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [Text("Ticket aberto em: "+detail.created,style: TextStyle(fontSize:14))],
                   )),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [Text("Status: ",style: TextStyle(fontSize:14)),Text(detail.status,style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500))],
                   )),
               Container(
-                  margin: EdgeInsets.only(top:10.0),
+                  margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -315,7 +319,7 @@ class _TicketsPageState extends State<TicketsPage> {
                   )),
               logs()
             ],
-          ));
+          );
   }
   Widget getSolicitante(){
     return Container(
@@ -327,13 +331,13 @@ class _TicketsPageState extends State<TicketsPage> {
             right:BorderSide(color:HexColor(Constants.red),width: 4),
           )
       ),
-          margin: EdgeInsets.all(10.0),
+          margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Text(detail.client.businessName,style: TextStyle(fontSize: 17),)]),
-              Row(children: [Text(detail.client.email!=null?detail.client.email:"-")]),
-              Row(children: [Text(detail.client.phone)]),
-              Row(children: [Text((detail.client.organization!=null?detail.client.organization.businessName:"-"))]),
+              Row(children: [Text(detail.client.businessName,style: TextStyle(fontSize: 17,fontWeight: FontWeight.bold,color: HexColor(Constants.blue)),)]),
+              Row(children: [Text(detail.client.email!=null?detail.client.email:"-",style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
+              Row(children: [Text(detail.client.phone,style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
+              Row(children: [Text((detail.client.organization!=null?detail.client.organization.businessName:"-"),style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
             ],
           ),
     );
@@ -348,11 +352,11 @@ class _TicketsPageState extends State<TicketsPage> {
               right:BorderSide(color:HexColor(Constants.red),width: 4),
             )
         ),
-          margin: EdgeInsets.all(10.0),
+      margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Expanded(child: Text((detail.serviceFirstLevel!=null?detail.serviceFirstLevel:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)))]),
-              Row(children: [Text((detail.serviceSecondLevel!=null?detail.serviceSecondLevel:'-'))])
+              Row(children: [Flexible(child: Text((detail.serviceFirstLevel!=null?detail.serviceFirstLevel:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16,color: HexColor(Constants.blue))))]),
+              Row(children: [Text((detail.serviceSecondLevel!=null?detail.serviceSecondLevel:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
             ],
           ),
     );
@@ -368,10 +372,10 @@ class _TicketsPageState extends State<TicketsPage> {
                 right:BorderSide(color:HexColor(Constants.red),width: 4),
               )
           ),
-          margin: EdgeInsets.all(10.0),
+        margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Text((detail.category!=null?detail.category:'-'))])
+              Row(children: [Text((detail.category!=null?detail.category:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
             ],
           ),
     );
@@ -380,7 +384,6 @@ class _TicketsPageState extends State<TicketsPage> {
   Widget getCc(){
     return Container(
         padding: EdgeInsets.all((10.0)),
-            margin: EdgeInsets.all(10.0),
             decoration: BoxDecoration(
                 color:Colors.white,
               border: Border(
@@ -388,11 +391,12 @@ class _TicketsPageState extends State<TicketsPage> {
                 right:BorderSide(color:HexColor(Constants.red),width: 4),
               )
             ),
+        margin: EdgeInsets.only(left:5, right: 5, top:2),
             child:Column(
                 children: [
                   Row(children: [
-                    Expanded(
-                      child: Text((detail.cc!=null?detail.cc:"-")),
+                    Flexible(
+                      child: Text((detail.cc!=null?detail.cc:"-"),style:TextStyle(color: HexColor(Constants.blue))),
                     )])]
             )
         );
@@ -415,7 +419,7 @@ class _TicketsPageState extends State<TicketsPage> {
               right:BorderSide(color:HexColor(Constants.red),width: 4),
             )
         ),
-            margin: EdgeInsets.all(10.0),
+        margin: EdgeInsets.only(left:5, right: 5, top:2),
             child: Column(
               children: [
                 Row(children: [
@@ -429,7 +433,7 @@ class _TicketsPageState extends State<TicketsPage> {
                   ),
 
                   //Icon(Icons.crop_square_outlined,color: Colors.green),
-                  Row(children: [Text(detail.urgency)])],)
+                  Row(children: [Text((detail.urgency!=null?detail.urgency:"-"),style:TextStyle(color: HexColor(Constants.blue),fontWeight: FontWeight.bold))])],)
               ],
             )
     );
@@ -451,28 +455,28 @@ class _TicketsPageState extends State<TicketsPage> {
         color: HexColor(Constants.grey),
         child:
         Container(
-          margin: EdgeInsets.all(10.0),
+          margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:
           Column(
             children: [
               Row(
-                children: [Text(act.createdDate),Spacer(),Text("Mensagem",style: TextStyle(fontStyle: FontStyle.italic))],
+                children: [Text(act.createdDate,style:TextStyle(color: HexColor(Constants.blue))),Spacer(),Text("Mensagem",style: TextStyle(fontStyle: FontStyle.italic,color:HexColor(Constants.blue)))],
               ),
               Divider(color: HexColor(Constants.red),),
               Row(
-                children: [Text("De:"),Text(
-                    (act.createdBy!=null?act.createdBy.businessName:"-")
+                children: [Text("De:",style:TextStyle(color: HexColor(Constants.blue))),Text(
+                    (act.createdBy!=null?act.createdBy.businessName:"-"),style:TextStyle(color: HexColor(Constants.blue))
                 )],
               ),
               Row(
-                children: [Text("Assunto: "),Text(act.justification)],
+                children: [Text("Assunto: ",style:TextStyle(color: HexColor(Constants.blue))),Text(act.justification,style:TextStyle(color: HexColor(Constants.blue)))],
               ),
               //Spacer(),
               Row(
                 children: [
-                  Expanded(
+                  Flexible(
                       child:
-                      Text(act.description)
+                      Text(act.description,style:TextStyle(color: HexColor(Constants.blue)))
                   )
                 ],
               ),

@@ -1,4 +1,5 @@
 //@dart=2.9
+import 'package:app_maxprotection/screens/VerifyMfa.dart';
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/login_screen.dart';
 import 'package:app_maxprotection/screens/welcome_screen.dart';
@@ -99,7 +100,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    MaterialColor bgColor = MaterialColor(0xFF1b3445,colorBlue);
+    //MaterialColor bgColor = MaterialColor(0xFF1b3445,colorBlue);
     MaterialColor accentColor = MaterialColor(0xFFa32330,colorRed);
     MaterialColor greyColor = MaterialColor(0xFFe8e6e6,colorGrey);
 
@@ -117,8 +118,8 @@ class MyApp extends StatelessWidget {
       title: 'Security App',
       theme: ThemeData(
         // brightness: Brightness.dark,
-        unselectedWidgetColor: Colors.white,
-        primarySwatch: bgColor,
+        unselectedWidgetColor: HexColor(Constants.blue),
+        //primarySwatch: bgColor,
         accentColor: accentColor,
         textSelectionTheme: TextSelectionThemeData(cursorColor: greyColor),
         colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
@@ -158,8 +159,7 @@ class MyApp extends StatelessWidget {
           overline: TextStyle(fontFamily: 'Metropolis'),
         ),
       ),
-      //home: InnerTickets(),
-      //home: LoginScreen(),
+      //home: VerfiyMfa(),
       home: (usr!=null?HomePage():WelcomeScreen()),
       /**home: LoginScreen(),
       navigatorObservers: [TransitionRouteObserver()],

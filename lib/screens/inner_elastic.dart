@@ -195,9 +195,7 @@ class _ElasticPageState extends State<ElasticPage> {
       urlApi = Constants.urlEndpoint + "alert/elastic/initial/" +
           widget.user["id"] + "/" + dtParam1 + "/" + dtParam2;
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -223,6 +221,12 @@ class _ElasticPageState extends State<ElasticPage> {
         loading = false;
       });
     }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        initialEmpresa.clear();
+        listModel = [];
+        data = [];
+      }
       loading = false;
     }
   }
@@ -240,7 +244,6 @@ class _ElasticPageState extends State<ElasticPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    empSel = widgetSearchEmpresa.state.empSel;
 
     //TODO: aqui fazer a condicão se é consultour ou cliente
     if(widget.user["tipo"]=="C")
@@ -260,9 +263,7 @@ class _ElasticPageState extends State<ElasticPage> {
     print(urlApi);
     print("**********");
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -315,6 +316,14 @@ class _ElasticPageState extends State<ElasticPage> {
           data.add(_ChartData(k, v, clHIGH));
       });
     }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        setState(() {
+        listModel = [];
+        data = [];
+          loading=false;
+        });
+      }
       loading = false;
     }
   }
@@ -364,12 +373,14 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
 
   void initState() {
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 90));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
@@ -380,8 +391,6 @@ class _ElasticPageState extends State<ElasticPage> {
 
     if(widget.user["tipo"]=="C") {
       isConsultor = true;
-      widgetSearchEmpresa =
-          searchEmpresa(onchangeF: () => getData(), context: context);
       initialEnterpriseData();
     }else {
       getData();
@@ -399,6 +408,11 @@ class _ElasticPageState extends State<ElasticPage> {
   void updateState(double pos){
     _fabHeight = pos * (_panelHeightOpen - _panelHeightClosed) + _initFabHeight;
   }
+
+  void setSelectedEmpresa(Empresa e){
+    this.empSel = e;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -406,6 +420,8 @@ class _ElasticPageState extends State<ElasticPage> {
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "elastic");
+    widgetSearchEmpresa =
+        searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,);
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
@@ -484,7 +500,7 @@ class _ElasticPageState extends State<ElasticPage> {
 
   Widget rangeDate(){
     return Container(
-        height: 59,
+        height: 58,
         margin: EdgeInsets.only(left:6.0,right: 6.0, top:10.0),
         decoration: BoxDecoration(
           border: Border(
@@ -493,6 +509,7 @@ class _ElasticPageState extends State<ElasticPage> {
           ),
           color:HexColor(Constants.firtColumn),
         ),
+        padding: EdgeInsets.zero,
         child:
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -504,6 +521,7 @@ class _ElasticPageState extends State<ElasticPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(width: 10,),
+                    SizedBox(height: 17,),
                     Text(
                       'Período:',
                       textAlign: TextAlign.start,
@@ -519,6 +537,7 @@ class _ElasticPageState extends State<ElasticPage> {
             ),
             Spacer(),
             Container(
+              padding: EdgeInsets.zero,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),
@@ -527,43 +546,35 @@ class _ElasticPageState extends State<ElasticPage> {
                 child:
                 Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Row(
-                        children: [
-                          Text("De",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start)
-                        ],
-                      ),
-                      Row(
-                          children: [
-                            Expanded(
-                                flex:1,
-                                child:
-                                TextField(
-                                  enableInteractiveSelection: false,
-                                  controller: txt,
-                                  readOnly: true,
-                                  style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
-                                  textAlignVertical: TextAlignVertical.top,
-                                  decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                                    fillColor: Colors.white,filled: true,
-                                    border: InputBorder.none,
-                                    prefixIcon: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 16,),
-                                    prefixIconConstraints: BoxConstraints(
-                                        maxWidth: 20,
-                                        maxHeight: 20
-                                    ),
-                                    suffixIcon:  IconButton(
-                                      icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red), size:16),
-                                      onPressed: ()=>_selectDate(context),
-                                    ),
-                                    suffixIconConstraints: BoxConstraints(
-                                        maxWidth: 25,
-                                        maxHeight: 25
-                                    ),
-                                  ),
-                                ))]),
+                      SizedBox(height: 1,),
+                      Text("De",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start),
+                      TextField(
+                        enableInteractiveSelection: false,
+                        controller: txt,
+                        readOnly: true,
+                        style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          fillColor: Colors.white,filled: true,
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 16,),
+                          prefixIconConstraints: BoxConstraints(
+                              maxWidth: 18,
+                              maxHeight: 18
+                          ),
+                          suffixIcon:  IconButton(
+                            icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red), size:16),
+                            onPressed: ()=>_selectDate(context),
+                          ),
+                          suffixIconConstraints: BoxConstraints(
+                              maxWidth: 22,
+                              maxHeight: 22
+                          ),
+                        ),
+                      )
                     ])
             ),
             SizedBox(width: 4,),
@@ -576,43 +587,35 @@ class _ElasticPageState extends State<ElasticPage> {
                 child:
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text("Até",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start,)
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Expanded(child: TextField(
-                          enableInteractiveSelection: false,
-                          readOnly: true,
-                          controller: txt2,
-                          style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
-                          textAlignVertical: TextAlignVertical.top,
-                          decoration: InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            fillColor: Colors.white,filled: true,
-                            border: InputBorder.none,
-                            prefix: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 14,),
-                            prefixIconConstraints: BoxConstraints(
-                                maxWidth: 20,
-                                maxHeight: 20
-                            ),
-                            suffixIcon:  IconButton(
-                              icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red),size:16),
-                              onPressed: ()=>_selectDate2(context),
-                            ),
-                            suffixIconConstraints: BoxConstraints(
-                                maxWidth: 25,
-                                maxHeight: 25
-                            ),
-                          ),
-                        ))
-                      ],
+                    SizedBox(height: 1,),
+                    Text("Até",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start,),
+                    TextField(
+                      enableInteractiveSelection: false,
+                      readOnly: true,
+                      controller: txt2,
+                      style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
+                      textAlignVertical: TextAlignVertical.top,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        //contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        fillColor: Colors.white,filled: true,
+                        border: InputBorder.none,
+                        prefix: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 14,),
+                        prefixIconConstraints: BoxConstraints(
+                            maxWidth: 18,
+                            maxHeight: 18
+                        ),
+                        suffixIcon:  IconButton(
+                          icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red),size:16),
+                          onPressed: ()=>_selectDate2(context),
+                        ),
+                        suffixIconConstraints: BoxConstraints(
+                            maxWidth: 22,
+                            maxHeight: 22
+                        ),
+                      ),
                     )
                   ],
                 )
@@ -807,7 +810,7 @@ class _ElasticPageState extends State<ElasticPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    Expanded(
+                    Flexible(
                         child:
                         Column(
                             mainAxisSize: MainAxisSize.max,

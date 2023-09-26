@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:app_maxprotection/screens/VerifyMfa.dart';
 import 'package:app_maxprotection/screens/inner_forgotpass.dart';
 import 'package:app_maxprotection/screens/login_request.dart';
 import 'package:app_maxprotection/widgets/RadialButton.dart';
@@ -182,7 +183,8 @@ class WelcomeScreenState extends State<WelcomeScreen>{
                     RadialButton(buttonText: "LOGIN", width: width, onpressed: ()=> getlogin(context)),
                     SizedBox(height: (tamanho<700?8:10),),
                     InkWell(
-                      child: Text("Solicitar login de acesso...",style: TextStyle(color:Colors.white),),
+                      child: Row(mainAxisAlignment:MainAxisAlignment.center,children:[Text("Solicitar login de acesso ",style: TextStyle(color:Colors.white),),
+                        Text("Sign Up",style: TextStyle(color:Colors.white,decoration: TextDecoration.underline,decorationThickness: 4,),)]),
                       onTap: () => requestLogin(context),
                     )],
                 ))
@@ -352,8 +354,11 @@ class WelcomeScreenState extends State<WelcomeScreen>{
       if(!resp.ok){
         Message.showMessage(resp.msg);
       }else {
-        Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
+        /**Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
           builder: (context)=>HomePage(),
+        ),(Route<dynamic> route) => false);**/
+        Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
+          builder: (context)=>verifyTwoFactor(),
         ),(Route<dynamic> route) => false);
       }
     });

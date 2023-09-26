@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:app_maxprotection/api/CallTecnicoApi.dart';
 import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/RoleModel.dart';
+import 'package:app_maxprotection/screens/inner_tecnicos.dart';
+import 'package:app_maxprotection/screens/inner_todostk.dart';
 import 'package:app_maxprotection/utils/HomeSearchDelegate.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:app_maxprotection/utils/Logoff.dart';
@@ -134,10 +136,10 @@ class _MyHomePageState extends State<MyHomePage>{
     print(">>>>"+matchQuery.toString());
   }
 
-  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
     return true;
-  }
+  }**/
 
 
   Future<void> initFCM() async {
@@ -175,8 +177,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
     String urlApi = "";
 
-
-    print("dashboardRefresh..."+widget.user["tipo"]);
+    //widget.user.forEach((k,v) => print("got key $k with $v"));
 
     if(widget.user['tipo']=="C") {
       urlApi = Constants.urlEndpoint + "dashboard/consultor/" +
@@ -199,10 +200,7 @@ class _MyHomePageState extends State<MyHomePage>{
       isConsultor=false;
     }
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    print("credenciais..."+u);
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
     "Authorization": basicAuth,
@@ -272,9 +270,8 @@ class _MyHomePageState extends State<MyHomePage>{
 
     try{
 
-      String u = widget.user["login"]+"|"+widget.user["password"];
       String p = widget.user["password"];
-      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+      String basicAuth = "Bearer "+widget.user["token"];
       var ssl = false;
       var responseData = null;
 
@@ -354,7 +351,7 @@ class _MyHomePageState extends State<MyHomePage>{
     _fabHeight = _initFabHeight;
     super.initState();
     taskRefresh();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
   }
 
   void taskRefresh(){
@@ -368,7 +365,7 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     alarm.cancel();
     super.dispose();
   }
@@ -386,6 +383,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
   void updateState(double pos){
     _fabHeight = pos * (_panelHeightOpen - _panelHeightClosed) + _initFabHeight;
+    print("_fabheight..."+_fabHeight.toString());
   }
   @override
   Widget build(BuildContext context) {
@@ -577,8 +575,8 @@ class _MyHomePageState extends State<MyHomePage>{
                 Spacer(),
                 FlatButton(
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(FadePageRoute(
-                      builder: (context) => (isConsultor?TicketsviewConsultor(0):TicketlistConsultor(null, 0)),
+                    Navigator.of(context).push(FadePageRoute(
+                      builder: (context) => (isConsultor?TicketsviewConsultor(0):InnerTodosTk()),
                     ));},
                   child: Text(
                     'Ver todos',
@@ -594,8 +592,8 @@ class _MyHomePageState extends State<MyHomePage>{
                   icon: const Icon(Icons.arrow_forward_ios_outlined, color:Colors.white,size: 18.0),
                   tooltip: 'Ver todos',
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(FadePageRoute(
-                      builder: (context) => (isConsultor?TicketsviewConsultor(0):TicketlistConsultor(null, 0)),
+                    Navigator.of(context).push(FadePageRoute(
+                      builder: (context) => (isConsultor?TicketsviewConsultor(0):InnerTodosTk()),
                     ));
                   },
                 )
@@ -606,7 +604,7 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   callTecnico() async{
-    CallTecnicoApi.callTecnico(widget.user["login"],widget.user["password"],widget.user["id"])
+    CallTecnicoApi.callTecnico(widget.user["token"],widget.user["id"])
     .then((resp){
     print('callTecnicoAPI. ${resp.ok}');
     if(!resp.ok){
@@ -638,6 +636,12 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   Widget _body(double width){
+    double bheight = MediaQuery.of(context).size.height-290;
+    print("altura para o body...."+bheight.toString());
+    double rowHeight = (bheight/4)-80;
+    print("altura de cada linha: "+rowHeight.toString());
+    bool extraRow =(widget.user["tipo"]=="T"||widget.user["tipo"]=="D"?true:false);
+
     return //Expanded(
       SingleChildScrollView(
         child: Column(
@@ -646,197 +650,72 @@ class _MyHomePageState extends State<MyHomePage>{
             Container(
               width: width,
               color: Colors.transparent,
+              height: bheight,
               /**padding: EdgeInsets.only(
                   left:width*0.1,right:width*0.1),**/
               child: Column(
                 children: <Widget>[
-                  SizedBox(height: 25,),
+                  //SizedBox(height: 25,),
+                  Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Spacer(),
-                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,icon:Icon(Icons.phone_forwarded,color: Colors.white),title: "Fale com o Diretor",ctx: context,r:true,
+                      SizedBox(width: width*0.06,),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,icon:Icon(Icons.phone_forwarded,color: Colors.white),title: "Fale com o Diretor",ctx: context,r:true,
                         onclickF: ()=>faleComDiretor(context),),
                       Spacer(),
-                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,title: "Leads",ctx: context,r:true,
-                        onclickF: ()=>InnerMessages(4),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,title: "Leads",ctx: context,r:false,
+                        action: InnerMessages(4),
                           icon: (dashboard.msgLead>0?BlinkIcon():Icon(Icons.people_outline,color: Colors.white)),
                           disableBlink: (){this.diableBlink();},
                       ),
-                      Spacer()
+                      SizedBox(width: width*0.05,),
                     ],
                   ),
-                  SizedBox(height: 20,),
+                  (bheight<400 && extraRow?SizedBox(height: 15,):Spacer()),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      SizedBox(width: width*0.06,),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS\nABERTOS",ctx: context,image: "images/tkaberto.png",action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),r:false,bheight: bheight),
                       Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS\nABERTOS",ctx: context,image: "images/tkaberto.png",action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),r:false),
-                      Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS EM\nATENDIMENTO",ctx: context,image: "images/tkatendimento.png", action:(isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),r:false),
-                      Spacer()
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "TICKETS EM\nATENDIMENTO",ctx: context,image: "images/tkatendimento.png", action:(isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),r:false,bheight: bheight),
+                      SizedBox(width: width*0.06,),
                     ],
                   ),
-                  SizedBox(height:10),
+                  (bheight<400 && extraRow?SizedBox(height: 15,):Spacer()),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      SizedBox(width: width*0.06,),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "SIEM",ctx: context,image: "images/siem.png",action: InnerElastic(null,null),r:false,bheight: bheight),
                       Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "SIEM",ctx: context,image: "images/siem.png",action: InnerElastic(null,null),r:false),
-                      Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "ZABBIX",ctx: context,image: "images/zabbix.png", action: InnerZabbix(null,null),r:false),
-                      Spacer()
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "ZABBIX",ctx: context,image: "images/zabbix.png", action: InnerZabbix(null,null),r:false,bheight: bheight),
+                      SizedBox(width: width*0.06,),
                     ],
                   ),
-                  SizedBox(height:10),
+                  (bheight<400 && extraRow?SizedBox(height: 15,):Spacer()),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      SizedBox(width: width*0.06,),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nTICKETS",ctx: context,image: "images/message.png",action:InnerMessages(2),r:false,bheight: bheight),
                       Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nTICKETS",ctx: context,image: "images/message.png",action:InnerMessages(2),r:false),
-                      Spacer(),
-                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nSIEM",ctx: context,image: "images/message.png",action:InnerMessages(1),r:false),
-                      Spacer()
-                    ],
-                  )
-                  /** Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        ctx:context,
-                        r:false,
-                        action: (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.support,
-                            color: HexColor(Constants.red), size: 20.0),
-                        title: 'Tickets Abertos',
-                      ),
-                      SizedBox(width: 20.0),
-                      ActiveProjectsCard(
-                          ctx:context,
-                          r:false,
-                          action: (isConsultor?TicketsviewConsultor(2):TicketlistConsultor(null,2)),
-                        cardColor: Colors.white,
-                        icon:Icon(Icons.watch_later_outlined,
-                            color: HexColor(Constants.red), size: 20.0),
-                        title: 'Tickets em Atendimento',
-                      ),
+                      BlockButtonWidget(cardColor: Colors.white,width: width*0.4,title: "MENSAGENS\nSIEM",ctx: context,image: "images/message.png",action:InnerMessages(1),r:false,bheight: bheight),
+                      SizedBox(width: width*0.06,),
                     ],
                   ),
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        ctx:context,
-                        r:false,
-                        action: InnerElastic(null,null),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.volume_down_sharp,
-                            color: HexColor(Constants.red), size: 20.0),
-                        title: 'SIEM',
-                      ),
-                      SizedBox(width: 20.0),
-                      ActiveProjectsCard(
-                        ctx:context,
-                        r:false,
-                        action: InnerZabbix(null,null),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.web,
-                            color: HexColor(Constants.red), size: 20.0),
-                        title: 'Zabbix',
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        r:false,
-                        ctx:context,
-                        action: InnerMessages(2),
-                        cardColor: Colors.white,
-                        icon: (dashboard.msgTicket>0?BlinkIcon():null),
-                        title: 'Mensagens sobre Tickets',
-                      ),
-                      SizedBox(width: 20.0),
-                      ActiveProjectsCard(
-                        r:false,
-                        ctx:context,
-                        action: InnerMessages(1),
-                        cardColor: Colors.white,
-                        icon:(dashboard.msgSiem>0?BlinkIcon():null),
-                        title: 'Mensagens sobre SIEM',
-                      ),
-                    ],
-                  ),
-                  (widget.user["tipo"]=="C"?
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        r:false,
-                        ctx:context,
-                        action: InnerMessages(4),
-                        cardColor: Colors.white,
-                        icon: (dashboard.msgLead>0?BlinkIcon():null),
-                        title: 'Leads',
-                        disableBlink: (){this.diableBlink();},
-                      ),
-                    ],
-                  )
-                      :
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        ctx:context,
-                        r:false,
-                        action: InnerMessages(3),
-                        cardColor: Colors.white,
-                        icon: (dashboard.msgZabbix>0?Icon(Icons.email_outlined,
-                            color: HexColor(Constants.red), size: 20.0):null),
-                        title: 'Mensagens sobre Zabbix',
-                      ),
-                    ],
-                  ))
-                  ,
-                  (widget.user["tipo"]=="T"?
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        ctx:context,
-                        r:true,
-                        onclickF: ()=>callTecnico(),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.call_outlined, color: HexColor(Constants.red),size:20.0),
-                        title: 'Ligar para Técnico Plantonista!',
-                      ),
-                    ],
-                  )
-                      : SizedBox(height: 1,)),
-                  (widget.user["tipo"]=="D"?
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        r:false,
-                        ctx:context,
-                        action: InnerTecnicos(),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.person_outline_outlined, color: HexColor(Constants.red),size:20.0),
-                        title: 'Técnicos',
-                      ),
-                    ],
-                  )
-                      : SizedBox(height: 1,)),
-                  ((widget.user["tipo"]=="D" && widget.user["interno"])?SizedBox(height: 1,):
-                  Row(
-                    children: <Widget>[
-                      ActiveProjectsCard(
-                        ctx: context,
-                        r:true,
-                        onclickF: ()=>faleComDiretor(context),
-                        cardColor: Colors.white,
-                        icon: Icon(Icons.message, color: HexColor(Constants.red),size:20.0),
-                        title: 'Fale com o Diretor',
-                      ),
-                    ],
-                  )),
-                  ,buildTileNoticia(width),**/
+                  (bheight<400 && extraRow?SizedBox(height: 15,):Spacer()),
+                  if(widget.user["tipo"]=="T")
+                    Row(mainAxisAlignment: MainAxisAlignment.center,children: <Widget>[BlockButtonWidget(cardColor: Colors.white,width: width*0.875,title: "Ligar para Plantonista",ctx: context,icon:Icon(Icons.phone_forwarded,color: HexColor(Constants.blueButton),size:40),onclickF: ()=>callTecnico(),r:true,bheight: bheight)]),
+                  if(widget.user["tipo"]=="D")
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[BlockButtonWidget(cardColor: Colors.white,width: width*0.875,title: "TÉCNICOS",ctx: context,icon:Icon(Icons.people_outline,color: HexColor(Constants.blueButton),size: 40,),action:InnerTecnicos(),r:false,bheight: bheight)
+                      ],
+                    ),
+                  (bheight<400 && extraRow?SizedBox(height: 15,):SizedBox(height: 10,)),
                 ],
               ),
             ),

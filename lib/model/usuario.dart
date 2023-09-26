@@ -21,9 +21,16 @@ class Usuario extends ChangeNotifier{
   Role role;
   String phone;
   bool interno;
+  String token;
 
-  Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T",this.interno=false});
+  Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T",this.interno=false,this.token=""});
 
+  Usuario.simpleFromJSon(Map<dynamic, dynamic> json){
+    id = (json['id']!=null?json["id"]:0);
+    name = json['name'];
+    login = json['login'];
+    tipo = json["tipo"];
+  }
   Usuario.fromJson(Map<String, dynamic> json) {
     id = (json['id']!=null?json["id"]:0);
     name = json['name'];
@@ -60,6 +67,7 @@ class Usuario extends ChangeNotifier{
     }
     hasAccess = json['hasAccess'];
     interno = (json['interno']!=null?json['interno']:false);
+    token = (json["token"]!=null?json["token"]:null);
   }
 
   Usuario.fromCall(Map<String,dynamic> json){
@@ -75,6 +83,7 @@ class Usuario extends ChangeNotifier{
     phone = json["phone"];
     hasAccess = json['hasAccess'];
     interno = json['interno'];
+    token = json['token'];
   }
   Usuario.fromSharedPref(Map<String, dynamic> json) {
     id = json['id'];
@@ -99,6 +108,7 @@ class Usuario extends ChangeNotifier{
       }
     hasAccess = json["hasAccess"];
       interno = json['interno'];
+      token = json['token'];
   }
 
   void setEmpresas(List<Empresa> lst){
@@ -126,6 +136,7 @@ class Usuario extends ChangeNotifier{
     data['empresas'] =  this.empresas != null ? this.empresas.map((i) => i.toJson()).toList() : null;
     data['hasAccess'] = this.hasAccess;
     data['interno'] = this.interno;
+    data["token"] = this.token;
     return data;
   }
 

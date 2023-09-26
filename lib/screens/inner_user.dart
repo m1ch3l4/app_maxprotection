@@ -102,6 +102,9 @@ class _UserPageState extends State<UserPage> {
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
   void dispose(){
@@ -489,11 +492,10 @@ class _UserPageState extends State<UserPage> {
           Message.showMessage("Seus dados foram alterados com sucesso!");
           //TODO = replace widget
           final usuario = resp.result;
-
-          Perfil.setTecnico(usuario.tipo == "T" ? true : false);
-          sharedPref.save('usuario', usuario);
-          sharedPref.save(
-              'tecnico', (usuario.tipo == "T" ? "true" : "false"));
+            Perfil.setTecnico(usuario.tipo == "T" ? true : false);
+            sharedPref.save('usuario', usuario);
+            sharedPref.save(
+                'tecnico', (usuario.tipo == "T" ? "true" : "false"));
         }
         return 'senha alterada';
       }

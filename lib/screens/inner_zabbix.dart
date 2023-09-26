@@ -22,6 +22,7 @@ import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../utils/HttpsClient.dart';
+import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
@@ -179,6 +180,10 @@ class _ZabbixPageState extends State<ZabbixPage> {
       });
   }
 
+  void setSelectedEmpresa(Empresa e){
+    this.empSel = e;
+  }
+
   Future<Null> getData() async{
     if(!mounted) return;
 
@@ -192,9 +197,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    empSel = widgetSearchEmpresa.state.empSel;
-
-    print("pegou empSel do searchEmpresa...."+empSel.toString());
+    //empSel = widgetSearchEmpresa.state.empSel;
 
     if(widget.user["tipo"]=="C")
       urlApi = Constants.urlEndpoint + "alert/zabbix/" +
@@ -213,9 +216,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
     print(urlApi);
     print("**********");
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -254,7 +255,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
             }
           }
           //loading = false;
-          widgetSearchEmpresa.state.empSel = empSel;
+          //widgetSearchEmpresa.state.empSel = empSel;
         });
         //dados.forEach((k,v) => data.add(_ChartData(k, v)));
         dados.forEach((k,v) {
@@ -264,12 +265,20 @@ class _ZabbixPageState extends State<ZabbixPage> {
             data.add(_ChartData(k, v, clFALHA));
         });
       } else {
+        if(responseData.statusCode == 401) {
+          Message.showMessage("As suas credenciais não são mais válidas...");
+          setState(() {
+            listModel = [];
+            data = [];
+            loading=false;
+          });
+        }
         loading = false;
       }
     }catch(error, exception){
       print("Zabbix.Erro : $error > $exception ");
     }
-    print(">>>>"+widgetSearchEmpresa.state.empSel.toString());
+    //print(">>>>"+widgetSearchEmpresa.state.empSel.toString());
   }
 
 
@@ -278,18 +287,20 @@ class _ZabbixPageState extends State<ZabbixPage> {
     loading=false;
   }
 
-  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
-  }
+  }**/
 
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
   void initState() {
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
@@ -298,12 +309,6 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
     if(widget.user["tipo"]=="C") {
       isConsultor = true;
-      try {
-        widgetSearchEmpresa =
-            searchEmpresa(onchangeF: () => getData(), context: context);
-      }catch(e){
-        print("erro searchEmpresa..."+e);
-      }
     }else {
       getData();
     }
@@ -328,6 +333,12 @@ class _ZabbixPageState extends State<ZabbixPage> {
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "zabbix");
+    try {
+      widgetSearchEmpresa =
+          searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,);
+    }catch(e){
+      print("erro searchEmpresa..."+e);
+    }
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
@@ -376,143 +387,129 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
   Widget rangeDate(){
     return Container(
-      height: 59,
-      margin: EdgeInsets.only(left:6.0,right: 6.0,top:10.0),
-      decoration: BoxDecoration(
+        height: 58,
+        margin: EdgeInsets.only(left:6.0,right: 6.0, top:10.0),
+        decoration: BoxDecoration(
           border: Border(
             left: BorderSide(color:HexColor(Constants.red),width:5),
             right: BorderSide(color:HexColor(Constants.red),width:5),
           ),
-        color:HexColor(Constants.firtColumn),
-      ),
-      child:
-      Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.only(right: 10,left: 5),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(width: 10,),
-                Text(
-                  'Período:',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    color: HexColor(Constants.red),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                //SizedBox(width:15,),
-              ],
-            )
+          color:HexColor(Constants.firtColumn),
         ),
-        Spacer(),
-        Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            width: 125,
-            child:
-            Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text("De",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start)
-                    ],
-                  ),
-                  Row(
-                      children: [
-                        Expanded(
-                          flex:1,
-                            child:
-                          TextField(
-                          enableInteractiveSelection: false,
-                          controller: txt,
-                          readOnly: true,
-                          style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
-                          textAlignVertical: TextAlignVertical.top,
-                          decoration: InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            fillColor: Colors.white,filled: true,
-                            border: InputBorder.none,
-                            prefixIcon: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 16,),
-                            prefixIconConstraints: BoxConstraints(
-                              maxWidth: 20,
-                              maxHeight: 20
-                            ),
-                            suffixIcon:  IconButton(
-                              icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red), size:16),
-                              onPressed: ()=>_selectDate(context),
-                            ),
-                            suffixIconConstraints: BoxConstraints(
-                                maxWidth: 25,
-                                maxHeight: 25
-                            ),
-                            ),
-                        ))]),
-                ])
-        ),
-        SizedBox(width: 4,),
-        Container(
-            width: 125,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child:
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+        padding: EdgeInsets.zero,
+        child:
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                padding: EdgeInsets.only(right: 10,left: 5),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Até",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start,)
+                    SizedBox(width: 10,),
+                    SizedBox(height: 17,),
+                    Text(
+                      'Período:',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        color: HexColor(Constants.red),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    //SizedBox(width:15,),
                   ],
+                )
+            ),
+            Spacer(),
+            Container(
+                padding: EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                width: 125,
+                child:
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      SizedBox(height: 1,),
+                      Text("De",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start),
+                      TextField(
+                        enableInteractiveSelection: false,
+                        controller: txt,
+                        readOnly: true,
+                        style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          fillColor: Colors.white,filled: true,
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 16,),
+                          prefixIconConstraints: BoxConstraints(
+                              maxWidth: 18,
+                              maxHeight: 18
+                          ),
+                          suffixIcon:  IconButton(
+                            icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red), size:16),
+                            onPressed: ()=>_selectDate(context),
+                          ),
+                          suffixIconConstraints: BoxConstraints(
+                              maxWidth: 22,
+                              maxHeight: 22
+                          ),
+                        ),
+                      )
+                    ])
+            ),
+            SizedBox(width: 4,),
+            Container(
+                width: 125,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child:
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Expanded(child: TextField(
+                    SizedBox(height: 1,),
+                    Text("Até",style: TextStyle(color:HexColor(Constants.blue),fontSize: 9),textAlign: TextAlign.start,),
+                    TextField(
                       enableInteractiveSelection: false,
                       readOnly: true,
                       controller: txt2,
                       style: TextStyle(color: HexColor(Constants.blue),fontSize: 12),
                       textAlignVertical: TextAlignVertical.top,
                       decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                        isDense: true,
+                        //contentPadding: EdgeInsets.symmetric(vertical: 8),
                         fillColor: Colors.white,filled: true,
                         border: InputBorder.none,
                         prefix: Icon(Icons.calendar_month,color:HexColor(Constants.blue),size: 14,),
                         prefixIconConstraints: BoxConstraints(
-                        maxWidth: 20,
-                        maxHeight: 20
+                            maxWidth: 18,
+                            maxHeight: 18
                         ),
                         suffixIcon:  IconButton(
                           icon: Icon(Icons.keyboard_arrow_down,color:HexColor(Constants.red),size:16),
                           onPressed: ()=>_selectDate2(context),
                         ),
                         suffixIconConstraints: BoxConstraints(
-                            maxWidth: 25,
-                            maxHeight: 25
+                            maxWidth: 22,
+                            maxHeight: 22
                         ),
                       ),
-                    ))
+                    )
                   ],
                 )
-              ],
             )
-        )
-      ],
-    ));
+          ],
+        ));
   }
-
 
   criaTabela() {
     return listModel.isNotEmpty?Table(
@@ -704,7 +701,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    Expanded(
+                    Flexible(
                         child:
                         Column(
                             mainAxisSize: MainAxisSize.max,

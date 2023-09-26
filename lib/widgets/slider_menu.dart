@@ -23,6 +23,7 @@ import '../screens/inner_pwd.dart';
 import '../screens/inner_servicos.dart';
 import '../screens/inner_zabbix.dart';
 import '../screens/ticketsview-consultor.dart';
+import '../utils/Logoff.dart';
 import '../utils/Message.dart';
 import 'HexColor.dart';
 import 'constants.dart';
@@ -172,7 +173,7 @@ class SliderMenu extends StatelessWidget{
 
     double top = height*0.025;
 
-    print("screen...."+screen+"|"+height.toString()+"/"+top.toString());
+    //print("screen...."+screen+"|"+height.toString()+"/"+top.toString());
 
     return Container(
         decoration: BoxDecoration(
@@ -186,9 +187,11 @@ class SliderMenu extends StatelessWidget{
           )
         ),
         child:
-        ListView(
+        Column(
       // Important: Remove any padding from the ListView.
-      padding: EdgeInsets.zero,
+      //padding: EdgeInsets.zero,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisSize: MainAxisSize.max,
       children: <Widget>[
         Container(
           padding: EdgeInsets.only(top:(height>732?20:5)),
@@ -205,6 +208,7 @@ class SliderMenu extends StatelessWidget{
                 padding: EdgeInsets.only(right: 6),
                 child: GestureDetector(child: img!=null?img:Image.asset("images/profilepic.png", width: 106, height: 106,),onTap: getImage,)),
           ),
+        Spacer(),
     new Container (
     decoration: new BoxDecoration (
       gradient: screen=='home'? LinearGradient(
@@ -220,6 +224,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 0,
           onTap: () => selectDestination(0),
         )),
+        Spacer(),
         (getFromList("app-siem").meus ?
         new Container (
             decoration: new BoxDecoration (
@@ -238,6 +243,7 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(1),
         ))
             :SizedBox(height: 10)),
+        Spacer(),
         (getFromList("app-zabbix").meus ?
         new Container (
             decoration: new BoxDecoration (
@@ -255,6 +261,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 2,
           onTap: () => selectDestination(2),
         )):SizedBox(height: 10)),
+        Spacer(),
         (getFromList("app-tickets").meus ?
         new Container (
             decoration: new BoxDecoration (
@@ -272,6 +279,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 3,
           onTap: () => selectDestination(3),
         )):SizedBox(height: 10)),
+        Spacer(),
     new Container (
     decoration: new BoxDecoration (
           gradient: screen=='noticias'? LinearGradient(
@@ -288,6 +296,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 4,
           onTap: () => selectDestination(4),
         )),
+        Spacer(),
         (getFromList("app-mensagem").meus ?
         new Container (
             decoration: new BoxDecoration (
@@ -305,6 +314,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 8,
           onTap: () => selectDestination(8),
         )):SizedBox(height: 10)),
+        Spacer(),
         (getFromList("app-servico").meus ?
         new Container (
             decoration: new BoxDecoration (
@@ -322,6 +332,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 10,
           onTap: () => selectDestination(10),
         )):SizedBox(height: 10)),
+        Spacer(),
         ListTile(
           contentPadding: EdgeInsets.only(left: 30),
           leading: Icon(Icons.lock,color:Colors.white, size:(height>732?32:28)),
@@ -329,6 +340,7 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination == 5,
           onTap: () => selectDestination(5),
         ),
+        Spacer(),
         ListTile(
           contentPadding: EdgeInsets.only(left: 30),
           leading: Icon(Icons.info_outline,color:Colors.white,size:(height>732?32:28)),
@@ -336,7 +348,6 @@ class SliderMenu extends StatelessWidget{
           selected: _selectedDestination ==11,
           onTap: () => selectDestination(11),
         ),
-        Spacer(),
         Container(
           height: (height>732?40:30),
           margin: EdgeInsets.only(right: 5),
@@ -354,7 +365,8 @@ class SliderMenu extends StatelessWidget{
               Text("LOG OUT", style:itemMenu),
             ],
           ),onTap: () =>selectDestination(7),)
-        )
+        ),
+        SizedBox(height: 15,)
       ],
     ));
   }
@@ -371,7 +383,7 @@ class SliderMenu extends StatelessWidget{
   void selectDestination(int index) {
     switch(index){
       case 0:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           //builder: (context) => (isConsultant?HomeConsultor():Home()),
           builder: (context) => HomePage(),
         ));
@@ -389,48 +401,49 @@ class SliderMenu extends StatelessWidget{
         screen = "elastic";
         break;
       case 2:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           //builder: (context) => (isConsultant?ZabbixAlertsConsultant():ZabbixAlerts()),
           builder: (context) => InnerZabbix(null,null),
         ));
         screen = "zabbix";
         break;
       case 3:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           //builder: (context) => (isConsultant?TicketsviewConsultant():Ticketsview()),
           builder: (context) => TicketsviewConsultor(0),
         ));
         screen = "tickets";
         break;
       case 4:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           builder: (context) => InnerNoticias(),
         ));
         screen = "news";
         break;
       case 5:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           builder: (context) => InnerPwd(),
         ));
         screen = "password";
         break;
       case 6:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           builder: (context) => InnerPreferences(),
         ));
         screen = "preferencias";
         break;
       case 7:
-        (isConsultant? logoutConsultor() : logout());
+        //(isConsultant? logoutConsultor() : logout());
+        Logoff.confirmarLogoff(ctx);
         break;
       case 8:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           builder: (context) => InnerMessages(0),
         ));
         screen = "messages";
         break;
       case 10:
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
+        Navigator.of(ctx).push(FadePageRoute(
           builder: (context) =>InnerServicos(),
         ));
         screen = "servicos";

@@ -17,6 +17,7 @@ import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
+import 'home_page.dart';
 
 class noticiaDetail extends StatelessWidget {
 
@@ -89,7 +90,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
 
   void initState() {
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
   }
 
   void updateState(double pos){
@@ -107,6 +108,8 @@ class _NoticiaPageState extends State<NoticiaPage> {
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
 
+    double heigh = MediaQuery.of(context).size.height;
+
     _fcmInit.configureMessage(context, "noticias");
 
     double _panelPosition = 0;
@@ -115,7 +118,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.blue),
-        body:loading ? Center (child: CircularProgressIndicator()) : getMain(width),
+        body:loading ? Center (child: CircularProgressIndicator()) : getMain(width,heigh),
         drawer:  Drawer(
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
@@ -124,7 +127,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
         )
     );
   }
-  Widget getMain(double width){
+  Widget getMain(double width, double height){
     return SafeArea(
         child:
         Stack(children:[
@@ -136,9 +139,9 @@ class _NoticiaPageState extends State<NoticiaPage> {
           children: <Widget>[
             _header(width),
         Container(
-          height: 520,
+              height: height-230,
               margin: EdgeInsets.only(top:100),
-              alignment: Alignment.bottomCenter,
+              //alignment: Alignment.bottomCenter,
               padding: EdgeInsets.only(left: 20.0,right: 20.0,top: 25.0,bottom: 25),
               decoration: BoxDecoration(
                   color:Colors.white,
@@ -191,10 +194,13 @@ class _NoticiaPageState extends State<NoticiaPage> {
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.thumb_up_alt_outlined, color:Colors.white,size: 20.0),
+                    icon: const Icon(Icons.home_outlined, color:Colors.white,size: 20.0),
                     tooltip: 'Abrir Menu',
                     onPressed: () {
-                      curtiu();
+                      Navigator.of(context).pushReplacement(FadePageRoute(
+                        builder: (context) => HomePage(),
+                      ));
+                      //curtiu();
                     },
                   ),
                 ),
@@ -221,12 +227,13 @@ class _NoticiaPageState extends State<NoticiaPage> {
     String data = simpleDate.format(dia)+" | "+dayOfWeek.format(dia);
     return SingleChildScrollView(child:
       Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children:[
-          Row(children:[Expanded(child: Text(widget.ticket.titulo,style:TextStyle(fontWeight: FontWeight.bold,fontSize:24,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
+          Row(children:[Flexible(child: Text(widget.ticket.titulo,style:TextStyle(fontWeight: FontWeight.bold,fontSize:24,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
           SizedBox(height: 20,),
           Row(children:[Text(data,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14, color:HexColor(Constants.greyContainer)))]),
           SizedBox(height: 20,),
-          Row(children:[Expanded(child: Text(widget.ticket.texto,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
+          Row(children:[Flexible(child: Text(widget.ticket.texto,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
         ]
     ));
   }

@@ -10,6 +10,7 @@ void main() => runApp(ContatcusScreen());
 class ContatcusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    double widt = MediaQuery.of(context).size.width;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
@@ -22,6 +23,7 @@ class ContatcusScreen extends StatelessWidget {
           textFont: 'Metropolis',
         ),
         body: Container(
+          width: widt,
     decoration: const BoxDecoration(
     image: DecorationImage(
     image: AssetImage("images/Fundo.png"),fit: BoxFit.cover),),

@@ -51,6 +51,7 @@ dependencies:
   audio_waveforms: ^1.0.4
   file_picker: ^4.5.0
   image_picker: 0.8.4
+  animated_widgets: ^1.1.0
 
 dependency_overrides:
   path_provider_android: 2.0.11
@@ -87,6 +88,7 @@ flutter:
     - images/mic.png
     - images/molde.png
     - images/pdf.png
+    - images/bgbutton.png
     - assets/audios/audio1.mp3
     - assets/audios/audio2.mp3
     - assets/audios/audio3.mp3

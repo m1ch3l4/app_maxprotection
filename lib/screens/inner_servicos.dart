@@ -126,26 +126,26 @@ class _ServicosPageState extends State<ServicosPage> {
   }
 
 
-  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
-  }
+  }**/
 
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
   void initState() {
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     if(widget.user["tipo"]!="C") {
       getData();
     }else{
       loadData();
       isConsultor = true;
-      widgetSearchEmpresa =
-          searchEmpresa(onchangeF: () => getData(), context: context);
     }
     _fabHeight = _initFabHeight;
   }
@@ -158,10 +158,14 @@ class _ServicosPageState extends State<ServicosPage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
+
     languageCode = Localizations.localeOf(context).languageCode;
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "messages");
+
+    widgetSearchEmpresa =
+        searchEmpresa(onchangeF: () => getData(), context: context,width: width);
     return Scaffold(
         key: _scaffoldKey,
         body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
@@ -207,10 +211,7 @@ class _ServicosPageState extends State<ServicosPage> {
           widget.user['company_id'].toString();
     }
 
-
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -275,7 +276,7 @@ class _ServicosPageState extends State<ServicosPage> {
                   child: (isConsultor?widgetSearchEmpresa:SizedBox(height: 1,)),
                 ),
               ]),
-          showContrato(width*0.8),
+          showContrato(width*0.9),
           _body(width*0.95)
         ],
       ),
@@ -309,9 +310,7 @@ class _ServicosPageState extends State<ServicosPage> {
     print("**********");
 
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -341,6 +340,9 @@ class _ServicosPageState extends State<ServicosPage> {
         //loading = false;
       //});
     }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+      }
       loading = false;
     }
   }

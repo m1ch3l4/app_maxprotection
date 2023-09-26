@@ -5,6 +5,7 @@ import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -13,6 +14,7 @@ import '../model/empresa.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
+import '../utils/Message.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import '../widgets/headerAlertas.dart';
@@ -145,9 +147,7 @@ class _TicketsPageState extends State<TicketsPage> {
 
           urlApi = Constants.urlEndpoint + "enterprise/stat/" + emp.id;
 
-          String u = widget.user["login"]+"|"+widget.user["password"];
-          String p = widget.user["password"];
-          String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+          String basicAuth = "Bearer "+widget.user["token"];
 
           Map<String, String> h = {
             "Authorization": basicAuth,
@@ -171,6 +171,12 @@ class _TicketsPageState extends State<TicketsPage> {
             emp.setAtendimento(data["atendimento"]);
             loading = false;
           } else {
+            if(responseData.statusCode == 401) {
+              Message.showMessage("As suas credenciais não são mais válidas...");
+              setState(() {
+                loading=false;
+              });
+            }
             loading = false;
           }
         }else{
@@ -183,21 +189,23 @@ class _TicketsPageState extends State<TicketsPage> {
 }
 
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
 
-  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+  /** bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
-  }
+  }**/
 
   void initState() {
     print("TicketsView-consultor....");
     _controller.addListener(_onScroll);
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     lstEmpresa = _empSearch.lstOptions;
     lazyLoad();
     //getData(lastIndex);
@@ -284,6 +292,64 @@ class _TicketsPageState extends State<TicketsPage> {
     GestureDetector gd;
     //print("widget.tipo ");print(widget.tipo);
     //print("Empresa: ");print(emp.id);
+
+
+    switch(widget.tipo){
+      case 0:
+        gd = GestureDetector(
+            onTap: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TicketlistConsultor(emp,0), // <-- document instance
+                  ));
+            },
+            child: card(emp, i,0)
+        );
+        break;
+      case 1:
+        gd = GestureDetector(
+            onTap: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TicketlistConsultor(emp,1), // <-- document instance
+                  ));
+            },
+            child: card(emp,i,1)
+        );
+        break;
+      case 2:
+        gd = GestureDetector(
+            onTap: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TicketlistConsultor(emp,2), // <-- document instance
+                  ));
+            },
+            child: card(emp,i,2)
+        );
+        break;
+      case 3:
+        gd = GestureDetector(
+            onTap: (){
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TicketlistConsultor(emp,3), // <-- document instance
+                  ));
+            },
+            child: card(emp,i,3)
+        );
+        break;
+    }
+    return gd;
+  }
+
+
+
+  Widget card(Empresa emp, int i, int status){
     Color par = HexColor(Constants.red);
     Color impar = HexColor(Constants.blue);
     Color cl = par;
@@ -299,160 +365,59 @@ class _TicketsPageState extends State<TicketsPage> {
       cl = par;
       clTexto = impar;
     }
-
-    switch(widget.tipo){
-      case 0:
-        gd = GestureDetector(
-            onTap: (){
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TicketlistConsultor(emp,0), // <-- document instance
-                  ));
-            },
+    return Card(
+        child:
+        ClipPath(
+            clipper: ShapeBorderClipper(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3))),
             child:
-            Card(
+            Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: cl, width: 5),
+                  ),
+                ),
+                //margin: EdgeInsets.all(12.0),
+                padding: EdgeInsets.all(5.0),
+                //height: 300,
                 child:
-                ClipPath(
-                    clipper: ShapeBorderClipper(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(3))),
-                    child:
-                    Container(
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(color: cl, width: 5),
-                          ),
+                Column(
+                    children: [
+                      if(status ==0 || status==1)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(emp.novo!=null&&emp.novo>0?"Novo":"",style:TextStyle(color: par,fontWeight: FontWeight.bold)),
+                          SizedBox(width: 5,),
+                        ],
+                      ),
+                      if(status==2)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(emp.atendimento!=null&&emp.atendimento>0?"Atendimento":"",style:TextStyle(color: par)),
+                            SizedBox(width: 5,),
+                          ],
                         ),
-                        //margin: EdgeInsets.all(12.0),
-                        padding: EdgeInsets.all(5.0),
-                        //height: 300,
-                        child:
-                        Column(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(emp.novo!=null&&emp.novo>0?"Novo":"",style:TextStyle(color: clTexto))
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color:clTexto))
-                            ],
-                          )
-                        ]
-                    )
-                )))
-        );
-        break;
-      case 1:
-        gd = GestureDetector(
-            onTap: (){
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TicketlistConsultor(emp,1), // <-- document instance
-                  ));
-            },
-            child:
-            Card(
-                color: HexColor(Constants.grey),
-                child: Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Column(
+                          Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
+                        ],
+                      ),
+                      if(status==0 || status==3)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(emp.novo>0?"Novo":"",style:TextStyle(color: HexColor(Constants.red)))
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
-                            ],
-                          )
-                        ]
-                    )
-                ))
-        );
-        break;
-      case 2:
-        gd = GestureDetector(
-            onTap: (){
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TicketlistConsultor(emp,2), // <-- document instance
-                  ));
-            },
-            child:
-            Card(
-                color: HexColor(Constants.grey),
-                child: Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(emp.atendimento>0?"Atendimento":"",style:TextStyle(color: HexColor(Constants.red)))
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
-                            ],
-                          ),
-                        ]
-                    )
-                ))
-        );
-        break;
-      case 3:
-        gd = GestureDetector(
-            onTap: (){
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TicketlistConsultor(emp,3), // <-- document instance
-                  ));
-            },
-            child:
-            Card(
-                color: HexColor(Constants.grey),
-                child: Container(
-                    margin: EdgeInsets.all(10.0),
-                    child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color: HexColor(Constants.red)))
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
-                            ],
-                          ),
-                        ]
-                    )
-                ))
-        );
-        break;
-    }
-    return gd;
+                          Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color:clTexto)),
+                          SizedBox(width: 5,),
+                        ],
+                      )
+                    ]
+                )
+            )));
   }
-
 
 
 }

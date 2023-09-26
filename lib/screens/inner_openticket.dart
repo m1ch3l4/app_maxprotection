@@ -172,7 +172,9 @@ class _MyAppState extends State<OpenTicketPage> {
               position, bufferedPosition, duration ?? Duration.zero));
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
 
@@ -183,7 +185,9 @@ class _MyAppState extends State<OpenTicketPage> {
 
   void initState() {
     super.initState();
+    //BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
+    empSel = null;
   }
 
   @override
@@ -195,6 +199,10 @@ class _MyAppState extends State<OpenTicketPage> {
     _fabHeight = pos * (_panelHeightOpen - _panelHeightClosed) + _initFabHeight;
   }
 
+  void setSelectedEmpresa(Empresa e){
+    this.empSel = e;
+  }
+
   @override
   Widget build(BuildContext context) {
     Usuario usr = Usuario.fromSharedPref(widget.user);
@@ -203,10 +211,9 @@ class _MyAppState extends State<OpenTicketPage> {
     empSel = _empSearch.defaultOpt;
 
     isTecnico = (usr.tipo=="T"?true:false);
-    if(_empSearch.lstOptions.length <3)
+    /**if(_empSearch.lstOptions.length <3)
       empSel = _empSearch.lstOptions.elementAt(0);
-
-    print("empSel...."+empSel.name);
+    print("empSel...."+empSel.name); **/
 
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
@@ -214,7 +221,7 @@ class _MyAppState extends State<OpenTicketPage> {
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "elastic");
 
-    searchEmpresaWdt = searchEmpresa(context: context,onchangeF: null,);
+    searchEmpresaWdt = searchEmpresa(context: context,onchangeF: null,width: width*0.95,notifyParent: setSelectedEmpresa,);
 
     return Scaffold(
         key: _scaffoldKey,
@@ -259,7 +266,7 @@ class _MyAppState extends State<OpenTicketPage> {
             isSender: true,
             appDirectory: appDirectory,
           ),
-          SizedBox(height: 25,),
+          SizedBox(height: 24,),
           controlBar(),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -289,7 +296,7 @@ class _MyAppState extends State<OpenTicketPage> {
   }
   void stopCronometer(){
     timerSubscription.cancel();
-    timerStream = null;
+    //timerStream = null;
     setState(() {
       hoursStr = '00';
       minutesStr = '00';
@@ -299,25 +306,20 @@ class _MyAppState extends State<OpenTicketPage> {
   Widget recButton(){
     return GestureDetector(
         child:
-        Stack(
-          children: <Widget>[
             Container(
-                decoration: new BoxDecoration(color: Colors.transparent),
+                decoration: new BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage("images/mic.png"),
+                      fit: BoxFit.fill
+                    )),
                 alignment: Alignment.center,
                 height: 180,
-                child: Image.asset("images/mic.png",fit: BoxFit.fill,)
+                width: 180,
+                child: !isGravando? Icon(Icons.mic,size: 62, color: Colors.white,) : Icon(Icons.mic_off,size: 62, color: Colors.white,)
             ),
-            Positioned(
-              bottom: 60, right: 148,
-              child: !isGravando? Icon(Icons.mic,size: 62, color: Colors.white,) : Icon(Icons.mic_off,size: 62, color: Colors.white,),
-              //child: _speechToText.isNotListening? Icon(Icons.mic,size: 62, color: Colors.white,) : Icon(Icons.mic_off,size: 62, color: Colors.white,),
-            )
-          ],
-        ),
     onTap: (){
           print("Gravando? "+isGravando.toString());
           if(!isGravando){
-            startCronometer();
             startRecord();
             //incrementTick();
           }else{
@@ -409,11 +411,13 @@ class _MyAppState extends State<OpenTicketPage> {
     setState(() {
       isGravando=true;
       isComplete=false;
+      if(searchEmpresaWdt.state!=null)
       empSel = searchEmpresaWdt.state.empSel;
     });
     bool hasPermission = await checkPermission();
     if (hasPermission) {
-      if(empSel.id !="0") {
+      if(empSel!=null && empSel.id !="0") {
+        startCronometer();
         print("Recording...");
         recordFilePath = await getFilePath();
         RecordMp3.instance.start(recordFilePath, (type) {
@@ -480,9 +484,8 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
+
     var ssl = false;
     var response = null;
 
@@ -543,6 +546,9 @@ class _MyAppState extends State<OpenTicketPage> {
         isLoading=false;
       });
     }else{
+      if(response.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+      }
       Message.showMessage("Não foi possível abrir o seu chamado.\nEntre em contato com o suporte.");
       setState(() {
         isLoading=false;
@@ -555,9 +561,8 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
+
     var ssl = false;
     var request  = null;
     var response = null;
@@ -622,6 +627,8 @@ class _MyAppState extends State<OpenTicketPage> {
       responseString = String.fromCharCodes(responseData);
     }
 
+    print("response.;..."+responseString);
+
     final data = jsonDecode(responseString);
     ChamadoMp3 cmp3 = ChamadoMp3.fromJson(data);
     if(cmp3!=null && cmp3.name!=null && cmp3.size>0){
@@ -637,9 +644,9 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+
+    String basicAuth = "Bearer "+widget.user["token"];
+
     var ssl = false;
     var request  = null;
     var response = null;

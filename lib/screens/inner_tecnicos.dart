@@ -19,6 +19,7 @@ import '../utils/SharedPref.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
+import '../widgets/headerAlertas.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
@@ -78,9 +79,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     });
     String urlApi = "";
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
     var ssl = false;
     var responseData = null;
 
@@ -107,22 +106,38 @@ class _TecnicosPageState extends State<TecnicosPage> {
 
     if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
-      final data = jsonDecode(source);
-      //print("data ");
-      setState(() {
-        for(Map i in data){
-          var alert = Usuario.fromJson(i);
-          listModel.add(alert);
-          checked.add(alert.role.nome == "tec-nivel1"?false:true);
-        }
-        loading = false;
-      });
+      print("source...."+source);
+      if(source!=null && source!="") {
+        final data = jsonDecode(source);
+        print("data " + data.toString());
+        setState(() {
+          for (Map i in data) {
+            var alert = Usuario.fromJson(i);
+            listModel.add(alert);
+            checked.add(alert.role.nome == "tec-nivel1" ? false : true);
+          }
+          loading = false;
+        });
+      }else{
+        setState(() {
+          loading=false;
+        });
+      }
+    }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        setState(() {
+          loading=false;
+        });
+      }
     }
   }
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
 
@@ -134,7 +149,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
   void initState() {
     getData();
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
   }
 
@@ -145,33 +160,23 @@ class _TecnicosPageState extends State<TecnicosPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+
     double width = MediaQuery.of(context).size.width;
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
+
     return Scaffold(
         key: _scaffoldKey,
-        //backgroundColor: HexColor(Constants.grey),
-        body:
-        SlidingUpPanel(
-          maxHeight: _panelHeightOpen,
-          minHeight: _panelHeightClosed,
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10.0),
-              topRight: Radius.circular(10.0)),
-          onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
-          body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
-        ),
+        resizeToAvoidBottomInset : false,
+        body: getMain(width),
         drawer:  Drawer(
-          // Add a ListView to the drawer. This ensures the user can scroll
-          // through the options in the drawer if there isn't enough vertical
-          // space to fit everything.
-          child: SliderMenu('tecnicos',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tecnicos',widget.user,textTheme,(width*0.6)),
         )
     );
   }
 
   Widget getMain(double width){
-    return SafeArea(
+    double height = MediaQuery.of(context).size.height-215;
+    /**return SafeArea(
       child: Column(
         children: <Widget>[
           _header(width),
@@ -186,6 +191,21 @@ class _TecnicosPageState extends State<TecnicosPage> {
           _body(),
         ],
       ),
+    );**/
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          headerAlertas(_scaffoldKey, widget.user, context, width, 185, 'Técnicos da '+(widget.user["company_name"]!=null?widget.user["company_name"]:"-")),
+          Spacer(),
+          Container(
+              width: width*0.9,
+              height: height,
+              child: _body(),),
+          Spacer()
+        ],
+      ),
     );
   }
 
@@ -194,7 +214,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
         child: listView());
   }
 
-  Widget _header(double width){
+ /** Widget _header(double width){
     return TopContainer(
       height: 80,
       width: width,
@@ -219,7 +239,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
                   ),
                   //TODO: ver aqui.
                   Expanded(child: Text(
-                    'Técnicos da '+widget.user["company_name"],
+                    'Técnicos da '+(widget.user["company_name"]!=null?widget.user["company_name"]:"-"),
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 18.0,
@@ -233,7 +253,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
 
           ]),
     );
-  }
+  }**/
 
   Widget listView(){
     return ListView(
@@ -287,9 +307,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,

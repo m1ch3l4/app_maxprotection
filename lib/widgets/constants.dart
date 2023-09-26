@@ -12,6 +12,7 @@ class Constants {
   //static const String urlEndpoint = protocolEndpoint+ipEndpoint+":"+portEndpoint+"/";
   //static const String urlEndpoint = protocolEndpoint+userEndpoint+":"+passEndpoint+"@"+ipEndpoint+"/";
   static const String blue = "1b3445";
+  static const String blueButton = "263f50";
   static const String red = "BF1E2E";
   static const String innerRed = "d44d58";
   static const String grey = "f5f5f5";

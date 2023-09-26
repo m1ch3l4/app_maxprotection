@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class CallTecnicoApi{
 
-  static Future<ApiResponse<Usuario>> callTecnico(String login, String pass, String iduser) async {
+  static Future<ApiResponse<Usuario>> callTecnico(String token, String iduser) async {
     try {
       var url = Constants.urlEndpoint + 'calltecnico/save';
       var ssl = false;
@@ -24,9 +24,7 @@ class CallTecnicoApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      String u = login+"|"+pass;
-
-      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$pass'));
+      String basicAuth = "Bearer "+token;
 
       if(ssl){
         var client = HttpsClient().httpsclient;

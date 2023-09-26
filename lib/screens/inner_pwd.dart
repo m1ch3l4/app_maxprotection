@@ -80,18 +80,20 @@ class _PwdPageState extends State<PwdPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
 
   void initState() {
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     consultant = (widget.user["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
 
@@ -321,7 +323,7 @@ class _PwdPageState extends State<PwdPage> {
   }
 
   Future<String> changePass(String iduser,String newpass) {
-    return ChangePassApi.changePass(widget.user["login"],widget.user["password"],iduser, newpass,consultant).then((resp) {
+    return ChangePassApi.changePass(widget.user["token"],iduser, newpass,consultant).then((resp) {
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Message.showMessage("Não foi possível alterar sua senha!");

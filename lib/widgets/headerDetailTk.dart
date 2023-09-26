@@ -45,6 +45,7 @@ class headerTkDetail extends StatelessWidget{
       color: HexColor(Constants.blue),
       child: Column(
         //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Row(children: [SizedBox(height: 10,)],),
             Row(
@@ -107,7 +108,7 @@ class headerTkDetail extends StatelessWidget{
               endIndent: 5,
               color: Colors.white,
             ),
-            SizedBox(height: 10,),
+            SizedBox(height: 20,),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -134,7 +135,9 @@ class headerTkDetail extends StatelessWidget{
                       ),
                     )
               ],
-            )
+            ),
+            Divider(color: Colors.white,indent: width*0.18,
+              endIndent: width*0.18,height: 0,),
           ]),
     );
   }

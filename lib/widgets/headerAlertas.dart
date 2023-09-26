@@ -68,7 +68,7 @@ class headerAlertas extends StatelessWidget{
                 Image.asset("images/lg.png",width: 150,height: 69,),
                 Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.home_outlined, color:Colors.white,size: 20.0),
+                  icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
                     Navigator.of(ctx).pushReplacement(FadePageRoute(
@@ -120,6 +120,12 @@ class headerAlertas extends StatelessWidget{
               children: <Widget>[
                 Column(
                   children: [
+                    Container(
+                      decoration:  BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: Colors.white))
+                      ),
+                      child:
                     Text(
                       status,
                       textAlign: TextAlign.start,
@@ -128,7 +134,7 @@ class headerAlertas extends StatelessWidget{
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
+                    )),
                   ],
                 ),
               ],

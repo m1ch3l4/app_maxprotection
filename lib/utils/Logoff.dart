@@ -28,7 +28,7 @@ class Logoff{
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(32.0))),
       title: Text("ATENÇÃO", style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red))),
-      content: Text("Ao Sair você fará logoff no App e precisará fazer login novamente. Tem certeza que deseja sair?",style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
+      content: Text("Ao sair você fará logoff no app e precisará fazer login novamente. Tem certeza que deseja sair?",style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
       actions: [
         cancelButton,
         launchButton,

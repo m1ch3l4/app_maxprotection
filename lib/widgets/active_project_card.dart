@@ -37,8 +37,7 @@ class ActiveProjectsCard extends StatelessWidget {
      * GestureDetector(
 
      */
-    return Expanded(
-          child:InkWell(
+    return InkWell(
         onTap: (){
          if(r){
             onclickF();
@@ -46,7 +45,7 @@ class ActiveProjectsCard extends StatelessWidget {
            if(title == "Leads"){
               disableBlink();
            }
-           Navigator.of(ctx).pushReplacement(FadePageRoute(
+           Navigator.of(ctx).push(FadePageRoute(
              builder: (context) => action,
            ));
          }
@@ -56,6 +55,7 @@ class ActiveProjectsCard extends StatelessWidget {
         margin: EdgeInsets.symmetric(vertical: 10.0),
         padding: EdgeInsets.all(1.0),
         height: 40,
+        width: width,
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(10.0),
@@ -84,6 +84,6 @@ class ActiveProjectsCard extends StatelessWidget {
           ],
         ),
       ),
-    ));
+    );
   }
 }

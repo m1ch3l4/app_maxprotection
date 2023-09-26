@@ -35,24 +35,24 @@ class TopHomeWidget extends StatelessWidget{
      decoration: BoxDecoration(
        color: cardColor
      ),
-     //width: width,
+     width: width,
      height: 30,
      child: Row(
-       mainAxisAlignment: MainAxisAlignment.end,
-       //mainAxisSize: MainAxisSize.min,
+       mainAxisAlignment: MainAxisAlignment.spaceBetween,
        children: [
          Container(
-           width: 28,
-           height: 40,
+           alignment: Alignment.center,
+           width: 34,
+           height: 36,
            child: icon,
            decoration: BoxDecoration(
              color: HexColor(Constants.red),
              borderRadius: BorderRadius.circular(5.0),
            ),
          ),
-         SizedBox(width: 5,),
+         //SizedBox(width: 5,),
          InkWell(
-           child: Text(title,style: TextStyle(color:HexColor(Constants.textColor),fontSize: 14.0),),
+           child: Container(alignment:Alignment.center,width: width*0.545,child:Text(title,textAlign:TextAlign.center,style: TextStyle(color:HexColor(Constants.textColor),fontSize: 11.0),)),
            onTap: (){
     if(r){
     onclickF();

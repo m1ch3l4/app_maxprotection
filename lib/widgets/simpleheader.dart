@@ -12,21 +12,23 @@ class simpleHeader extends StatelessWidget{
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   BuildContext ctx;
   double width;
+  double height;
 
   @override
   Widget build(BuildContext context) {
     return _header(width, context);
   }
 
-  simpleHeader(GlobalKey<ScaffoldState> key, BuildContext context, double w){
+  simpleHeader(GlobalKey<ScaffoldState> key, BuildContext context, double w, double h){
     _scaffoldKey = key;
     width = w;
+    height = h;
     ctx = context;
   }
 
   Widget _header(double width, BuildContext context){
     return TopContainer(
-      height: 200,
+      height: (height!=null?height:200),
       width: width,
       color: HexColor(Constants.blue),
       child: Column(
@@ -47,7 +49,7 @@ class simpleHeader extends StatelessWidget{
                 Image.asset("images/lg.png",width: 150,height: 69,),
                 Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.home_outlined, color:Colors.white,size: 20.0),
+                  icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
                     Navigator.of(ctx).pushReplacement(FadePageRoute(

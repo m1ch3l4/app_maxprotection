@@ -101,12 +101,7 @@ class _NoticiasPageState extends State<NoticiasPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
-
-    print("...u.:"+u);
-    print("...p.:"+p);
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -135,6 +130,12 @@ class _NoticiasPageState extends State<NoticiasPage> {
         loading = false;
       });
     }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        setState(() {
+          loading=false;
+        });
+      }
       loading = false;
     }
   }
@@ -144,7 +145,9 @@ class _NoticiasPageState extends State<NoticiasPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));
     return true;
   }
 
@@ -176,11 +179,17 @@ class _NoticiasPageState extends State<NoticiasPage> {
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.blue),
-        body:loading ? Center (child: CircularProgressIndicator()) : getMain(width,height),
+        body:        SlidingUpPanel(
+          maxHeight: _panelHeightOpen,
+          minHeight: _panelHeightClosed,
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10.0),
+              topRight: Radius.circular(10.0)),
+          onPanelSlide: (double pos) => updateState(pos),
+          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
+          body: loading ? Center (child: CircularProgressIndicator()) : getMain(width,height),
+        ),
         drawer:  Drawer(
-          // Add a ListView to the drawer. This ensures the user can scroll
-          // through the options in the drawer if there isn't enough vertical
-          // space to fit everything.
           child: SliderMenu('noticias',widget.user,textTheme,(width*0.5)),
         )
     );

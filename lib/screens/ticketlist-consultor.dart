@@ -18,6 +18,8 @@ import '../model/empresa.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../utils/HttpsClient.dart';
+import '../utils/Message.dart';
+import '../widgets/TopHomeWidget.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
@@ -84,6 +86,8 @@ class _TicketsPageState extends State<TicketsPage> {
   String perfil="Analista";
   String stats = "Abertos";
 
+  Empresa emp=null;
+
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
@@ -125,6 +129,8 @@ class _TicketsPageState extends State<TicketsPage> {
 
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
+
+    emp = empresa;
 
     if(widget.user["tipo"]=="C"){
       isConsultor = true;
@@ -186,9 +192,7 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -235,6 +239,12 @@ class _TicketsPageState extends State<TicketsPage> {
         originalListModel = listModel;
       });
     }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+        setState(() {
+          loading=false;
+        });
+      }
       loading = false;
     }
   }
@@ -253,13 +263,15 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    /**Navigator.of(context).pushReplacement(FadePageRoute(
+      builder: (context) => HomePage(),
+    ));**/
     return true;
   }
 
   void initState() {
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     getData(widget.empresa);
   }
 
@@ -387,10 +399,37 @@ class _TicketsPageState extends State<TicketsPage> {
                   top:188,
                   left: width*0.05,
                 ),
+               Container(
+                  alignment: Alignment.center,
+                    margin:EdgeInsets.only(left: width*0.04),
+                    padding:  EdgeInsets.only(top:250),
+                    width: width*.9,
+                    child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(width: width*0.03,),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,icon:ImageIcon(
+                        AssetImage("images/tkaberto.png"),
+                        color: Colors.white, size:22
+                      ),
+                          title: "Tickets abertos",ctx: context,r:false,
+                        action: TicketlistConsultor(emp,1), // <-- document instance
+                        ),
+                      Spacer(),
+                      TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,title: "Tickets em atendimento",ctx: context,r:false,
+                          action: TicketlistConsultor(emp,2),
+                          icon: Image.asset("images/tkatendimento.png",color: Colors.white,fit:BoxFit.contain,width: 24,)),
+                      //SizedBox(width: width*0.05,),
+                    ],
+                  )
+                ),
                 Container(
-                  width: width*.98,
+                  margin:EdgeInsets.only(left: width*0.04),
+                  //alignment: Alignment.center,
+                  width: width*.9,
                   height: MediaQuery.of(context).size.height-100,
-                  padding:  EdgeInsets.only(left:5,top:240),
+                  padding:  EdgeInsets.only(left:5,top:290),
                   child: (listModel.length>0?listView():Container(height: 20,)),
                 )
               ],
@@ -448,7 +487,7 @@ class _TicketsPageState extends State<TicketsPage> {
     ),
     ),
         //margin: EdgeInsets.all(12.0),
-        padding: EdgeInsets.all(5.0),
+        padding: EdgeInsets.only(right:5.0,top:5.0,bottom:5.0,left:10),
         //height: 300,
         child:
         Column(
@@ -458,35 +497,35 @@ class _TicketsPageState extends State<TicketsPage> {
                     mainAxisAlignment: MainAxisAlignment.start,
                   children: [Text("#"+tech.id, style: TextStyle(fontWeight: FontWeight.w500,color: cl))],
                 ),
+                SizedBox(height: 1.5,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [Text(tech.user,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                 ),
+                SizedBox(height: 1.5,),
                 Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                   children: [Expanded(child: Text(tech.title,style: TextStyle(fontSize: 16.0, color: clTexto)))],
                 ),
                 SizedBox(height: 5,),
                 Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                  Container(
-                      padding: EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                        color: HexColor(Constants.grey),
-                        borderRadius: BorderRadius.circular(5)
-                      ),
-                      child: Expanded(child:Text(tech.empresa,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold)))
-                  )],
-                ),
-                Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                 ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [Text(tech.tecnico)],
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                        padding: EdgeInsets.all(10.0),
+                        decoration: BoxDecoration(
+                            color: HexColor(Constants.grey),
+                            borderRadius: BorderRadius.circular(5)
+                        ),
+                        child: Expanded(child:Text(tech.empresa,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold)))
+                    ),
+                    Text(tech.tecnico,style: TextStyle(fontWeight: FontWeight.w500),)],
                 ),
+                SizedBox(height: 3,)
               ],
         )
     ))

@@ -13,6 +13,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import '../model/AlertModel.dart';
 import '../utils/HexColor.dart';
 import '../utils/HttpsClient.dart';
+import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
 import '../widgets/slider_menu.dart';
@@ -161,9 +162,7 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    String u = widget.user["login"]+"|"+widget.user["password"];
-    String p = widget.user["password"];
-    String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+    String basicAuth = "Bearer "+widget.user["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -187,22 +186,26 @@ class _TicketsPageState extends State<TicketsPage> {
         }
         loading = false;
       });
+    }else{
+      if(responseData.statusCode == 401) {
+        Message.showMessage("As suas credenciais não são mais válidas...");
+      }
     }
   }
 
 
-  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
     return true;
-  }
+  }**/
 
   void dispose(){
-    BackButtonInterceptor.remove(myInterceptor);
+    //BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
   void initState() {
-    BackButtonInterceptor.add(myInterceptor);
+    //BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);

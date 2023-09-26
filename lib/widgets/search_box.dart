@@ -88,10 +88,12 @@ class _searchBox extends State<SearchBox>{
 
   @override
   Widget build(BuildContext context) {
+    double largura = widget.width-8;
+    print("search.home.width: "+largura.toString());
     return Container(
       alignment: Alignment.center,
         height: 40,
-        width: widget.width,
+        width: largura,
         decoration: BoxDecoration(
           color: HexColor(Constants.red),
           borderRadius: BorderRadius.circular(20.0),
@@ -142,14 +144,14 @@ class _searchBox extends State<SearchBox>{
                       ),
                     ),
                   ),
-                ),height: 40,width: widget.width*0.9,),
+                ),height: 40,width: widget.width*0.88,),
                 GestureDetector(
                   onTap: () {
                     widget.f(txtSearch.value.text);
                   },
                   child: Container(
                   height: 40,
-                  width: widget.width*0.1,
+                  width: widget.width*0.085,
                   decoration: new BoxDecoration(
                     borderRadius: BorderRadius.circular(20.0),
                     color: HexColor(Constants.red),

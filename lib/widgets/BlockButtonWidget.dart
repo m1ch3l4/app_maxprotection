@@ -16,6 +16,7 @@ class BlockButtonWidget extends StatelessWidget{
   final Function onclickF;
   final width;
   final bool r;
+  double bheight;
 
   Function disableBlink;
 
@@ -28,16 +29,20 @@ class BlockButtonWidget extends StatelessWidget{
     this.width,
     this.r,
     this.onclickF,
-    this.image
+    this.image,
+    this.bheight
   });
 
   @override
   Widget build(BuildContext context) {
     double tam = MediaQuery.of(context).size.height;
-    return
+    //print("largura do botao..."+width.toString());
+    return GestureDetector(
+          child:
           Container(
-            height: 80,
+            height: (bheight<400?50:80),
             width: width,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: cardColor,
               boxShadow: [ BoxShadow(
@@ -50,37 +55,38 @@ class BlockButtonWidget extends StatelessWidget{
                 ),
               )]
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: (width>200?MainAxisAlignment.spaceAround:MainAxisAlignment.spaceBetween),
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Spacer(),
-                    InkWell(
+                Container(
+                  alignment: (width>200?Alignment.centerRight:Alignment.centerLeft),
+                  width: (width>200?width*0.45:width*0.32),
+                  padding: (width>200?EdgeInsets.only(right:10):EdgeInsets.only(left: 10)),
+                  child:InkWell(
                     child: (image!=null?Image.asset(image,width: (tam<700?40:45),height: (tam<700?40:45),):icon),
-                    onTap: () {
-                        if(r){
-                          onclickF();
-                        }else {
-                          if(title == "Leads"){
-                            disableBlink();
-                          }
-                          Navigator.of(ctx).pushReplacement(FadePageRoute(
-                            builder: (context) => action,
-                          ));
-                        }
-                    },
                   ),
-                  SizedBox(width: 4,),
-                  Text(title,style:TextStyle(fontSize: (tam<700?12:13),color: HexColor(Constants.textColor))),
-                    Spacer()
-                  ],
+                ),
+                Container(
+                    alignment: (width>200?Alignment.centerLeft:Alignment.center),
+                    width: (width>200?width*0.55:width*0.68),
+                    padding: EdgeInsets.only(right: 6),
+                  child: Text(title,style:TextStyle(fontSize: (tam<700?11.5:13),color: HexColor(Constants.textColor)),textAlign: TextAlign.center,)
                 )
               ],
             )
-        );
+        ),onTap: () {
+      if(r){
+        onclickF();
+      }else {
+        if(title == "Leads"){
+          disableBlink();
+        }
+        Navigator.of(ctx).push(FadePageRoute(
+          builder: (context) => action,
+        ));
+      }
+    });
   }
 
 }

@@ -101,10 +101,7 @@ class ChangePassApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      String u = usr.login+"|"+usr.senha;
-      String p = usr.senha;
-
-      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$p'));
+      String basicAuth = "Bearer "+usr.token;
 
       if(ssl) {
         var client = HttpsClient().httpsclient;
@@ -139,21 +136,20 @@ class ChangePassApi{
       if(response.statusCode == 200){
         final usuario = Usuario.fromJson(mapResponse);
         usuario.senha=usr.senha;
-
         return ApiResponse.ok(usuario);
       }else{
-        return ApiResponse.error("Erro");
+        if(response.statusCode == 401) {
+          return ApiResponse.error("As suas credenciais não são mais válidas...");
+        }
       }
     }catch(error, exception){
-
       print("Erro : $error > $exception ");
-
       return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
-
     }
+    return ApiResponse.error("Falha ao alterar dados do usuário");
   }
 
-  static Future<ApiResponse<Usuario>> changePass(String login, String pass, String iduser, String password, bool consultor) async {
+  static Future<ApiResponse<Usuario>> changePass(String token, String iduser, String password, bool consultor) async {
     SharedPref sharedPref = SharedPref();
     try{
       var ssl = false;
@@ -177,9 +173,7 @@ class ChangePassApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      String u = login+"|"+pass;
-
-      String basicAuth = "Basic "+base64Encode(utf8.encode('$u:$pass'));
+      String basicAuth = "Bearer "+token;
 
       if(ssl) {
         var client = HttpsClient().httpsclient;
@@ -223,7 +217,9 @@ class ChangePassApi{
           //await FlutterSession().set('logged', usuario);
           return ApiResponse.ok(usuario);
         }else{
-        return ApiResponse.error("Erro");
+        if(response.statusCode == 401) {
+          return ApiResponse.error("As suas credenciais não são mais válidas...");
+        }
       }
 
       return ApiResponse.error("Falha ao trocar a senha");
@@ -234,6 +230,106 @@ class ChangePassApi{
 
       return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
 
+    }
+  }
+
+  static Future<ApiResponse<List<Usuario>>> checkLogin(String login) async{
+    try{
+      var url =Constants.urlEndpoint+'user/checklogin/'+login;
+
+      List<Usuario> lst = [];
+
+      print("url $url");
+
+      var response = await http.get(Uri.parse(url),
+          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "GET, OPTIONS"}).timeout(Duration(seconds: 5));
+
+      print("CheckLogin.retorno...${response.statusCode}");
+
+      if(response.statusCode == 200){
+        String source = Utf8Decoder().convert(response.bodyBytes);
+        final data = jsonDecode(source);
+        for(Map i in data){
+          Usuario tmp = Usuario.simpleFromJSon(i);
+          lst.add(tmp);
+        }
+        return ApiResponse.ok(lst);
+      }else{
+        if(response.statusCode == 401) {
+          return ApiResponse.error("As suas credenciais não são mais válidas...");
+        }
+        return ApiResponse.error("Erro");
+      }
+
+    }catch(error, exception){
+      print("Push.Erro : $error > $exception ");
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
+    }
+  }
+
+  static Future<ApiResponse<String>> forgotPass(String login) async{
+    try{
+      var url =Constants.urlEndpoint+'user/forgotpass/'+login;
+
+      print("url $url");
+
+      var response = await http.get(Uri.parse(url),
+          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "GET, OPTIONS"}).timeout(Duration(seconds: 5));
+
+      print("ForgotPass.retorno...${response.statusCode}");
+
+      if(response.statusCode == 200){
+        if(response.body!=""){
+          return ApiResponse.ok("Você receberá uma nova senha por e-mail.");
+        }else{
+          return ApiResponse.error("Usuário não encontrado");
+        }
+      }else{
+        return ApiResponse.error("Erro");
+      }
+
+    }catch(error, exception){
+      print("Push.Erro : $error > $exception ");
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
+    }
+  }
+
+  static Future<ApiResponse<String>> forgotPassTipo(String login, String tipo) async{
+    try{
+      var url =Constants.urlEndpoint+"user/forgotpassdois/"+login+"/"+tipo.toUpperCase();
+
+      print("url $url");
+
+      var response = await http.get(Uri.parse(url),
+          headers: {"Access-Control-Allow-Origin": "*", // Required for CORS support to work
+            "Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+            "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "GET, OPTIONS"}).timeout(Duration(seconds: 5));
+
+      print("Push.retorno...${response.statusCode}");
+
+      if(response.statusCode == 200){
+        if(response.body!=""){
+          return ApiResponse.ok("Você receberá uma nova senha por e-mail.");
+        }else{
+          return ApiResponse.error("Usuário não encontrado");
+        }
+      }else{
+        if(response.statusCode == 401) {
+          return ApiResponse.error("As suas credenciais não são mais válidas...");
+        }
+        return ApiResponse.error("Erro");
+      }
+
+    }catch(error, exception){
+      print("Push.Erro : $error > $exception ");
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
     }
   }
 

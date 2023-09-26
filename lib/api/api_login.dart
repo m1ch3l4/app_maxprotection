@@ -21,6 +21,80 @@ class LoginApi{
     exit(0);
   }
 
+  static Future<ApiResponse<String>> verifymfa(String iduser, String pin) async {
+    try{
+
+      EmpresasSearch _empSearch = new EmpresasSearch();
+
+      var url =Constants.urlEndpoint+'user/verifymfa';
+
+      print("url $url");
+
+      Map params = {
+        'id': iduser,
+        'token':pin
+      };
+
+      //encode Map para JSON(string)
+      var body = json.encode(params);
+      var ssl = false;
+      var response = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
+      if(ssl){
+        var client = HttpsClient().httpsclient;
+        //TODO
+        response = await client.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 6));
+      }else {
+
+        response = await http.post(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "POST, OPTIONS"
+            },
+            body: body).timeout(Duration(seconds: 6));
+      }
+      print("${response.statusCode}");
+          print("verifymfa...");
+          print(response.body);
+          print(response.toString());
+          print("++++++++++++++++");
+
+      String source = Utf8Decoder().convert(response.bodyBytes);
+
+      if(response.statusCode == 200){
+
+        String source = Utf8Decoder().convert(response.bodyBytes);
+        print("resposta...."+source);
+
+            if(response.body == "true")
+              return ApiResponse.ok("token aceito");
+            else
+              return ApiResponse.error("Pin incorreto!");
+          } else {
+            return ApiResponse.error("Pin incorreto!");
+          }
+    }catch(error, exception){
+      print("Erro : $error > $exception ");
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
+    }
+  }
+
   static Future<ApiResponse<Usuario>> login(String user, String password) async {
     final prefs = await SharedPreferences.getInstance();
 
