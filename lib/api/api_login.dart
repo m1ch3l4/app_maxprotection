@@ -10,8 +10,6 @@ import '../utils/perfil.dart';
 import '../widgets/constants.dart';
 import 'api_response.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart' as ioclient;
-import 'dart:convert' show utf8;
 
 class LoginApi{
 
@@ -22,6 +20,7 @@ class LoginApi{
   }
 
   static Future<ApiResponse<String>> verifymfa(String iduser, String pin) async {
+    final prefs = await SharedPreferences.getInstance();
     try{
 
       EmpresasSearch _empSearch = new EmpresasSearch();
@@ -82,11 +81,15 @@ class LoginApi{
         String source = Utf8Decoder().convert(response.bodyBytes);
         print("resposta...."+source);
 
-            if(response.body == "true")
+            if(response.body == "true") {
+              prefs.setString("mfa", "OK");
               return ApiResponse.ok("token aceito");
-            else
+            }else {
+              prefs.remove("mfa");
               return ApiResponse.error("Pin incorreto!");
+            }
           } else {
+            prefs.remove("mfa");
             return ApiResponse.error("Pin incorreto!");
           }
     }catch(error, exception){
@@ -161,6 +164,7 @@ class LoginApi{
         mapResponse.forEach((k,v) => print("got key $k with $v"));
 
         final usuario = Usuario.fromJson(mapResponse);
+        print("token...."+usuario.token);
         if(usuario.id=="-1"){
           //return ApiResponse.error(utf8.decode(usuario.name.codeUnits)); //acento
           return ApiResponse.error(usuario.name);
@@ -168,6 +172,7 @@ class LoginApi{
           Perfil.setTecnico(usuario.tipo == "T" ? true : false);
 
           if (usuario.hasAccess || usuario.tipo != "T") {
+            prefs.remove("mfa");
             prefs.setString('usuario', json.encode(usuario));
             prefs.setString(
                 'tecnico', (usuario.tipo == "T" ? "true" : "false"));

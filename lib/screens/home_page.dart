@@ -297,6 +297,7 @@ class _MyHomePageState extends State<MyHomePage>{
         Map<String, dynamic> mapResponse = jsonDecode(source);
         Usuario refresh = Usuario.fromJson(mapResponse);
         Usuario doSistema = Usuario.fromSharedPref(widget.user);
+        refresh.token=doSistema.token;
         refresh.senha = p;
 
         Role rAtual = doSistema.role;

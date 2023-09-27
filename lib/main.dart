@@ -22,6 +22,7 @@ Future<void> _messageHandler(RemoteMessage message) async {
 }
 
 var usr = null;
+var mfa = null;
 void main() {
 
   SharedPreferences sharedPref;
@@ -42,6 +43,7 @@ void main() {
 
 Future runMyApp(SharedPreferences inst) async{
   usr = inst.get("usuario");
+  mfa = inst.get("mfa");
   print("usuario..."+usr.toString());
   await Firebase.initializeApp();
   runApp(MyApp());
@@ -159,8 +161,8 @@ class MyApp extends StatelessWidget {
           overline: TextStyle(fontFamily: 'Metropolis'),
         ),
       ),
-      //home: VerfiyMfa(),
-      home: (usr!=null?HomePage():WelcomeScreen()),
+      home: getScreen(),
+      //home: (usr!=null && mfa!=null?HomePage():WelcomeScreen()),
       /**home: LoginScreen(),
       navigatorObservers: [TransitionRouteObserver()],
       initialRoute: LoginScreen.routeName,
@@ -169,5 +171,13 @@ class MyApp extends StatelessWidget {
         HomePage.routeName: (context)=>HomePage()
       },**/
     );
+  }
+  Widget getScreen(){
+    if(usr!=null && mfa!=null)
+      return HomePage();
+    if(usr!=null && mfa==null)
+      return verifyTwoFactor();
+    else
+      return WelcomeScreen();
   }
 }
