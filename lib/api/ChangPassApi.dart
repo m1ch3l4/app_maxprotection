@@ -233,7 +233,7 @@ class ChangePassApi{
     }
   }
 
-  static Future<ApiResponse<List<Usuario>>> checkLogin(String login) async{
+  static Future<ApiResponse<String>> checkLogin(String login) async{
     try{
       var url =Constants.urlEndpoint+'user/checklogin/'+login;
 
@@ -250,13 +250,7 @@ class ChangePassApi{
       print("CheckLogin.retorno...${response.statusCode}");
 
       if(response.statusCode == 200){
-        String source = Utf8Decoder().convert(response.bodyBytes);
-        final data = jsonDecode(source);
-        for(Map i in data){
-          Usuario tmp = Usuario.simpleFromJSon(i);
-          lst.add(tmp);
-        }
-        return ApiResponse.ok(lst);
+        return ApiResponse.ok(response.body);
       }else{
         if(response.statusCode == 401) {
           return ApiResponse.error("As suas credenciais não são mais válidas...");
