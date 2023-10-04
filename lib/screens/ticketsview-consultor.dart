@@ -220,7 +220,6 @@ class _TicketsPageState extends State<TicketsPage> {
 
     tam = MediaQuery.of(context).size.height;
 
-    print("Tamanho da tela..."+tam.toString());
     return new Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),

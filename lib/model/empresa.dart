@@ -1,13 +1,14 @@
+// @dart=2.9
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 
 class Empresa extends Equatable{
-  late String id;
-  late String name;
-  late int novo;
-  late int aguardando;
-  late int atendimento;
+  String id;
+  String name;
+  int novo;
+  int aguardando;
+  int atendimento;
 
   Empresa(this.id,this.name);
 
