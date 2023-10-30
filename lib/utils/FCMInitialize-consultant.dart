@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/api/PushConfirmApi.dart';
@@ -57,8 +56,8 @@ MessageData convertMessage(RemoteMessage message){
   String formattedDate = formatter.format(now);
 
   MessageData m = new MessageData();
-  m.title = message.notification.title;
-  m.text = message.notification.body;
+  m.title = message.notification?.title;
+  m.text = message.notification?.body;
   m.type = message.data['type'];
   m.id = message.data['id'];
   m.enterprise = message.data['eid'];
@@ -74,7 +73,7 @@ Future<void> saveToLocalStorage(RemoteMessage message) async{
   if(m.id!=null) {
     print("deve armazenar a message no storage");
     await storage.ready;
-    await storage.setItem(m.id, m.toJSON());
+    await storage.setItem(m.id!, m.toJSON());
     var value = await sharedPref.getValue("pushid");
     if (value != null) {
       List<dynamic> lst = json.decode(value);
@@ -82,7 +81,7 @@ Future<void> saveToLocalStorage(RemoteMessage message) async{
       sharedPref.save("pushid", lst);
     } else {
       List<String> lst = [];
-      lst.add(m.id);
+      lst.add(m.id!);
       sharedPref.save("pushid", lst);
     }
   }
@@ -95,20 +94,21 @@ Future<bool> isTecnico(RemoteMessage message) async{
   if(value=="true") {
     playAlertSound();
   }
+  return true;
 }
 
 class FCMInitConsultor{
 
   static final FCMInitConsultor _instance = FCMInitConsultor._internal();
   factory FCMInitConsultor() => _instance;
-  FirebaseMessaging _firebaseMessaging;
-  Map<String, dynamic> user;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  late Map<String, dynamic> user;
   List<Empresa> lst = [];
-  String screen;
-  BuildContext ctx;
+  late String screen;
+  late BuildContext ctx;
   var messageFCM = new MessageData();
 
-  static bool isTecnico;
+  static bool isTecnico=false;
 
   List<String> topics = [];
 
@@ -244,7 +244,7 @@ class FCMInitConsultor{
     await storage.deleteItem(id);
   }
 
-  Future<void> setConsultant(Map<String, dynamic> usr) {
+  Future<void> setConsultant(Map<String, dynamic> usr) async {
     user = usr;
     isTecnico=false;
 
@@ -284,12 +284,12 @@ class FCMInitConsultor{
       print("FCMInit...assumindo que é consultor ou técnico...");
       lst.map((item) {
         if(item.id!="0"){
-          _firebaseMessaging.subscribeToTopic('elastic' + item.id);
-          topics.add('elastic'+item.id);
-          _firebaseMessaging.subscribeToTopic('zabbix' + item.id);
-          topics.add('zabbix' + item.id);
-          _firebaseMessaging.subscribeToTopic('techsupport' + item.id);
-          topics.add('techsupport' + item.id);
+          _firebaseMessaging.subscribeToTopic('elastic' + item.id!);
+          topics.add('elastic'+item.id!);
+          _firebaseMessaging.subscribeToTopic('zabbix' + item.id!);
+          topics.add('zabbix' + item.id!);
+          _firebaseMessaging.subscribeToTopic('techsupport' + item.id!);
+          topics.add('techsupport' + item.id!);
         }
       }).toList();
 
@@ -330,7 +330,7 @@ class FCMInitConsultor{
   }
 
   void showSimpleMessage(MessageData message){
-    print("*******RECEBEU Notificacao. showSimpleMessage: "+message.text);
+    print("*******RECEBEU Notificacao. showSimpleMessage: "+message.text!);
     if(message.title!="titulo") {
       showDialog(
           context: ctx,
@@ -338,12 +338,12 @@ class FCMInitConsultor{
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(32.0))),
-              title: Text(message.title,
+              title: Text(message.title!,
                   style: TextStyle(color: HexColor(Constants.red))),
               content: SingleChildScrollView(
                 child: ListBody(
                   children: <Widget>[
-                    Text(message.text)
+                    Text(message.text!)
                   ],
                 ),
               ),
@@ -375,7 +375,7 @@ class FCMInitConsultor{
   }
 
   void showMessage(MessageData message){
-    print("*******RECEBEU Notificacao. showMessage: "+message.text);
+    print("*******RECEBEU Notificacao. showMessage: "+message.text!);
     if(message.title!="titulo") {
       showDialog(
           context: ctx,
@@ -383,12 +383,12 @@ class FCMInitConsultor{
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(32.0))),
-              title: Text(message.title,
+              title: Text(message.title!,
                   style: TextStyle(color: HexColor(Constants.red))),
               content: SingleChildScrollView(
                 child: ListBody(
                   children: <Widget>[
-                    Text(message.text)
+                    Text(message.text!)
                   ],
                 ),
               ),
@@ -397,8 +397,8 @@ class FCMInitConsultor{
                   child: Text('Ciente',
                       style: TextStyle(color: HexColor(Constants.blue))),
                   onPressed: () {
-                    removeMessageRead(message.id);
-                    PushApi.changePass(user["id"], message.id).then((value){
+                    removeMessageRead(message.id!);
+                    PushApi.changePass(user["id"], message.id!).then((value){
                       //Navigator.of(bdctx).pop();
                       Navigator.of(ctx).pop();
                       goto(message,bdctx);
@@ -414,8 +414,8 @@ class FCMInitConsultor{
   void goto(MessageData msg, BuildContext context){
     print("goto.userTipo: "+user["tipo"]);
     print(msg.type);
-    print("Empresa.id: "+msg.enterprise);
-    print("Alert.id: "+msg.aid);
+    print("Empresa.id: "+msg.enterprise!);
+    print("Alert.id: "+msg.aid!);
 
     bool isConsultor = (user["tipo"]=="C"?true:false);
     switch (msg.type) {
@@ -425,7 +425,7 @@ class FCMInitConsultor{
         break;
       case 'zabbix':
         Navigator.of(context).pushReplacement(FadePageRoute(
-          builder: (context) => InnerZabbix(msg.enterprise,msg.aid),));
+          builder: (context) => InnerZabbix(msg.enterprise!,msg.aid!),));
         break;
       case 'techsupport':
         Empresa emp = Empresa(msg.enterprise,"");
@@ -441,7 +441,7 @@ class FCMInitConsultor{
         break;
       case 'msg':
         //0 padrao, 1 - siem, 2 - ticket, 3 - zabbix, 4- lead
-        Navigator.of(context).pushReplacement(FadePageRoute(builder:(context)=> InnerMessages(int.parse(msg.msgid)),)); //parseint
+        Navigator.of(context).pushReplacement(FadePageRoute(builder:(context)=> InnerMessages(int.parse(msg.msgid!)),)); //parseint
         break;
       default:
         Navigator.of(context).pop();

@@ -1,13 +1,12 @@
-//@dart=2.9
 class Permissao{
-  int id;
-  String nome;
-  bool criar;
-  bool editar;
-  bool visualizar;
-  bool excluir;
-  bool meus;
-  bool todos;
+  int? id;
+  String? nome;
+  bool? criar;
+  bool? editar;
+  bool? visualizar;
+  bool? excluir;
+  bool? meus;
+  bool? todos;
 
   Permissao(this.nome,this.meus);
 

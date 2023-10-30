@@ -1,15 +1,14 @@
-// @dart=2.9
 import 'package:intl/intl.dart';
 class TechSupportData{
-  String title;
-  String data;
-  String status;
-  String id;
-  String justify;
-  String empresa;
-  String user;
-  String tecnico;
-  String urgencia;
+  String? title;
+  String? data;
+  String? status;
+  String? id;
+  String? justify;
+  String? empresa;
+  String? user;
+  String? tecnico;
+  String? urgencia;
 
   TechSupportData(this.title,this.data,this.status,this.id,this.justify,this.empresa) {
     // Set these rather than using the default value because Firebase returns

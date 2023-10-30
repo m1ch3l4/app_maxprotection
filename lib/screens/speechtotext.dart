@@ -31,6 +31,8 @@ class _SpeechToTextPage extends State<SpeechToTextPage> {
         break;
       case PermissionStatus.restricted:
         break;
+      case PermissionStatus.provisional:
+        break;// TODO: Handle this case.
     }
   }
 

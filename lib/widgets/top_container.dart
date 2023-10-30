@@ -1,15 +1,14 @@
-// @dart=2.9
 import 'package:flutter/material.dart';
 
 import '../utils/HexColor.dart';
 import 'constants.dart';
 
 class TopContainer extends StatelessWidget {
-  final double height;
-  final double width;
-  final Widget child;
-  final Color color;
-  final EdgeInsets padding;
+  final double? height;
+  final double? width;
+  final Widget? child;
+  final Color? color;
+  final EdgeInsets? padding;
   TopContainer({this.height, this.width, this.child, this.padding,this.color});
 
 

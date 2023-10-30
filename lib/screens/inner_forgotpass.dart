@@ -1,12 +1,16 @@
-//@dart=2.10
 import 'package:app_maxprotection/api/ChangPassApi.dart';
 import 'package:app_maxprotection/model/usuario.dart';
+import 'package:app_maxprotection/screens/welcome_screen.dart';
+import 'package:app_maxprotection/utils/Logoff.dart';
 import 'package:app_maxprotection/utils/Message.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/HexColor.dart';
 import '../widgets/RadialButton.dart';
 import '../widgets/constants.dart';
+import '../widgets/custom_route.dart';
 
 class ForgotScreen extends StatefulWidget {
   static const routeName = '/forgot';
@@ -21,12 +25,37 @@ class ForgotScreenState extends State<ForgotScreen>{
   bool firstLogin = false;
   final loginCtrl = TextEditingController();
 
+  var senhaFocus = FocusNode();
+  bool _ok=false;
+  bool _keyclose=false;
+
   double tam=0.0;
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => WelcomeScreen("true"),
+            ));
+    return true;
+  }
+
+  void initState() {
+    super.initState();
+    BackButtonInterceptor.add(myInterceptor);
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    //throw UnimplementedError();
+    print("build....");
+    _keyclose = MediaQuery.of(context).viewInsets.bottom != 0;
+    _ok = _keyclose;
     return buildForgotScrenn(context);
   }
 
@@ -54,17 +83,19 @@ class ForgotScreenState extends State<ForgotScreen>{
               _footer(width, (height*0.25)),
             ],
           ),
-
         ),
         backgroundColor: Colors.transparent,
-      )
-    ;
+      );
   }
 
-
+  handleKey(RawKeyEventData key) {
+    String _keyCode;
+    _keyCode = key.keyLabel.toString();
+    print("clicou...."+_keyCode);//keycode of key event (66 is return)
+  }
 
   Widget _formUI(double width, double height) {
-    return Form(
+    Widget f = Form(
         key: _key,
         child: new Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -74,6 +105,11 @@ class ForgotScreenState extends State<ForgotScreen>{
               controller: loginCtrl,
               cursorColor: HexColor(Constants.red),
               style: TextStyle(color: HexColor(Constants.red)),
+              onFieldSubmitted: (value){
+                  _ok=true;
+                  print("submite...");
+                  FocusScope.of(context).unfocus();
+              },
               decoration: new InputDecoration(hintText: 'E-mail', hintStyle: TextStyle(color: HexColor(Constants.red)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(
@@ -102,10 +138,18 @@ class ForgotScreenState extends State<ForgotScreen>{
                 ),
           ],
         ));
+
+    if(!_ok) {
+      loginCtrl.selection = TextSelection.collapsed(offset: loginCtrl.text.length);
+      FocusScope.of(context).requestFocus(senhaFocus);
+      print("focos....");
+    }
+
+    return f;
   }
 
   forgotPass() async {
-    String msg;
+    String? msg;
     String login = loginCtrl.value.text;
 
     String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
@@ -116,17 +160,21 @@ class ForgotScreenState extends State<ForgotScreen>{
       await ChangePassApi.checkLogin(login).then((value) => msg=value.result);
 
       AlertDialog alert;
-      Widget cancelButton = FlatButton(
+      Widget cancelButton = ElevatedButton(
         child: Text("OK"),
         onPressed:  () {
           Navigator.of(context, rootNavigator: true).pop('dialog');
+          Logoff.cleanDados();
+          Navigator.of(context).push(FadePageRoute(
+              builder: (context)=>WelcomeScreen("")
+          ));
         },
       );
       alert = AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(32.0))),
         title: Text("ATENÇÃO", style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red))),
-        content: Text(msg,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
+        content: Text(msg!,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
         actions: [
           cancelButton
         ],

@@ -1,19 +1,18 @@
-//@dart=2.9
 import 'package:intl/intl.dart';
 
 class AlertData {
-  String id;
-  String title;
-  String data;
-  String text;
-  String categoria;
-  String empresa;
-  String total;
-  String status;
-  String link;
-  String linkSoc;
-  String zhost;
-  String zstatus;
+  String? id;
+  String? title;
+  String? data;
+  String? text;
+  String? categoria;
+  String? empresa;
+  String? total;
+  String? status;
+  String? link;
+  String? linkSoc;
+  String? zhost;
+  String? zstatus;
 
   AlertData.data([this.title,this.data,this.text,this.categoria]) {
     // Set these rather than using the default value because Firebase returns

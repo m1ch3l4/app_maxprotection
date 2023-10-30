@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:io';
 
 import 'package:back_button_interceptor/back_button_interceptor.dart';
@@ -16,8 +15,10 @@ import '../utils/HttpsClient.dart';
 import '../utils/Message.dart';
 import '../widgets/bottom_menu.dart';
 import '../widgets/constants.dart';
+import '../widgets/custom_route.dart';
 import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
+import 'home_page.dart';
 
 
 void main() => runApp(new InnerTickets());
@@ -28,29 +29,16 @@ class InnerTickets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      /**child: FutureBuilder(
-        future: FlutterSession().get("logged"),
-        builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new TicketsPage(title: 'Tickets MovieDesk', user: snapshot.data),
-          ) : CircularProgressIndicator());
-        },
-      ),**/
       child: new TicketsPage(title: 'Tickets MoviDesk'),
     );
   }
 }
 
 class TicketsPage extends StatefulWidget {
-  TicketsPage({Key key, this.title,this.user}) : super(key: key);
+  TicketsPage({this.title,this.user}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _TicketsPageState createState() => new _TicketsPageState();
@@ -65,8 +53,8 @@ class _TicketsPageState extends State<TicketsPage> {
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
   DateTime minDate = DateTime.now();
-  DateTime firstDate;
-  DateTime initDate,endDate;
+  DateTime firstDate=DateTime.now();
+  DateTime initDate=DateTime.now(),endDate = DateTime.now();
 
   final df = new DateFormat('dd/MM/yyyy');
   final dbFormat = new DateFormat('yyyy-MM-dd');
@@ -81,24 +69,23 @@ class _TicketsPageState extends State<TicketsPage> {
   var loading = false;
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime pickedDate = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
         initialDatePickerMode: DatePickerMode.day,
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
         firstDate: minDate.subtract(Duration(days:30)),
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -111,22 +98,21 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   Future<void> _selectDate2(BuildContext context) async {
-    final DateTime pickedDate2 = await showDatePicker(
+    final DateTime? pickedDate2 = await showDatePicker(
         context: context,
         initialDate: initDate,
         firstDate: initDate,
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -156,13 +142,13 @@ class _TicketsPageState extends State<TicketsPage> {
       ssl = true;
 
 
-    urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/elastic/"+dtParam1+"/"+dtParam2;
+    urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user!['id'].toString()+"/elastic/"+dtParam1+"/"+dtParam2;
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -178,7 +164,7 @@ class _TicketsPageState extends State<TicketsPage> {
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           var ent = i["company"];
           var alert = AlertData.fromJson(i);
           alert.setEmpresa(ent["name"]);
@@ -193,19 +179,26 @@ class _TicketsPageState extends State<TicketsPage> {
     }
   }
 
-
-  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
-  }**/
+  }
 
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
+   BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
   void initState() {
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
@@ -236,14 +229,14 @@ class _TicketsPageState extends State<TicketsPage> {
               topLeft: Radius.circular(10.0),
               topRight: Radius.circular(10.0)),
           onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
+          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user!),
           body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         ),
         drawer:  Drawer(
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -377,7 +370,7 @@ class _TicketsPageState extends State<TicketsPage> {
     return ListView(
       children: <Widget>[
         for (int i = 0; i < listModel.length; i++)
-          getAlert(listModel[i].title, listModel[i].data, listModel[i].text, listModel[i].empresa)
+          getAlert(listModel[i].title!, listModel[i].data!, listModel[i].text!, listModel[i].empresa!)
       ],
     );
   }

@@ -1,17 +1,16 @@
-// @dart=2.10
 import 'package:intl/intl.dart';
 class MessageData{
   MessageData({this.title,this.text,this.type});
 
-  String id;
-  String title;
-  String text;
-  String data;
-  String type;
-  String sender;
-  String enterprise;
-  String aid;
-  String msgid;
+  String? id;
+  String? title;
+  String? text;
+  String? data;
+  String? type;
+  String? sender;
+  String? enterprise;
+  String? aid;
+  String? msgid;
 
   MessageData.fromJson(Map<String, dynamic> json) {
     final df = new DateFormat('dd/MM HH:mm');

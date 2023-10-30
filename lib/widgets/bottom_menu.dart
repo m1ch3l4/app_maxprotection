@@ -157,6 +157,7 @@ class BottomMenu extends StatelessWidget{
                                 )
                               ],
                             ),
+                            if(isTecnico)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[

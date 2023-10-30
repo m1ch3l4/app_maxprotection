@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:collection';
 import 'dart:io';
 
@@ -36,8 +35,8 @@ import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 class InnerZabbix extends StatelessWidget {
 
-  final String eid;
-  final String aid;
+  final String? eid;
+  final String? aid;
 
   InnerZabbix(this.eid,this.aid);
 
@@ -49,14 +48,7 @@ class InnerZabbix extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new ZabbixPage(title: 'Alertas Zabbix', user: snapshot.data,eid:eid,aid:aid),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new ZabbixPage(title: 'Alertas Zabbix', user: snapshot.data as Map<String, dynamic>,eid:eid,aid:aid) : CircularProgressIndicator());
         },
       ),
     );
@@ -64,12 +56,12 @@ class InnerZabbix extends StatelessWidget {
 }
 
 class ZabbixPage extends StatefulWidget {
-  ZabbixPage({Key key, this.title,this.user,this.eid,this.aid}) : super(key: key);
+  ZabbixPage({this.title,this.user,this.eid,this.aid});
 
-  final String eid;
-  final String aid;
-  final String title;
-  final Map<String, dynamic> user;
+  final String? eid;
+  final String? aid;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _ZabbixPageState createState() => new _ZabbixPageState();
@@ -84,8 +76,8 @@ class _ZabbixPageState extends State<ZabbixPage> {
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
   DateTime minDate = DateTime.now();
-  DateTime firstDate;
-  DateTime initDate,endDate;
+  DateTime firstDate= DateTime.now();
+  DateTime initDate=DateTime.now(),endDate=DateTime.now();
 
   final df = new DateFormat('dd/MM/yyyy');
   final dbFormat = new DateFormat('yyyy-MM-dd');
@@ -104,39 +96,38 @@ class _ZabbixPageState extends State<ZabbixPage> {
   bool isConsultor = false;
   static EmpresasSearch _empSearch = EmpresasSearch();
 
-  Empresa empSel;
+  late Empresa empSel;
 
   static List<DropdownMenuItem<Empresa>> _data = [];
   String _selected = '';
 
   List<_ChartData> data = [];
-  TooltipBehavior _tooltip;
-  HashMap<String,int> dados;
+  late TooltipBehavior _tooltip;
+  late HashMap<String,int> dados;
 
   Color clOK = HexColor(Constants.blue);
   Color clFALHA = HexColor(Constants.red);
 
-  searchEmpresa widgetSearchEmpresa;
+  searchEmpresa? widgetSearchEmpresa;
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime pickedDate = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
         initialDatePickerMode: DatePickerMode.day,
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
         firstDate: minDate.subtract(Duration(days:180)),
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -150,22 +141,21 @@ class _ZabbixPageState extends State<ZabbixPage> {
   }
 
   Future<void> _selectDate2(BuildContext context) async {
-    final DateTime pickedDate2 = await showDatePicker(
+    final DateTime? pickedDate2 = await showDatePicker(
         context: context,
         initialDate: initDate,
         firstDate: initDate,
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -199,24 +189,24 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
     //empSel = widgetSearchEmpresa.state.empSel;
 
-    if(widget.user["tipo"]=="C")
+    if(widget.user!["tipo"]=="C")
       urlApi = Constants.urlEndpoint + "alert/zabbix/" +
-          empSel.id+ "/" + dtParam1 + "/" + dtParam2;
+          empSel.id!+ "/" + dtParam1 + "/" + dtParam2;
     //urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/zabbix/"+dtParam1+"/"+dtParam2;
     else
-    if(widget.user["tipo"]=="T"){
+    if(widget.user!["tipo"]=="T"){
       urlApi = Constants.urlEndpoint + "alert/zabbix/" +
-          widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+          widget.user!['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
     }else {
       urlApi = Constants.urlEndpoint + "alert/zabbix/" +
-          widget.user['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
+          widget.user!['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
     }
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -239,7 +229,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
         dados = new HashMap<String,int>();
         setState(() {
           listModel.clear();
-          for (Map i in dataJ) {
+          for (Map<String,dynamic> i in dataJ) {
             var alert = AlertData.fromJson(i);
             if(widget.aid!=null && isConsultor){
               if(alert.id == widget.aid)
@@ -249,9 +239,9 @@ class _ZabbixPageState extends State<ZabbixPage> {
             }
             if(alert.zstatus==null)alert.zstatus="OK";
             if(!dados.containsKey(alert.zstatus)){
-              dados.putIfAbsent(alert.zstatus, () => 1);
+              dados.putIfAbsent(alert.zstatus!, () => 1);
             }else{
-              dados.update(alert.zstatus, (value) => value+1);
+              dados.update(alert.zstatus!, (value) => value+1);
             }
           }
           //loading = false;
@@ -283,39 +273,52 @@ class _ZabbixPageState extends State<ZabbixPage> {
 
 
   FutureOr<http.Response> _onTimeout(){
-    print("não foi possível conectar em 8sec");
-    loading=false;
+    http.Response r = http.Response('Timeout',403);
+
+    setState(() {
+      loading=false;
+      print("não foi possível conectar em 8sec");
+    });
+    return r;
   }
 
-  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
-  }**/
+  }
 
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
+    BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
   void initState() {
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
     dtParam1 = dbFormat.format(firstDate);
     dtParam2 = dbFormat.format(minDate);
 
-    if(widget.user["tipo"]=="C") {
+    if(widget.user!["tipo"]=="C") {
       isConsultor = true;
     }else {
       getData();
     }
 
     if(widget.eid!=null) {
-      print("veio com info de Eid...");
-      widgetSearchEmpresa.state.empSel = Empresa(widget.eid,"");
+      firstDate = minDate.subtract(Duration(days:2));
+      dtParam1 = dbFormat.format(firstDate);
+      Empresa e = Empresa(widget.eid,"");
+      setSelectedEmpresa(e);
       getData();
     }
 
@@ -337,7 +340,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
       widgetSearchEmpresa =
           searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,);
     }catch(e){
-      print("erro searchEmpresa..."+e);
+      print("erro searchEmpresa..."+e.toString());
     }
     return Scaffold(
         key: _scaffoldKey,
@@ -347,7 +350,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('zabbix',widget.user,textTheme,(width*0.6)),
+          child: SliderMenu('zabbix',widget.user!,textTheme,(width*0.6)),
         )
     );
   }
@@ -361,7 +364,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
           children: <Widget>[
             Stack(
               children: [
-                headerAlertas(_scaffoldKey, widget.user, context, width, 200, "Alertas Zabbix"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width, 200, "Alertas Zabbix"),
                 Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.only(top:170),
@@ -524,7 +527,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
       children: [
         _criarLinhaTable("Título, Data, Severidade",0,"-1"),
         for (int i = 0; i < listModel.length; i++)
-          _criarLinhaTable(listModel[i].title+","+listModel[i].data+","+listModel[i].zstatus,(i+1),listModel[i].id),
+          _criarLinhaTable(listModel[i].title!+","+listModel[i].data!+","+listModel[i].zstatus!,(i+1),listModel[i].id!),
       ],
     ):SizedBox(width: 1,);
   }
@@ -693,7 +696,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(tech.data, style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
+                        Text(tech.data!, style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
                       ],)
                   ],
                 ),
@@ -707,7 +710,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                             mainAxisSize: MainAxisSize.max,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children:[
-                              Text(tech.title,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
+                              Text(tech.title!,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
                             ])),
                   ],
                 ),
@@ -720,7 +723,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text(tech.text,style: TextStyle(color:HexColor(Constants.blue))))
+                    Text(tech.text!,style: TextStyle(color:HexColor(Constants.blue))))
                   ],
                 ),
                 SizedBox(height: 15,),
@@ -732,7 +735,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text((tech.zhost!=null?tech.zhost:"-"),style: TextStyle(color:HexColor(Constants.blue))))
+                    Text((tech.zhost!=null?tech.zhost!:"-"),style: TextStyle(color:HexColor(Constants.blue))))
                   ],
                 ),
                 SizedBox(height: 15,),
@@ -745,7 +748,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text((tech.zstatus!=null?tech.zstatus:"-"),style: TextStyle(color:HexColor(Constants.blue)))
+                    Text((tech.zstatus!=null?tech.zstatus!:"-"),style: TextStyle(color:HexColor(Constants.blue)))
                   ],
                 )
               ],

@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/widgets/top_container.dart';
@@ -16,16 +15,16 @@ import 'custom_route.dart';
 class headerTkDetail extends StatelessWidget{
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  BuildContext ctx;
-  String title;
-  String tipo;
-  String tkid;
-  double width;
-  Function f;
+  BuildContext? ctx;
+  String? title;
+  String? tipo;
+  String? tkid;
+  double? width;
+  Function? f;
 
   @override
   Widget build(BuildContext context) {
-    return _header(width, context);
+    return _header(width!, context);
   }
 
   headerTkDetail(GlobalKey<ScaffoldState> key, BuildContext context, double w, String tit, String tip, String tki, Function ff){
@@ -55,7 +54,7 @@ class headerTkDetail extends StatelessWidget{
                   icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
                 Spacer(),
@@ -65,7 +64,7 @@ class headerTkDetail extends StatelessWidget{
                   icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Voltar',
                   onPressed: () {
-                    f();
+                    f!();
                   },
                 ),
               ],
@@ -82,7 +81,7 @@ class headerTkDetail extends StatelessWidget{
                   },
                 ),
                 Expanded(child: Text(
-                  tkid+' - '+title,
+                  tkid!+' - '+title!,
                   maxLines: 2,
                   softWrap: true,
                   textAlign: TextAlign.center,

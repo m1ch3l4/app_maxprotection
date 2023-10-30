@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -24,7 +23,6 @@ import 'package:app_maxprotection/widgets/BlinkIcon.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
-import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -52,7 +50,7 @@ import 'inner_zabbix.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-final GlobalKey<_MyHomePageState> keyHP = new GlobalKey<_MyHomePageState>();
+GlobalKey<_MyHomePageState> keyHP = new GlobalKey<_MyHomePageState>();
 
 class HomePage extends StatelessWidget {
   static const routeName = '/dashboard';
@@ -60,40 +58,38 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: FutureBuilder(
+    return FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            home: new MyHomePage(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data),
+            home: new MyHomePage(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data as Map<String, dynamic>),
           ) : CircularProgressIndicator());
         },
-      ),
     );
   }
 
 }
 
 class MyHomePage extends StatefulWidget{
-  MyHomePage({Key key, this.title,this.user}) : super(key: key);
+  MyHomePage({required Key key, this.title,this.user}) : super(key: key);
 
-  final String title;
-  final Map<String, dynamic> user;
-  static _MyHomePageState state;
+  final String? title;
+  final Map<String, dynamic>? user;
+  static _MyHomePageState? state;
 
   @override
   _MyHomePageState createState() {
     state = new _MyHomePageState();
-    return state;
+    return state!;
   }
 }
 
 class _MyHomePageState extends State<MyHomePage>{
 
   List<NoticiaData> listModel = [];
-  DashboardData dashboard;
+  DashboardData? dashboard;
   var loading=false;
   int totalSiem = 0;
   int totalAberto = 0;
@@ -103,22 +99,22 @@ class _MyHomePageState extends State<MyHomePage>{
   int msgTicket = 0;
   bool isConsultor = false;
   String perfil = "Analista";
-  Timer alarm;
+  Timer? alarm;
   double tam = 0.0;
 
-  DashboardData get dashboardDados=>dashboard;
+  DashboardData? get dashboardDados=>dashboard;
 
   static EmpresasSearch _empSearch = EmpresasSearch();
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
-  SliderMenu mnu;
-  TextTheme textTheme;
+  SliderMenu? mnu;
+  TextTheme? textTheme;
   final df = new DateFormat('dd/MM HH:mm');
 
   diableBlink(){
     print("chamou disableBlink da Home...");
     setState(() {
-      this.dashboard.msgLead = 0;
+      this.dashboard!.msgLead = 0;
       loading = false;
     });
   }
@@ -156,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage>{
       }
     }
     FCMInitConsultor _fcmInit = new FCMInitConsultor();
-    _fcmInit.setConsultant(a);
+    _fcmInit.setConsultant(a!);
   }
 
 
@@ -179,20 +175,20 @@ class _MyHomePageState extends State<MyHomePage>{
 
     //widget.user.forEach((k,v) => print("got key $k with $v"));
 
-    if(widget.user['tipo']=="C") {
+    if(widget.user!['tipo']=="C") {
       urlApi = Constants.urlEndpoint + "dashboard/consultor/" +
-          widget.user['id'].toString();
+          widget.user!['id'].toString();
       isConsultor=true;
       perfil="Consultor";
     } else {
-      if(widget.user['tipo']=='D'){
+      if(widget.user!['tipo']=='D'){
         urlApi = Constants.urlEndpoint + "dashboard/diretor/" +
-            widget.user['company_id'].toString() + "/" +
-            widget.user['id'].toString() ;
+            widget.user!['company_id'].toString() + "/" +
+            widget.user!['id'].toString() ;
         perfil="Diretor";
       }else {
         urlApi = Constants.urlEndpoint + "dashboard/tecnico/" +
-            widget.user['id'].toString() ;
+            widget.user!['id'].toString() ;
         print("Tecnico: "+urlApi);
         perfil = "Analista";
       }
@@ -200,11 +196,12 @@ class _MyHomePageState extends State<MyHomePage>{
       isConsultor=false;
     }
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
     "Authorization": basicAuth,
     };
+
 
     if(ssl) {
       var client = HttpsClient().httpsclient;
@@ -227,7 +224,7 @@ class _MyHomePageState extends State<MyHomePage>{
           //data.forEach((k,v) => print("Dashboard.got key $k with $v"));
 
           if(data!=null && data['infoNewsList']!=null) {
-            for (Map i in data['infoNewsList']) {
+            for (Map<String,dynamic> i in data['infoNewsList']) {
               listModel.add(NoticiaData.fromJson(i));
             }
           }
@@ -246,32 +243,36 @@ class _MyHomePageState extends State<MyHomePage>{
       }
       loading = false;
       dashboard = new DashboardData.data(0,0,0,0,0,0);
-      dashboard.msgTicket=0;
-      dashboard.msgLead=0;
-      dashboard.msgZabbix=0;
-      dashboard.msgSiem=0;
+      dashboard!.msgTicket=0;
+      dashboard!.msgLead=0;
+      dashboard!.msgZabbix=0;
+      dashboard!.msgSiem=0;
       Message.showMessage("Não foi possível sincronizar com a nuvem.\nVerifique sua conexão com a Internet.");
     }
   }
 
   FutureOr<http.Response> _onTimeout(){
+    http.Response r = http.Response('Timeout',403);
+
     setState(() {
       loading=false;
       print("não foi possível conectar em 8sec");
     });
+    return r;
   }
+
   void refreshUser() async{
     print("******chamou refreshUser....");
 
     final prefs = await SharedPreferences.getInstance();
     String urlApi = "";
     urlApi = Constants.urlEndpoint + "dashboard/consultor/refresh/" +
-          widget.user['id'].toString();
+          widget.user!['id'].toString();
 
     try{
 
-      String p = widget.user["password"];
-      String basicAuth = "Bearer "+widget.user["token"];
+      String p = widget.user!["password"];
+      String basicAuth = "Bearer "+widget.user!["token"];
       var ssl = false;
       var responseData = null;
 
@@ -296,14 +297,14 @@ class _MyHomePageState extends State<MyHomePage>{
 
         Map<String, dynamic> mapResponse = jsonDecode(source);
         Usuario refresh = Usuario.fromJson(mapResponse);
-        Usuario doSistema = Usuario.fromSharedPref(widget.user);
+        Usuario doSistema = Usuario.fromSharedPref(widget.user!);
         refresh.token=doSistema.token;
         refresh.senha = p;
 
-        Role rAtual = doSistema.role;
-        Role rNova = refresh.role;
+        Role rAtual = doSistema.role!;
+        Role rNova = refresh.role!;
 
-        if (!refresh.hasAccess && refresh.tipo == "T") {
+        if (!refresh.hasAccess! && refresh.tipo == "T") {
           Message.showMessage("A sua credencial não é mais válida!");
           Logoff.logoff();
         }
@@ -311,7 +312,7 @@ class _MyHomePageState extends State<MyHomePage>{
         double width = MediaQuery.of(context).size.width;
         if (rAtual.nome != rNova.nome) {
           setState(() {
-            mnu = SliderMenu('index', refresh.toJson(), textTheme,(width*0.5));
+            mnu = SliderMenu('index', refresh.toJson(), textTheme!,(width*0.5));
             prefs.setString('usuario', json.encode(refresh));
           });
         }
@@ -319,8 +320,8 @@ class _MyHomePageState extends State<MyHomePage>{
         if (doSistema.tipo == "C") {
           List<Empresa> eNova = refresh.empresas;
           List<Empresa> eOld = doSistema.empresas;
-          eNova.sort((a, b) => a.name.compareTo(b.name));
-          eOld.sort((a, b) => a.name.compareTo(b.name));
+          eNova.sort((a, b) => a.name!.compareTo(b.name!));
+          eOld.sort((a, b) => a.name!.compareTo(b.name!));
 
           if (!DeepCollectionEquality().equals(eNova, eOld)) {
             List<Empresa> lstEmpresas = [];
@@ -332,19 +333,21 @@ class _MyHomePageState extends State<MyHomePage>{
             FCMInitConsultor().setConsultant(refresh.toJson());
           }
           prefs.setString('usuario', json.encode(refresh));
-
-          eNova = null;
-          eOld = null;
         }
       } else {
         Message.showMessage("A sua credencial não é mais válida!");
-        Logoff.logoff();
+        Logoff.cleanDados();
+        exit(0);
       }
     }
     }catch(error, exception){
       print("Home.Erro : $error > $exception ");
     }
+  }
 
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    print("sem back na home...");
+    return true;
   }
 
   void initState(){
@@ -352,7 +355,7 @@ class _MyHomePageState extends State<MyHomePage>{
     _fabHeight = _initFabHeight;
     super.initState();
     taskRefresh();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
   }
 
   void taskRefresh(){
@@ -366,8 +369,8 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
-    alarm.cancel();
+    BackButtonInterceptor.remove(myInterceptor);
+    alarm!.cancel();
     super.dispose();
   }
 
@@ -377,6 +380,7 @@ class _MyHomePageState extends State<MyHomePage>{
   double _fabHeight = 0;
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
+  double width = 0.0;
   //double width = 150.0;
   TextEditingController _textFieldController = TextEditingController();
   String valueText="";
@@ -393,14 +397,16 @@ class _MyHomePageState extends State<MyHomePage>{
 
     _fcmInit.configureMessage(context, "elastic");
 
-    double width = MediaQuery.of(context).size.width;
+    width = MediaQuery.of(context).size.width;
 
     tam = MediaQuery.of(context).size.height;
 
     print("tamanho da tela: "+tam.toString());
 
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
-    mnu = SliderMenu('home',widget.user,textTheme,width);
+    mnu = SliderMenu('home',widget.user!,textTheme!,width);
+    mnu!.setNotifyParent(updateMenu);
+
     return Scaffold(
       appBar: AppBar(backgroundColor: HexColor(Constants.blue), toolbarHeight: 0,),
         key: _scaffoldKey,
@@ -425,6 +431,15 @@ class _MyHomePageState extends State<MyHomePage>{
           child: mnu,
         )
     );
+  }
+
+  void updateMenu(){
+    print("atualizou menu....");
+    setState(() {
+      mnu = null;
+      mnu = SliderMenu('home',widget.user!,textTheme!,width);
+    });
+    _scaffoldKey.currentState!.closeDrawer();
   }
 
   Widget getMain(double width){
@@ -460,13 +475,13 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   void ticketsOpen(){
-    Navigator.of(context).pushReplacement(FadePageRoute(
+    Navigator.of(context).push(FadePageRoute(
       builder: (context) => (isConsultor?TicketsviewConsultor(1):TicketlistConsultor(null,1)),
     ));
   }
 
   void cadastro(){
-    Navigator.of(context).pushReplacement(FadePageRoute(
+    Navigator.of(context).push(FadePageRoute(
       builder: (context) => (InnerUser()),
     ));
   }
@@ -490,7 +505,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
                 Spacer(),
@@ -500,7 +515,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   icon: const Icon(Icons.notifications_none, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
               ],
@@ -519,7 +534,7 @@ class _MyHomePageState extends State<MyHomePage>{
                   },
                 ),
                Expanded(child: Text(
-                  'Olá, '+widget.user['name'].toString()+" | "+perfil,
+                  'Olá, '+widget.user!['name'].toString()+" | "+perfil,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.0,
@@ -560,7 +575,7 @@ class _MyHomePageState extends State<MyHomePage>{
                     ),
                     GestureDetector(
                       child: Text(
-                        dashboard.novo.toString(),
+                        dashboard!.novo.toString(),
                         textAlign: TextAlign.start,
                         style: TextStyle(
                           fontSize: 18.0,
@@ -574,11 +589,15 @@ class _MyHomePageState extends State<MyHomePage>{
                   ],
                 ),
                 Spacer(),
-                FlatButton(
+                ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(FadePageRoute(
                       builder: (context) => (isConsultor?TicketsviewConsultor(0):InnerTodosTk()),
                     ));},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0
+                  ),
                   child: Text(
                     'Ver todos',
                     textAlign: TextAlign.start,
@@ -605,7 +624,7 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   callTecnico() async{
-    CallTecnicoApi.callTecnico(widget.user["token"],widget.user["id"])
+    CallTecnicoApi.callTecnico(widget.user!["token"],widget.user!["id"])
     .then((resp){
     print('callTecnicoAPI. ${resp.ok}');
     if(!resp.ok){
@@ -615,8 +634,8 @@ class _MyHomePageState extends State<MyHomePage>{
       if(u.id!="-1") {
         if (u.phone != null) {
           Message.showMessage(
-              "Ligando para " + u.name + ", telefone: " + u.phone);
-          String ph = "0" + u.phone.replaceAll(RegExp('[^0-9]'),
+              "Ligando para " + u.name! + ", telefone: " + u.phone!);
+          String ph = "0" + u.phone!.replaceAll(RegExp('[^0-9]'),
               ''); // 25/08/2022 - adicionando o ZERO pela questão da operadora...
           if (ph.length > 10) {
             FlutterPhoneDirectCaller.callNumber(ph);
@@ -641,7 +660,7 @@ class _MyHomePageState extends State<MyHomePage>{
     print("altura para o body...."+bheight.toString());
     double rowHeight = (bheight/4)-80;
     print("altura de cada linha: "+rowHeight.toString());
-    bool extraRow =(widget.user["tipo"]=="T"||widget.user["tipo"]=="D"?true:false);
+    bool extraRow =(widget.user!["tipo"]=="T"||widget.user!["tipo"]=="D"?true:false);
 
     return //Expanded(
       SingleChildScrollView(
@@ -668,7 +687,7 @@ class _MyHomePageState extends State<MyHomePage>{
                       Spacer(),
                       TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,title: "Leads",ctx: context,r:false,
                         action: InnerMessages(4),
-                          icon: (dashboard.msgLead>0?BlinkIcon():Icon(Icons.people_outline,color: Colors.white)),
+                          icon: (dashboard!.msgLead!>0?BlinkIcon():Icon(Icons.people_outline,color: Colors.white)),
                           disableBlink: (){this.diableBlink();},
                       ),
                       SizedBox(width: width*0.05,),
@@ -708,9 +727,9 @@ class _MyHomePageState extends State<MyHomePage>{
                     ],
                   ),
                   (bheight<400 && extraRow?SizedBox(height: 15,):Spacer()),
-                  if(widget.user["tipo"]=="T")
+                  if(widget.user!["tipo"]=="T")
                     Row(mainAxisAlignment: MainAxisAlignment.center,children: <Widget>[BlockButtonWidget(cardColor: Colors.white,width: width*0.875,title: "Ligar para Plantonista",ctx: context,icon:Icon(Icons.phone_forwarded,color: HexColor(Constants.blueButton),size:40),onclickF: ()=>callTecnico(),r:true,bheight: bheight)]),
-                  if(widget.user["tipo"]=="D")
+                  if(widget.user!["tipo"]=="D")
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[BlockButtonWidget(cardColor: Colors.white,width: width*0.875,title: "TÉCNICOS",ctx: context,icon:Icon(Icons.people_outline,color: HexColor(Constants.blueButton),size: 40,),action:InnerTecnicos(),r:false,bheight: bheight)
@@ -789,7 +808,7 @@ class _MyHomePageState extends State<MyHomePage>{
                 onPressed: () {
                   if(_textFieldController.value.text!="") {
                   ChangePassApi.sendMessageDiretor(
-                  widget.user["id"], valueText).then((resp) {
+                  widget.user!["id"], valueText).then((resp) {
                   if (resp.ok) {
                   Message.showMessage("Mensagem enviada com sucesso!");
                   } else {
@@ -815,63 +834,7 @@ class _MyHomePageState extends State<MyHomePage>{
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
-  }
-
-
-  Widget buildTileNoticia(double width){
-    return Container(
-            alignment: Alignment.topCenter,
-            width: width,
-            height: 120,
-            child: loading ? Center (child: CircularProgressIndicator()) : (listModel.length>0? getSwiper(width):Center(
-                child: Text(
-                  "Nenhuma notícia atual",
-                  style: TextStyle(color: HexColor(Constants.red), fontWeight: FontWeight.w700, fontSize: 24.0),
-                  textAlign: TextAlign.center,
-                ))));
-  }
-  Widget getSwiper(double width){
-    return Swiper(
-      itemBuilder: (BuildContext context, int index) {
-        return getNoticia(listModel[index].titulo, listModel[index].data, listModel[index].texto,listModel[index].url);
-      },
-      itemCount: listModel.length,
-      itemWidth: width,
-      itemHeight: 120.0,
-      layout: SwiperLayout.DEFAULT,
-      //control: new SwiperControl(),
-    );
-  }
-  void gotToNoticias(){
-    Navigator.of(this.context).pushReplacement(FadePageRoute(
-      builder: (context) => InnerNoticias(),
-    ));
-  }
-  Widget getNoticia(String title, String date, String text, String url){
-    return Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            ListTile(
-                onTap: gotToNoticias,
-                title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text(df.format(DateTime.parse(date))),
-                leading: Icon(
-                    Icons.book_outlined,
-                    color: HexColor(Constants.red)
-                )),
-            /**ListTile(
-                title: Text("Leia Mais",style: TextStyle(fontSize: 12.0)),
-                onTap: (){
-                  _launchURL(url);
-                }
-            )**/
-          ],
-        )
-    );
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
 
   void _launchURL(_url) async =>

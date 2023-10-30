@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'dart:convert';
 
 import 'package:intl/intl.dart';
@@ -8,22 +7,22 @@ import 'moviedesk/Owner.dart';
 import 'moviedesk/Person.dart';
 
 class Ticket{
-  String id;
-  String title;
-  String data;
-  String created;
-  String status;
-  String category;
-  String justify;
-  String origin;
-  String type;
-  String urgency;
-  String serviceFirstLevel;
-  String serviceSecondLevel;
-  String cc;
-  Person client;
-  Owner owner;
-  List<ActionLog> actions;
+  String? id;
+  String? title;
+  String? data;
+  String? created;
+  String? status;
+  String? category;
+  String? justify;
+  String? origin;
+  String? type;
+  String? urgency;
+  String? serviceFirstLevel;
+  String? serviceSecondLevel;
+  String? cc;
+  Person? client;
+  Owner? owner;
+  List<ActionLog> actions=[];
 
 
   Ticket.fromJson(Map<String, dynamic> json) {
@@ -50,7 +49,7 @@ class Ticket{
     var act = json["actions"];
     List<ActionLog> lst = [];
     if(act!=null){
-      for(Map i in act){
+      for(Map<String,dynamic> i in act){
         lst.add(ActionLog.fromJson(i));
       }
       actions = lst;

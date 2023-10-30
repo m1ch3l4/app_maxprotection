@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'package:flutter/material.dart';
 
 import '../utils/HexColor.dart';
@@ -7,18 +6,18 @@ import 'custom_route.dart';
 
 class BlockButtonWidget extends StatelessWidget{
 
-  final Color cardColor;
-  Widget icon;
-  final String image;
-  final String title;
-  final Widget action;
-  BuildContext ctx;
-  final Function onclickF;
-  final width;
-  final bool r;
-  double bheight;
+  final Color? cardColor;
+  Widget? icon;
+  final String? image;
+  final String? title;
+  final Widget? action;
+  BuildContext? ctx;
+  final Function? onclickF;
+  final double? width;
+  final bool? r;
+  double? bheight;
 
-  Function disableBlink;
+  Function? disableBlink;
 
   BlockButtonWidget({
     this.cardColor,
@@ -40,7 +39,7 @@ class BlockButtonWidget extends StatelessWidget{
     return GestureDetector(
           child:
           Container(
-            height: (bheight<400?50:80),
+            height: (bheight!<400?50:80),
             width: width,
             alignment: Alignment.center,
             decoration: BoxDecoration(
@@ -57,33 +56,33 @@ class BlockButtonWidget extends StatelessWidget{
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: (width>200?MainAxisAlignment.spaceAround:MainAxisAlignment.spaceBetween),
+              mainAxisAlignment: (width!>200?MainAxisAlignment.spaceAround:MainAxisAlignment.spaceBetween),
               children: <Widget>[
                 Container(
-                  alignment: (width>200?Alignment.centerRight:Alignment.centerLeft),
-                  width: (width>200?width*0.45:width*0.32),
-                  padding: (width>200?EdgeInsets.only(right:10):EdgeInsets.only(left: 10)),
+                  alignment: (width!>200?Alignment.centerRight:Alignment.centerLeft),
+                  width: (width!>200?width!*0.45:width!*0.32),
+                  padding: (width!>200?EdgeInsets.only(right:10):EdgeInsets.only(left: 10)),
                   child:InkWell(
-                    child: (image!=null?Image.asset(image,width: (tam<700?40:45),height: (tam<700?40:45),):icon),
+                    child: (image!=null?Image.asset(image!,width: (tam<700?40:45),height: (tam<700?40:45),):icon),
                   ),
                 ),
                 Container(
-                    alignment: (width>200?Alignment.centerLeft:Alignment.center),
-                    width: (width>200?width*0.55:width*0.68),
+                    alignment: (width!>200?Alignment.centerLeft:Alignment.center),
+                    width: (width!>200?width!*0.55:width!*0.68),
                     padding: EdgeInsets.only(right: 6),
-                  child: Text(title,style:TextStyle(fontSize: (tam<700?11.5:13),color: HexColor(Constants.textColor)),textAlign: TextAlign.center,)
+                  child: Text(title!,style:TextStyle(fontSize: (tam<700?11.5:13),color: HexColor(Constants.textColor)),textAlign: TextAlign.center,)
                 )
               ],
             )
         ),onTap: () {
-      if(r){
-        onclickF();
+      if(r!){
+        onclickF!();
       }else {
         if(title == "Leads"){
-          disableBlink();
+          disableBlink!();
         }
-        Navigator.of(ctx).push(FadePageRoute(
-          builder: (context) => action,
+        Navigator.of(ctx!).push(FadePageRoute(
+          builder: (context) => action!,
         ));
       }
     });

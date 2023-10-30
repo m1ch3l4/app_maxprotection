@@ -1,6 +1,7 @@
-// @dart=2.10
 import 'package:animated_widgets/widgets/rotation_animated.dart';
 import 'package:animated_widgets/widgets/shake_animated_widget.dart';
+import 'package:app_maxprotection/screens/inner_pwd.dart';
+import 'package:app_maxprotection/screens/inner_user.dart';
 import 'package:app_maxprotection/utils/HexColor.dart';
 import 'package:app_maxprotection/widgets/RadialButton.dart';
 import 'package:app_maxprotection/widgets/constants.dart';
@@ -29,7 +30,7 @@ class verifyTwoFactor extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            home: new VerfiyMfa(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data),
+            home: new VerfiyMfa(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data as Map<String, dynamic>),
           ) : CircularProgressIndicator());
         },
       ),
@@ -39,24 +40,28 @@ class verifyTwoFactor extends StatelessWidget {
 }
 
 class VerfiyMfa extends StatefulWidget {
-  VerfiyMfa({Key key, this.title,this.user}) : super(key: key);
+  VerfiyMfa({required Key key, this.title,this.user}) : super(key: key);
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   VerfiyMfaState createState() => VerfiyMfaState();
 }
 
 class VerfiyMfaState extends State<VerfiyMfa> {
-  String code;
-  bool loaded;
-  bool shake;
-  bool valid;
+  String? code;
+  bool? loaded;
+  bool? shake;
+  bool valid=false;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _textNode = FocusNode();
 
-  double tamanho;
+  SharedPref sharedPref = SharedPref();
+
+  double? tamanho;
+
+  String? firstLogin="";
 
   @override
   void initState() {
@@ -78,8 +83,9 @@ class VerfiyMfaState extends State<VerfiyMfa> {
       loaded = false;
     });
 
+    firstLogin = await sharedPref.getValue("fl");
 
-    await LoginApi.verifymfa(widget.user["id"],code).then((resp){
+    await LoginApi.verifymfa(widget.user!["id"],code!).then((resp){
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Message.showMessage(resp.msg);
@@ -91,9 +97,16 @@ class VerfiyMfaState extends State<VerfiyMfa> {
     });
 
     if (valid) {
-      Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
-        builder: (context)=>HomePage(),
-      ),(Route<dynamic> route) => false);
+      if(firstLogin=="true"){
+        Message.showMessage("É o seu primeiro login. Você deve alterar sua senha.");
+        Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
+          builder: (context) => InnerPwd(),
+        ), (Route<dynamic> route) => false);
+      }else {
+        Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
+          builder: (context) => HomePage(),
+        ), (Route<dynamic> route) => false);
+      }
     } else {
       setState(() {
         shake = true;
@@ -114,7 +127,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
     for (int i = 1; i <= 6; i++) {
       result.add(
         ShakeAnimatedWidget(
-          enabled: shake,
+          enabled: shake!,
           duration: const Duration(
             milliseconds: 100,
           ),
@@ -124,13 +137,13 @@ class VerfiyMfaState extends State<VerfiyMfa> {
           curve: Curves.linear,
           child: Column(
             children: <Widget>[
-              if (code.length >= i)
+              if (code!.length >= i)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15.0,
                   ),
                   child: Text(
-                    code[i - 1],
+                    code![i - 1],
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 30,
@@ -145,7 +158,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
                 child: Container(
                   height: 5.0,
                   width: 30.0,
-                  color: shake ? Colors.red : Colors.white,
+                  color: shake! ? Colors.red : Colors.white,
                 ),
               ),
             ],
@@ -284,7 +297,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Image.asset("images/lg.png",width: (tamanho<700?280:300),height: (tamanho<700?128:138),),
+                  Image.asset("images/lg.png",width: (tamanho!<700?280:300),height: (tamanho!<700?128:138),),
                 ],
               ),
               Spacer()]));

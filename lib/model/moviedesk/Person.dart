@@ -1,13 +1,12 @@
-// @dart=2.9
 import 'Organization.dart';
 
 class Person{
-  String userName;
-  String businessName;
-  String email;
-  String id;
-  String phone;
-  Organization organization;
+  String? userName;
+  String? businessName;
+  String? email;
+  String? id;
+  String? phone;
+  Organization? organization;
 
   Person.data([this.userName,this.businessName,this.email,this.id,this.phone]){
     this.userName ??= "-";

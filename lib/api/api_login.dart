@@ -164,14 +164,14 @@ class LoginApi{
         mapResponse.forEach((k,v) => print("got key $k with $v"));
 
         final usuario = Usuario.fromJson(mapResponse);
-        print("token...."+usuario.token);
+
         if(usuario.id=="-1"){
           //return ApiResponse.error(utf8.decode(usuario.name.codeUnits)); //acento
-          return ApiResponse.error(usuario.name);
+          return ApiResponse.error(usuario!.name!);
         }else {
           Perfil.setTecnico(usuario.tipo == "T" ? true : false);
-
-          if (usuario.hasAccess || usuario.tipo != "T") {
+          usuario.senha=password;
+          if (usuario!.hasAccess! || usuario.tipo != "T") {
             prefs.remove("mfa");
             prefs.setString('usuario', json.encode(usuario));
             prefs.setString(

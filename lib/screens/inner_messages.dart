@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/model/MessageModel.dart';
@@ -35,6 +34,7 @@ import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
 
+GlobalKey<_MessagesPageState> keyMP = new GlobalKey<_MessagesPageState>();
 
 class InnerMessages extends StatelessWidget {
 
@@ -47,27 +47,22 @@ class InnerMessages extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: FutureBuilder(
+    return FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            home: new MessagesPage(title: 'Mensagens', user: snapshot.data, tipo: tipo),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new MessagesPage(key:keyMP,title: 'Mensagens', user: snapshot.data as Map<String, dynamic>, tipo: tipo)
+          : CircularProgressIndicator());
         },
-      ),
     );
   }
 }
 
 class MessagesPage extends StatefulWidget {
-  MessagesPage({Key key, this.title,this.user,this.tipo}) : super(key: key);
+  MessagesPage({required Key key, this.title,this.user,this.tipo}) : super(key: key);
 
-  final String title;
-  final Map<String, dynamic> user;
-  final int tipo;
+  final String? title;
+  final Map<String, dynamic>? user;
+  final int? tipo;
 
   @override
   _MessagesPageState createState() => new _MessagesPageState();
@@ -92,19 +87,29 @@ class _MessagesPageState extends State<MessagesPage> {
   double altura = 0.0;
 
 
-  /**
    bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
-    return true;
-  }**/
+     Navigator.of(context).maybePop(context).then((value) {
+       if (value == false) {
+         Navigator.pushReplacement(
+             context,
+             FadePageRoute(
+               builder: (ctx) => HomePage(),
+             ));
+       }
+     });
+     return true;
+  }
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     getData();
     _fabHeight = _initFabHeight;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
   }
 
   void updateState(double pos){
@@ -140,13 +145,13 @@ class _MessagesPageState extends State<MessagesPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('messages',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('messages',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
 
   //
@@ -180,22 +185,54 @@ class _MessagesPageState extends State<MessagesPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(width: width*0.03,),
-            TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,
-              icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),
-              title: (widget.tipo==0?"Mensagens Tickets":"Mensagens"),ctx: context,r:false,
-              action: (widget.tipo==0?InnerMessages(2):InnerMessages(0)), // <-- document instance
-            ),
-            Spacer(),
-            TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
-              title: (widget.tipo==2?"Mensaens Tickets":"Mensagens Siem"),ctx: context,r:false,
-                action: (widget.tipo==2?InnerMessages(2):InnerMessages(1)),
-              icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),
-            //SizedBox(width: width*0.05,),
-          ],
+          children: opcoesMenu(),
         )
     );
+  }
+  List<Widget> opcoesMenu(){
+    List<Widget> lst = [];
+    lst.add(SizedBox(width: width*0.03,),);
+    print("...."+widget.tipo.toString());
+    switch(widget.tipo){
+      case 0:
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,
+          icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),
+          title: "Mensagens Tickets",ctx: context,r:false,
+          action: InnerMessages(2) // <-- document instance
+        ));
+        lst.add(Spacer());
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
+            title: "Mensaens Siem",ctx: context,r:false,
+            action: InnerMessages(1),
+            icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),);
+        break;
+      case 1:
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,
+            icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),
+            title: "Mensagens",ctx: context,r:false,
+            action: InnerMessages(0) // <-- document instance
+        ));
+        lst.add(Spacer());
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
+          title: "Mensaens Tickets",ctx: context,r:false,
+          action: InnerMessages(2),
+          icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),);
+        break;
+      case 2:
+
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.42,
+            icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),
+            title: "Mensagens",ctx: context,r:false,
+            action: InnerMessages(0) // <-- document instance
+        ));
+        lst.add(Spacer());
+        lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
+          title: "Mensaens Siem",ctx: context,r:false,
+          action: InnerMessages(1),
+          icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),);
+        break;
+    }
+    return lst;
   }
 
   Future<Null> getData() async{
@@ -212,22 +249,22 @@ class _MessagesPageState extends State<MessagesPage> {
     //0 padrao, 1 - siem, 2 - ticket, 3 - zabbix, 4- lead
     switch(widget.tipo){
       case 0:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString();
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString();
         break;
       case 1:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString()+"/siem";
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString()+"/siem";
         break;
       case 2:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString()+"/moviedesk";
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString()+"/moviedesk";
         break;
       case 3:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString()+"/zabbix";
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString()+"/zabbix";
         break;
       case 4:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString()+"/lead";
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString()+"/lead";
         break;
       default:
-        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user['id'].toString();
+        urlApi = Constants.urlEndpoint+"message/chatmsg/"+widget.user!['id'].toString();
     }
 
 
@@ -235,7 +272,7 @@ class _MessagesPageState extends State<MessagesPage> {
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -254,7 +291,7 @@ class _MessagesPageState extends State<MessagesPage> {
       print(source);
       final data = jsonDecode(source);
       setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           var alert = ChatData.fromJson(i);
           listModel.add(alert);
         }
@@ -284,7 +321,7 @@ class _MessagesPageState extends State<MessagesPage> {
       physics: NeverScrollableScrollPhysics(),
       children: <Widget>[
       for (int i = 0; i < listModel.length; i++)
-        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo:""), listModel[i].data, listModel[i].texto, listModel[i].tipo, (listModel[i].sender!=null?listModel[i].sender.name:"-"),i)
+        getAlert((listModel[i].tipo!="padrao"?listModel[i].tipo!:""), listModel[i].data!, listModel[i].texto!, listModel[i].tipo!, (listModel[i].sender!=null?listModel[i].sender!.name!:"-"),i)
       ],
     );
   }
@@ -452,7 +489,7 @@ class _MessagesPageState extends State<MessagesPage> {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(simpleDate.format(tech.data), style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
+                        Text(simpleDate.format(tech.data!), style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
                       ],)
                   ],
                 ),
@@ -465,7 +502,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text(tech.sender.name,style: TextStyle(color:HexColor(Constants.blue))))
+                    Text(tech.sender!.name!,style: TextStyle(color:HexColor(Constants.blue))))
                   ],
                 ),
                 SizedBox(height: 10,),
@@ -477,7 +514,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text(removeAllHtmlTags(tech.texto),style: TextStyle(color:HexColor(Constants.blue))))
+                    Text(removeAllHtmlTags(tech.texto!),style: TextStyle(color:HexColor(Constants.blue))))
                   ],
                 ),
                 SizedBox(height: 15,),

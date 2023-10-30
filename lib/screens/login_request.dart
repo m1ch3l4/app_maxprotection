@@ -412,7 +412,7 @@ class LoginRequestState extends State<LoginRequest> {
 
   backToWelcome(BuildContext context){
     Navigator.of(context).push(FadePageRoute(
-      builder: (context)=>WelcomeScreen(),
+      builder: (context)=>WelcomeScreen(""),
     ));
   }
 

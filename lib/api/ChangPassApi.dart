@@ -101,7 +101,7 @@ class ChangePassApi{
       //encode Map para JSON(string)
       var body = json.encode(params);
 
-      String basicAuth = "Bearer "+usr.token;
+      String basicAuth = "Bearer "+usr!.token!;
 
       if(ssl) {
         var client = HttpsClient().httpsclient;
@@ -206,16 +206,21 @@ class ChangePassApi{
       Map<String,dynamic> mapResponse = json.decode(response.body);
 
       if(response.statusCode == 200){
-          final usuario = Usuario.fromJson(mapResponse);
-          sharedPref.save('usuario', usuario);
-          if(usuario.tipo=="C"){
-            sharedPref.save('tipo', 'consultor');
-          }else{
-            sharedPref.save('tipo', 'cliente');
-          }
 
-          //await FlutterSession().set('logged', usuario);
-          return ApiResponse.ok(usuario);
+        print("response.body...."+response.body.toString());
+
+          final usuario = Usuario.fromJson(mapResponse);
+          if(usuario.id!="-1") {
+            sharedPref.save('usuario', usuario);
+            if (usuario.tipo == "C") {
+              sharedPref.save('tipo', 'consultor');
+            } else {
+              sharedPref.save('tipo', 'cliente');
+            }
+            return ApiResponse.ok(usuario);
+          }else{
+            return ApiResponse.error(usuario!.name!);
+          }
         }else{
         if(response.statusCode == 401) {
           return ApiResponse.error("As suas credenciais não são mais válidas...");
@@ -250,6 +255,7 @@ class ChangePassApi{
       print("CheckLogin.retorno...${response.statusCode}");
 
       if(response.statusCode == 200){
+
         return ApiResponse.ok(response.body);
       }else{
         if(response.statusCode == 401) {

@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:flutter/material.dart';
 
 import '../widgets/HexColor.dart';
@@ -7,9 +6,9 @@ import '../widgets/constants.dart';
 class TicketSeach extends SearchDelegate{
 
 
-  List<String> searchTerms;
+  late List<String> searchTerms;
   List<String> searchResult=[];
-  Function f;
+  late Function f;
 
   @override
   List<Widget> buildActions(BuildContext context) {

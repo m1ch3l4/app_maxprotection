@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:async';
 import 'dart:io';
 
@@ -18,7 +17,6 @@ import '../screens/home_page.dart';
 import '../screens/inner_elastic.dart';
 import '../screens/inner_messages.dart';
 import '../screens/inner_noticias.dart';
-import '../screens/inner_preferences.dart';
 import '../screens/inner_pwd.dart';
 import '../screens/inner_servicos.dart';
 import '../screens/inner_zabbix.dart';
@@ -31,18 +29,19 @@ import 'custom_route.dart';
 import 'package:path/path.dart';
 
 class SliderMenu extends StatelessWidget{
-  String screen;
-  Map<String, dynamic> usr;
-  BuildContext ctx;
-  TextTheme textTheme;
+  String? screen;
+  Map<String, dynamic>? usr;
+  BuildContext? ctx;
+  TextTheme? textTheme;
   bool isConsultant = false;
   bool acessoContrato = false;
-  Role rol;
-  List<Permissao> lst;
+  Role? rol;
+  List<Permissao>? lst;
 
-  StatelessWidget instance;
-  Timer _timer;
-  double width;
+  StatelessWidget? instance;
+  Timer? _timer;
+  double? width;
+  Function? notifyParent=null;
 
   NewVersion newVersion = NewVersion(
     iOSId: 'br.com.maxprotection.securityNews',
@@ -59,7 +58,7 @@ class SliderMenu extends StatelessWidget{
         {
           newVersion.showUpdateDialog
             (
-              context: ctx,
+              context: ctx!,
               versionStatus: status,
               dialogTitle: "App Desatualizado",
               dismissButtonText: "Agora Não",
@@ -70,10 +69,10 @@ class SliderMenu extends StatelessWidget{
         }else {
           Message.showMessage("Versão: " + status.localVersion);
           showDialog(
-              context: ctx,
+              context: ctx!,
               builder: (BuildContext builderContext) {
                 _timer = Timer(Duration(seconds: 5), () {
-                  Navigator.of(ctx).pop();
+                  Navigator.of(ctx!).pop();
                   Navigator.of(builderContext).pop();
                 });
 
@@ -96,8 +95,8 @@ class SliderMenu extends StatelessWidget{
                 );
               }
           ).then((val){
-            if (_timer.isActive) {
-              _timer.cancel();
+            if (_timer!.isActive) {
+              _timer!.cancel();
             }
           });
         }
@@ -107,14 +106,14 @@ class SliderMenu extends StatelessWidget{
     }
   }
 
-  File _image;
+  File? _image;
   final picker = ImagePicker();
-  Widget img = null;
+  Widget? img = null;
 
   Future getImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    XFile pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedImage == null) return;
 
@@ -130,11 +129,13 @@ class SliderMenu extends StatelessWidget{
     print("localImage...."+localImage.path);
 
     prefs.setString('profile_image', localImage.path);
+    Message.showMessage("Imagem de perfil atualizada.");
+    notifyParent!();
   }
 
-  Future<Widget> loadImage() async{
+  Future<Widget?> loadImage() async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String img = prefs.getString('profile_image');
+    String? img = prefs.getString('profile_image');
     if(img!=null) {
       return CircleAvatar(
         backgroundImage: Image.file(File(img),width: 100,height:100,).image,
@@ -152,14 +153,19 @@ class SliderMenu extends StatelessWidget{
     this.screen = screen;
     this.usr = user;
     textTheme = theme;
+    //this.notifyParent = not;
     //this.width = (wd!=null? wd : 200);
     this.width = wd;
-    if(usr!=null && usr["role"]!=null) {
-      rol = Role.fromJson(usr["role"]);
+    if(usr!=null && usr!["role"]!=null) {
+      rol = Role.fromJson(usr!["role"]);
       if(rol!=null)
-      lst = rol.permissoes.where((content) => content.nome.contains("app-")).toList();
+      lst = rol!.permissoes.where((content) => content.nome!.contains("app-")).toList();
     }
     loadImage().then((value) => img= value);
+  }
+
+  void setNotifyParent(Function f){
+    this.notifyParent=f;
   }
 
 
@@ -225,7 +231,7 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(0),
         )),
         Spacer(),
-        (getFromList("app-siem").meus ?
+        (getFromList("app-siem").meus! ?
         new Container (
             decoration: new BoxDecoration (
               gradient: screen=='elastic'? LinearGradient(
@@ -244,7 +250,7 @@ class SliderMenu extends StatelessWidget{
         ))
             :SizedBox(height: 10)),
         Spacer(),
-        (getFromList("app-zabbix").meus ?
+        (getFromList("app-zabbix").meus! ?
         new Container (
             decoration: new BoxDecoration (
             gradient: screen=='zabbix'? LinearGradient(
@@ -262,7 +268,7 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(2),
         )):SizedBox(height: 10)),
         Spacer(),
-        (getFromList("app-tickets").meus ?
+        (getFromList("app-tickets").meus! ?
         new Container (
             decoration: new BoxDecoration (
             gradient: screen=='tickets'? LinearGradient(
@@ -297,7 +303,7 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(4),
         )),
         Spacer(),
-        (getFromList("app-mensagem").meus ?
+        (getFromList("app-mensagem").meus! ?
         new Container (
             decoration: new BoxDecoration (
               gradient: screen=='messages'? LinearGradient(
@@ -315,7 +321,7 @@ class SliderMenu extends StatelessWidget{
           onTap: () => selectDestination(8),
         )):SizedBox(height: 10)),
         Spacer(),
-        (getFromList("app-servico").meus ?
+        if(getFromList("app-servico").meus!)
         new Container (
             decoration: new BoxDecoration (
                 gradient: screen=='servicos'? LinearGradient(
@@ -331,7 +337,7 @@ class SliderMenu extends StatelessWidget{
           title: Text('Serviços',style:itemMenu),
           selected: _selectedDestination == 10,
           onTap: () => selectDestination(10),
-        )):SizedBox(height: 10)),
+        )),
         Spacer(),
         ListTile(
           contentPadding: EdgeInsets.only(left: 30),
@@ -373,7 +379,7 @@ class SliderMenu extends StatelessWidget{
 
   Permissao getFromList(String nome){
     if(rol!=null && lst!=null){
-      return lst.where((element) => element.nome == nome).last;
+      return lst!.where((element) => element.nome == nome).last;
     }else{
       Permissao p = Permissao(nome,true);
       return p;
@@ -383,7 +389,7 @@ class SliderMenu extends StatelessWidget{
   void selectDestination(int index) {
     switch(index){
       case 0:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           //builder: (context) => (isConsultant?HomeConsultor():Home()),
           builder: (context) => HomePage(),
         ));
@@ -391,59 +397,59 @@ class SliderMenu extends StatelessWidget{
         break;
       case 1:
         //Navigator.of(ctx).pop();
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           //builder: (context) => (isConsultant?ElasticAlertsConsultant():ElasticAlerts()),
           builder: (context){
             instance = InnerElastic(null,null);
-            return instance;
+            return instance!;
           },
         ));
         screen = "elastic";
         break;
       case 2:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           //builder: (context) => (isConsultant?ZabbixAlertsConsultant():ZabbixAlerts()),
           builder: (context) => InnerZabbix(null,null),
         ));
         screen = "zabbix";
         break;
       case 3:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           //builder: (context) => (isConsultant?TicketsviewConsultant():Ticketsview()),
           builder: (context) => TicketsviewConsultor(0),
         ));
         screen = "tickets";
         break;
       case 4:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           builder: (context) => InnerNoticias(),
         ));
         screen = "news";
         break;
       case 5:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           builder: (context) => InnerPwd(),
         ));
         screen = "password";
         break;
-      case 6:
-        Navigator.of(ctx).push(FadePageRoute(
+      /**case 6:
+        Navigator.of(ctx!).push(FadePageRoute(
           builder: (context) => InnerPreferences(),
         ));
         screen = "preferencias";
-        break;
+        break;**/
       case 7:
         //(isConsultant? logoutConsultor() : logout());
-        Logoff.confirmarLogoff(ctx);
+        Logoff.confirmarLogoff(ctx!);
         break;
       case 8:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           builder: (context) => InnerMessages(0),
         ));
         screen = "messages";
         break;
       case 10:
-        Navigator.of(ctx).push(FadePageRoute(
+        Navigator.of(ctx!).push(FadePageRoute(
           builder: (context) =>InnerServicos(),
         ));
         screen = "servicos";

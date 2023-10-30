@@ -1,14 +1,13 @@
-// @dart=2.9
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
 
 class Empresa extends Equatable{
-  String id;
-  String name;
-  int novo;
-  int aguardando;
-  int atendimento;
+  String? id;
+  String? name;
+  int? novo;
+  int? aguardando;
+  int? atendimento;
 
   Empresa(this.id,this.name);
 
@@ -42,6 +41,6 @@ class Empresa extends Equatable{
 
   @override
   // TODO: implement props
-  List<Object> get props => [id];
+  List<Object> get props => [id!];
 
 }

@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/Logoff.dart';
@@ -16,17 +15,17 @@ import 'custom_route.dart';
 class headerTk extends StatelessWidget{
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  Map<String, dynamic> usr;
-  BuildContext ctx;
-  String perfil;
-  String status;
-  int tk;
-  double width;
-  Function f;
+  Map<String, dynamic>? usr;
+  BuildContext? ctx;
+  String? perfil;
+  String? status;
+  int? tk;
+  double? width;
+  Function? f;
 
   @override
   Widget build(BuildContext context) {
-    return _header(width, context);
+    return _header(width!, context);
   }
 
   headerTk(GlobalKey<ScaffoldState> key, Map<String,dynamic> u, BuildContext context, String p, int t, double w, String s, Function ff){
@@ -56,7 +55,7 @@ class headerTk extends StatelessWidget{
                   icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
                 Spacer(),
@@ -66,7 +65,7 @@ class headerTk extends StatelessWidget{
                   icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Voltar',
                   onPressed: () {
-                    f();
+                    f!();
                   },
                 ),
               ],
@@ -83,7 +82,7 @@ class headerTk extends StatelessWidget{
                   },
                 ),
                 Expanded(child: Text(
-                  'Olá, '+usr['name'].toString()+" | "+perfil,
+                  'Olá, '+usr!['name'].toString()+" | "+perfil!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.0,
@@ -114,7 +113,7 @@ class headerTk extends StatelessWidget{
                 Column(
                   children: [
                     Text(
-                      'Tickets '+status,
+                      'Tickets '+status!,
                       textAlign: TextAlign.start,
                       style: TextStyle(
                         fontSize: 14.0,

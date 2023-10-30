@@ -1,9 +1,6 @@
-//@dart=2.9
 import 'package:app_maxprotection/screens/VerifyMfa.dart';
 import 'package:app_maxprotection/screens/home_page.dart';
-import 'package:app_maxprotection/screens/login_screen.dart';
 import 'package:app_maxprotection/screens/welcome_screen.dart';
-import 'package:app_maxprotection/transition_route_observer.dart';
 import 'package:app_maxprotection/utils/HexColor.dart';
 import 'package:app_maxprotection/widgets/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,11 +15,12 @@ import 'package:device_preview/device_preview.dart';
 import 'utils/SharedPref.dart';
 
 Future<void> _messageHandler(RemoteMessage message) async {
-  print('APP_MAX...background message ${message.notification.body}');
+  print('APP_MAX...background message ${message.notification!.body}');
 }
 
 var usr = null;
 var mfa = null;
+var logoff = null;
 void main() {
 
   SharedPreferences sharedPref;
@@ -44,6 +42,7 @@ void main() {
 Future runMyApp(SharedPreferences inst) async{
   usr = inst.get("usuario");
   mfa = inst.get("mfa");
+  logoff = inst.getString("logoff");
   print("usuario..."+usr.toString());
   await Firebase.initializeApp();
   runApp(MyApp());
@@ -122,7 +121,6 @@ class MyApp extends StatelessWidget {
         // brightness: Brightness.dark,
         unselectedWidgetColor: HexColor(Constants.blue),
         //primarySwatch: bgColor,
-        accentColor: accentColor,
         textSelectionTheme: TextSelectionThemeData(cursorColor: greyColor),
         colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
         buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
@@ -173,11 +171,24 @@ class MyApp extends StatelessWidget {
     );
   }
   Widget getScreen(){
-    if(usr!=null && mfa!=null)
-      return HomePage();
-    if(usr!=null && mfa==null)
-      return verifyTwoFactor();
-    else
-      return WelcomeScreen();
+    Widget screen = WelcomeScreen("");
+
+    if(usr!=null && logoff=="true") {
+      print("WelcomeScreen");
+      screen = WelcomeScreen(logoff);
+    }
+    if(usr!=null && mfa!=null && logoff!="true") {
+      print("HomePage");
+      screen = HomePage();
+    }
+    if(usr!=null && mfa==null && logoff!="true") {
+      print("VerifyMfa");
+      screen =  verifyTwoFactor();
+    }
+    if(usr==null){
+      print("primeira instalacao");
+      screen =  WelcomeScreen("");
+    }
+    return screen;
   }
 }

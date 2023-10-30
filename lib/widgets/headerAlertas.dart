@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/screens/inner_user.dart';
@@ -16,16 +15,16 @@ import 'custom_route.dart';
 class headerAlertas extends StatelessWidget{
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  Map<String, dynamic> usr;
-  BuildContext ctx;
-  String perfil;
-  String status;
-  double width;
-  double het;
+  Map<String, dynamic>? usr;
+  BuildContext? ctx;
+  String? perfil;
+  String? status;
+  double? width;
+  double? het;
 
   @override
   Widget build(BuildContext context) {
-    return _header(width, context);
+    return _header(width!, context);
   }
 
   headerAlertas(GlobalKey<ScaffoldState> key, Map<String,dynamic> u, BuildContext context, double w, double _height, String s){
@@ -39,11 +38,11 @@ class headerAlertas extends StatelessWidget{
   }
 
   Widget _header(double width, BuildContext context){
-    if(usr["tipo"]=="D")
+    if(usr!["tipo"]=="D")
       perfil = "Diretor";
-    if(usr["tipo"]=="T")
+    if(usr!["tipo"]=="T")
       perfil = "Analista";
-    if(usr["tipo"]=="C")
+    if(usr!["tipo"]=="C")
       perfil = "Consultor";
     
     return TopContainer(
@@ -61,7 +60,7 @@ class headerAlertas extends StatelessWidget{
                   icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
                 Spacer(),
@@ -71,9 +70,18 @@ class headerAlertas extends StatelessWidget{
                   icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    Navigator.of(ctx).pushReplacement(FadePageRoute(
+                    Navigator.of(ctx!).maybePop(ctx).then((value) {
+                      if (value == false) {
+                        Navigator.pushReplacement(
+                            ctx!,
+                            FadePageRoute(
+                              builder: (ctx) => HomePage(),
+                            ));
+                      }
+                    });
+                    /**Navigator.of(ctx).push(FadePageRoute(
                       builder: (ctx) => HomePage(),
-                    ));
+                    ));**/
                   },
                 ),
               ],
@@ -90,7 +98,7 @@ class headerAlertas extends StatelessWidget{
                   },
                 ),
                 Expanded(child: Text(
-                  'Olá, '+usr['name'].toString()+" | "+perfil,
+                  'Olá, '+usr!['name'].toString()+" | "+perfil!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.0,
@@ -127,7 +135,7 @@ class headerAlertas extends StatelessWidget{
                       ),
                       child:
                     Text(
-                      status,
+                      status!,
                       textAlign: TextAlign.start,
                       style: TextStyle(
                         fontSize: 18.0,

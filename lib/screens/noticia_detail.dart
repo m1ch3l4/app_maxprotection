@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:app_maxprotection/screens/inner_noticias.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +18,8 @@ import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
 
+GlobalKey<_NoticiaPageState> keyHP = new GlobalKey<_NoticiaPageState>();
+
 class noticiaDetail extends StatelessWidget {
 
 final NoticiaData ticket;
@@ -33,14 +34,8 @@ Widget build(BuildContext context) {
     child: FutureBuilder(
       future: sharedPref.read("usuario"),
       builder: (context,snapshot){
-        return (snapshot.hasData ? new MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'TI & Segurança',
-          theme: new ThemeData(
-            primarySwatch: Colors.blue,
-          ),
-          home: new NoticiaPage(title: ticket.titulo, user: snapshot.data,ticket: ticket),
-        ) : CircularProgressIndicator());
+        return (snapshot.hasData ? new NoticiaPage(key:keyHP, title: ticket.titulo, user: snapshot.data as Map<String, dynamic>,ticket: ticket)
+        : CircularProgressIndicator());
       },
     ),
   );
@@ -48,11 +43,11 @@ Widget build(BuildContext context) {
 }
 
 class NoticiaPage extends StatefulWidget {
-  NoticiaPage({Key key, this.title, this.user, this.ticket}) : super(key: key);
+  NoticiaPage({required Key key, this.title, this.user, this.ticket}) : super(key: key);
 
-  final String title;
-  final Map<String, dynamic> user;
-  final NoticiaData ticket;
+  final String? title;
+  final Map<String, dynamic>? user;
+  final NoticiaData? ticket;
 
 
   @override
@@ -60,7 +55,7 @@ class NoticiaPage extends StatefulWidget {
 }
 
 class _NoticiaPageState extends State<NoticiaPage> {
-  NoticiaData detail;
+  NoticiaData? detail;
   var loading = false;
   bool isConsultor = false;
 
@@ -76,7 +71,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
   DateFormat simpleDate = DateFormat('dd/MM/yy');
   String languageCode="pt-br";
 
-  Usuario usr;
+  Usuario? usr;
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     print("BACK BUTTON!"); // Do some stuff.
@@ -114,7 +109,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
 
     double _panelPosition = 0;
 
-    usr = Usuario.fromSharedPref(widget.user);
+    usr = Usuario.fromSharedPref(widget.user!);
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.blue),
@@ -123,7 +118,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('noticias',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('noticias',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -178,7 +173,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
                     icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent,size: 20.0),
                     tooltip: 'Voltar',
                     onPressed: () {
-                      Navigator.of(context).pushReplacement(FadePageRoute(
+                      Navigator.of(context).push(FadePageRoute(
                         builder: (ctx) => InnerNoticias(),
                       ));
                     },
@@ -211,7 +206,7 @@ class _NoticiaPageState extends State<NoticiaPage> {
   }
 
   Future<String> curtiu(){
-    return PushApi.curtirNoticia(usr.login,usr.senha,widget.ticket.id).then((resp){
+    return PushApi.curtirNoticia(usr!.login!,usr!.senha!,widget.ticket!.id!).then((resp){
       if(resp.ok){
         Message.showMessage("Curtiu!!!");
         return "OK";
@@ -223,17 +218,17 @@ class _NoticiaPageState extends State<NoticiaPage> {
   }
   Widget _body(){
     DateFormat dayOfWeek = DateFormat('EEEE',languageCode);
-    DateTime dia = DateTime.parse(widget.ticket.data);
+    DateTime dia = DateTime.parse(widget.ticket!.data!);
     String data = simpleDate.format(dia)+" | "+dayOfWeek.format(dia);
     return SingleChildScrollView(child:
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children:[
-          Row(children:[Flexible(child: Text(widget.ticket.titulo,style:TextStyle(fontWeight: FontWeight.bold,fontSize:24,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
+          Row(children:[Flexible(child: Text(widget.ticket!.titulo!,style:TextStyle(fontWeight: FontWeight.bold,fontSize:24,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
           SizedBox(height: 20,),
           Row(children:[Text(data,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14, color:HexColor(Constants.greyContainer)))]),
           SizedBox(height: 20,),
-          Row(children:[Flexible(child: Text(widget.ticket.texto,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
+          Row(children:[Flexible(child: Text(widget.ticket!.texto!,style:TextStyle(fontWeight: FontWeight.normal,fontSize:14,color:HexColor(Constants.blueContainer)),softWrap: true,))]),
         ]
     ));
   }

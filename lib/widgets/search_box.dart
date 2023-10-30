@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -16,12 +15,12 @@ import 'package:http/http.dart' as http;
 
 class SearchBox extends StatefulWidget {
 
-  final Color cardColor;
-  final String title;
-  final Map<String, dynamic> usr;
-  final double width;
-  final Function f;
-  final SearchDelegate searchDelegate;
+  final Color? cardColor;
+  final String? title;
+  final Map<String, dynamic>? usr;
+  final double? width;
+  final Function? f;
+  final SearchDelegate? searchDelegate;
 
   SearchBox({
     this.cardColor,
@@ -44,7 +43,7 @@ class _searchBox extends State<SearchBox>{
   Future<void> _showSearch(BuildContext context) async {
     await showSearch(
       context: context,
-      delegate: widget.searchDelegate,
+      delegate: widget.searchDelegate!,
       query: txtSearch.value.text,
     );
   }
@@ -84,11 +83,14 @@ class _searchBox extends State<SearchBox>{
       print("texto reconhecido...."+_lastWords);
       txtSearch.text = _lastWords;
     });
+    if(txtSearch.text.length>1){
+      _showSearch(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double largura = widget.width-8;
+    double largura = widget.width!-8;
     print("search.home.width: "+largura.toString());
     return Container(
       alignment: Alignment.center,
@@ -144,14 +146,14 @@ class _searchBox extends State<SearchBox>{
                       ),
                     ),
                   ),
-                ),height: 40,width: widget.width*0.88,),
+                ),height: 40,width: widget.width!*0.88,),
                 GestureDetector(
                   onTap: () {
-                    widget.f(txtSearch.value.text);
+                    widget.f!(txtSearch.value.text);
                   },
                   child: Container(
                   height: 40,
-                  width: widget.width*0.085,
+                  width: widget.width!*0.085,
                   decoration: new BoxDecoration(
                     borderRadius: BorderRadius.circular(20.0),
                     color: HexColor(Constants.red),

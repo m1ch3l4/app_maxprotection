@@ -1,14 +1,13 @@
-// @dart=2.9
 import 'package:intl/intl.dart';
 
 class NoticiaData{
-  String id;
-  String data;
-  String titulo;
-  String texto;
-  String categoria;
-  String url;
-  String imageFile;
+  String? id;
+  String? data;
+  String? titulo;
+  String? texto;
+  String? categoria;
+  String? url;
+  String? imageFile;
 
   NoticiaData.data([this.data, this.titulo,this.texto,this.url]) {
     // Set these rather than using the default value because Firebase returns

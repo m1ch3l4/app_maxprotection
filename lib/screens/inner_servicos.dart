@@ -1,4 +1,4 @@
-//@dart=2.10
+
 import 'dart:io';
 
 import 'package:app_maxprotection/model/MessageModel.dart';
@@ -49,14 +49,7 @@ class InnerServicos extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new ServicosPage(title: 'Serviços Contratados', user: snapshot.data,id:"0"),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new ServicosPage(title: 'Serviços Contratados', user: snapshot.data as Map<String, dynamic>,id:"0"): CircularProgressIndicator());
         },
       ),
     );
@@ -64,20 +57,20 @@ class InnerServicos extends StatelessWidget {
 }
 
 class ServicosPage extends StatefulWidget {
-  ServicosPage({Key key, this.title,this.user,this.id}) : super(key: key);
+  ServicosPage({this.title,this.user,this.id}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
-  _ServicosPageState state;
+  final String? title;
+  final Map<String, dynamic>? user;
+  _ServicosPageState? state;
 
-  String id;
+  String? id="";
 
-  static _ServicosPageState of(BuildContext context) => context.findAncestorStateOfType<_ServicosPageState>();
+  static _ServicosPageState of(BuildContext context) => context!.findAncestorStateOfType<_ServicosPageState>()!;
 
   @override
   _ServicosPageState createState(){
     this.state =  new _ServicosPageState();
-    return state;
+    return state!;
   }
 }
 
@@ -97,7 +90,7 @@ class _ServicosPageState extends State<ServicosPage> {
 
   static EmpresasSearch _empSearch = EmpresasSearch();
 
-  Empresa empSel;
+  late Empresa empSel;
 
   static List<DropdownMenuItem<Empresa>> _data = [];
   String _selected = '';
@@ -105,7 +98,7 @@ class _ServicosPageState extends State<ServicosPage> {
   List<Servico> listModel = [];
   var loading = false;
 
-  searchEmpresa widgetSearchEmpresa;
+  late searchEmpresa widgetSearchEmpresa;
 
   void loadData() {
     if(mounted) {
@@ -119,29 +112,39 @@ class _ServicosPageState extends State<ServicosPage> {
         _data.add(
             new DropdownMenuItem(
                 value: bean,
-                child: Text(bean.name, overflow: TextOverflow.fade,)));
+                child: Text(bean.name!, overflow: TextOverflow.fade,)));
       }
       loading = false;
     }
   }
 
 
-  /**bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
-  }**/
+  }
 
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
+    BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
+  }
+
+  void setSelectedEmpresa(Empresa e){
+    this.empSel = e;
   }
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
-    if(widget.user["tipo"]!="C") {
+    BackButtonInterceptor.add(myInterceptor);
+    if(widget.user!["tipo"]!="C") {
       getData();
     }else{
       loadData();
@@ -165,12 +168,12 @@ class _ServicosPageState extends State<ServicosPage> {
     _fcmInit.configureMessage(context, "messages");
 
     widgetSearchEmpresa =
-        searchEmpresa(onchangeF: () => getData(), context: context,width: width);
+        searchEmpresa(onchangeF: () => getData(), context: context,width: width,notifyParent: setSelectedEmpresa,);
     return Scaffold(
         key: _scaffoldKey,
         body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('servicos',widget.user,textTheme,(width*0.6)),
+          child: SliderMenu('servicos',widget.user!,textTheme,(width*0.6)),
         )
     );
   }
@@ -179,13 +182,13 @@ class _ServicosPageState extends State<ServicosPage> {
     return Container(
       width: width,
       alignment: Alignment.center,
-      margin: EdgeInsets.only(top:20,bottom: 20),
+      margin: EdgeInsets.only(top:3,bottom: 15),
       child: GestureDetector(child:Container(
           margin: EdgeInsets.zero,
           padding: EdgeInsets.zero,
           decoration: new BoxDecoration(color: Colors.transparent),
           alignment: Alignment.center,
-          height: 120,
+          height: 110,
           child: Image.asset("images/pdf.png")
       ),
         onTap: getContrato),
@@ -205,13 +208,13 @@ class _ServicosPageState extends State<ServicosPage> {
 
     if(isConsultor){
       if(empSel!=null)
-        urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id;
+        urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id!;
     }else {
       urlApi = Constants.urlEndpoint + "enterprise/showcontrato/" +
-          widget.user['company_id'].toString();
+          widget.user!['company_id'].toString();
     }
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -269,13 +272,25 @@ class _ServicosPageState extends State<ServicosPage> {
         children: <Widget>[
           Stack(
               children: [
-                headerAlertas(_scaffoldKey, widget.user, context, width, 195, "Serviços Contratados"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width, 195, "Serviços Contratados"),
                 Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.only(top:170),
                   child: (isConsultor?widgetSearchEmpresa:SizedBox(height: 1,)),
                 ),
               ]),
+          Spacer(),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children:[
+                Text('Clique no ícone acima para baixar o contrato.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    color: HexColor(Constants.red),
+                    fontWeight: FontWeight.normal,
+                  ),
+                )]),
           showContrato(width*0.9),
           _body(width*0.95)
         ],
@@ -299,10 +314,10 @@ class _ServicosPageState extends State<ServicosPage> {
 
     if(isConsultor) {
       empSel = _empSearch.defaultOpt;
-      urlApi = Constants.urlEndpoint + "servico/lista/" + empSel.id;
+      urlApi = Constants.urlEndpoint + "servico/lista/" + empSel.id!;
     }else {
       urlApi = Constants.urlEndpoint + "servico/lista/" +
-          widget.user['company_id'].toString();
+          widget.user!['company_id'].toString();
     }
 
     print("****URL API: ");
@@ -310,7 +325,7 @@ class _ServicosPageState extends State<ServicosPage> {
     print("**********");
 
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -328,7 +343,7 @@ class _ServicosPageState extends State<ServicosPage> {
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       //setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           var serv = Servico.fromJson(i);
           listModel.add(serv);
         }
@@ -375,7 +390,7 @@ class _ServicosPageState extends State<ServicosPage> {
       ),
       children: [
         for (int i = 0; i < listModel.length; i++)
-          _criarLinhaTable(listModel[i].titulo,listModel[i].descricao,listModel[i].contratado,listModel[i].id,i)
+          _criarLinhaTable(listModel[i].titulo!,listModel[i].descricao!,listModel[i].contratado!,listModel[i].id!,i)
       ],
     ))
         :SizedBox(width: 1,);
@@ -482,9 +497,9 @@ return TableRow(
                 checkColor: Colors.white,
                 selected: isContrato,
                 value: isContrato,
-                onChanged: (bool value) {
+                onChanged: (bool? value) {
                   setState(() {
-                    if(value && !isConsultor){
+                    if(value! && !isConsultor){
                       maisInfoServico(id,title);
                     }
                   });
@@ -495,21 +510,21 @@ return TableRow(
 
   void maisInfoServico(id, title){
     AlertDialog alert;
-    BuildContext dialogContext;
+    BuildContext? dialogContext;
 
     alert = AlertDialog(
       title: Text("Informações sobre Serviços"),
       content: Text("Gostaria que um de nossos consultores entrasse em contato para falar mais sobre "+title+"?"),
       actions: [
-        FlatButton(
+        ElevatedButton(
           onPressed: () {
             sendMessage("Quero receber mais informações sobre "+title);
-            Navigator.pop(dialogContext, false);
+            Navigator.pop(dialogContext!, false);
           }, // passing false
           child: Text('Sim, por favor.'),
         ),
-        FlatButton(
-          onPressed: () => Navigator.pop(dialogContext, true), // passing true
+        ElevatedButton(
+          onPressed: () => Navigator.pop(dialogContext!, true), // passing true
           child: Text('Não, obrigada.'),
         ),
       ],
@@ -530,9 +545,9 @@ return TableRow(
     int tipo = 3;
 
     Map params = {
-      'userid':widget.user["id"],
-      'nome': widget.user["name"],
-      'email' : widget.user["login"],
+      'userid':widget.user!["id"],
+      'nome': widget.user!["name"],
+      'email' : widget.user!["login"],
       'celular': '00000',
       'tipo': tipo,
       'assunto':assunto

@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/ticket-detail.dart';
 import 'package:app_maxprotection/screens/ticketsview-consultor.dart';
@@ -28,7 +27,7 @@ import '../widgets/slider_menu.dart';
 
 class TicketlistConsultor extends StatelessWidget {
 
-  final Empresa empresa;
+  final Empresa? empresa;
   /**
    * 0 - todos
    * 1 - Novo
@@ -47,11 +46,8 @@ class TicketlistConsultor extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            home: new TicketsPage(title: (empresa!=null?empresa.name:"Tickets por status"), user: snapshot.data,empresa: empresa,status:status),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new TicketsPage(title: (empresa!=null?empresa!.name:"Tickets por status"), user: snapshot.data as Map<String, dynamic>,empresa: empresa,status:status)
+          : CircularProgressIndicator());
         },
       ),
     );
@@ -59,12 +55,12 @@ class TicketlistConsultor extends StatelessWidget {
 }
 
 class TicketsPage extends StatefulWidget {
-  TicketsPage({Key key, this.title,this.user,this.empresa,this.status}) : super(key: key);
+  TicketsPage({this.title,this.user,this.empresa,this.status});
 
-  final String title;
-  final Map<String, dynamic> user;
-  final Empresa empresa;
-  final int status;
+  final String? title;
+  final Map<String, dynamic>? user;
+  final Empresa? empresa;
+  final int? status;
 
 
   @override
@@ -86,7 +82,7 @@ class _TicketsPageState extends State<TicketsPage> {
   String perfil="Analista";
   String stats = "Abertos";
 
-  Empresa emp=null;
+  Empresa? emp;
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
@@ -100,9 +96,9 @@ class _TicketsPageState extends State<TicketsPage> {
 
   filtraPesquisa(String query){
     if(query!="!"){
-    String index = filterResults[query];
+    String? index = filterResults[query];
     print("filta Pesquisa...."+query);
-    List<String> ids = index.split(",");
+    List<String> ids = index!.split(",");
     if(ids!=null) {
       listModel = [];
       ids.forEach((element) {
@@ -119,7 +115,7 @@ class _TicketsPageState extends State<TicketsPage> {
     }
   }
 
-  Future<Null> getData(Empresa empresa) async{
+  Future<Null> getData(Empresa? empresa) async{
     setState(() {
       loading = true;
     });
@@ -130,26 +126,27 @@ class _TicketsPageState extends State<TicketsPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
+    if(empresa!=null)
     emp = empresa;
 
-    if(widget.user["tipo"]=="C"){
+    if(widget.user!["tipo"]=="C"){
       isConsultor = true;
-      if(empresa!=null && widget.status<1) {
-        urlApi = Constants.urlEndpoint + "tech/list/emp/" + empresa.id;
+      if(empresa!=null && widget.status!<1) {
+        urlApi = Constants.urlEndpoint + "tech/list/emp/" + empresa.id!;
       }else{
         switch(widget.status) {
           case 0:
-            urlApi = Constants.urlEndpoint + "tech/consultor/"+widget.user["id"]+"/all";
+            urlApi = Constants.urlEndpoint + "tech/consultor/"+widget.user!["id"]+"/all";
             break;
           case 1:
             //urlApi = Constants.urlEndpoint + "tech/consultor/"+widget.user["id"]+"/status/Novo";
-            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa.id+"/status/Novo";
+            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa!.id!+"/status/Novo";
             break;
           case 2:
-            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa.id+"/status/Em Atendimento";
+            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa!.id!+"/status/Em Atendimento";
             break;
           case 3:
-            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa.id+"/status/Aguardando";
+            urlApi = Constants.urlEndpoint + "tech/list/emp/"+empresa!.id!+"/status/Aguardando";
             break;
         }
       }
@@ -159,30 +156,30 @@ class _TicketsPageState extends State<TicketsPage> {
       print(widget.status);
       switch(widget.status){
         case 0:
-          if(widget.user["tipo"]=="D") {
+          if(widget.user!["tipo"]=="D") {
             urlApi = Constants.urlEndpoint + "tech/list/emp/" +
-                widget.user['company_id'].toString();
+                widget.user!['company_id'].toString();
           }else{
             urlApi = Constants.urlEndpoint + "tech/list/tecnico/" +
-                widget.user['id'].toString();
+                widget.user!['id'].toString();
           }
           break;
         case 1:
-          if(widget.user["tipo"]=="D") {
+          if(widget.user!["tipo"]=="D") {
             urlApi = Constants.urlEndpoint + "tech/list/emp/" +
-                widget.user['company_id'].toString()+"/status/Novo";
+                widget.user!['company_id'].toString()+"/status/Novo";
           }else{
             urlApi = Constants.urlEndpoint + "tech/list/tecnico/" +
-                widget.user['id'].toString()+"/status/Novo";
+                widget.user!['id'].toString()+"/status/Novo";
           }
           break;
         case 2:
-          if(widget.user["tipo"]=="D") {
+          if(widget.user!["tipo"]=="D") {
             urlApi = Constants.urlEndpoint + "tech/list/emp/" +
-                widget.user['company_id'].toString()+"/status/Em Atendimento";
+                widget.user!['company_id'].toString()+"/status/Em Atendimento";
           }else{
             urlApi = Constants.urlEndpoint + "tech/list/tecnico/" +
-                widget.user['id'].toString()+"/status/Em Atendimento";
+                widget.user!['id'].toString()+"/status/Em Atendimento";
           }
           break;
       }
@@ -192,7 +189,7 @@ class _TicketsPageState extends State<TicketsPage> {
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -212,7 +209,7 @@ class _TicketsPageState extends State<TicketsPage> {
       final data = jsonDecode(source);
       termos = [];
       setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           var c = i["cliente"];
           var e = i["empresa"];
           var o = i["owner"];
@@ -222,16 +219,16 @@ class _TicketsPageState extends State<TicketsPage> {
           ticket.setTecnico((o!=null?o["name"]:""));
           if(!listModel.contains(ticket))
             listModel.add(ticket);
-          List<String> palavras = ticket.title.split(" ");
+          List<String> palavras = ticket.title!.split(" ");
           palavras.forEach((element) {
             if(!termos.contains(element) && !excludeTerms.contains(element.toLowerCase())) {
               termos.add(element);
               var val = filterResults[element];
               if(val!=null)
-                val+=","+ticket.id;
+                val+=","+ticket.id!;
               else
                 val = ticket.id;
-              filterResults[element]=val;
+              filterResults[element]=val!;
             }
           });
         }
@@ -251,10 +248,13 @@ class _TicketsPageState extends State<TicketsPage> {
 
 
   FutureOr<http.Response> _onTimeout(){
+    http.Response r = http.Response('Timeout',403);
+
     setState(() {
       loading=false;
       print("não foi possível conectar em 8sec");
     });
+    return r;
   }
 
   void dispose(){
@@ -263,15 +263,21 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    /**Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));**/
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     getData(widget.empresa);
   }
 
@@ -280,16 +286,16 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
 
   @override
   Widget build(BuildContext context) {
-    if(widget.user["tipo"]=="C")
+    if(widget.user!["tipo"]=="C")
       perfil = "Consultor";
-    if(widget.user["tipo"]=="T")
+    if(widget.user!["tipo"]=="T")
       perfil = "Analista";
-    if(widget.user["tipo"]=="D")
+    if(widget.user!["tipo"]=="D")
       perfil = "Diretor";
 
     switch(widget.status) {
@@ -334,52 +340,17 @@ class _TicketsPageState extends State<TicketsPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
         )
     );
-
-    /**return new Scaffold(
-      appBar: AppBar(title: Text(widget.title),
-        backgroundColor: HexColor(Constants.red),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(FadePageRoute(
-                builder: (context) => (isConsultor?TicketsviewConsultor(widget.status):HomePage()),
-                //builder: (context) => HomePage(),
-              ));
-            },
-          )
-        ],
-      ),
-      drawer: Drawer(
-        child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
-      ),
-      body:  Container(
-        padding: EdgeInsets.fromLTRB(10,10,10,0),
-        width: double.maxFinite,
-        child: loading ? Center (child: CircularProgressIndicator()) : getMain(),
-      ),
-    );**/
   }
 
   goBack(){
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => (isConsultor?TicketsviewConsultor(widget.status):HomePage()),
+    Navigator.of(context).push(FadePageRoute(
+      builder: (context) => (isConsultor?TicketsviewConsultor(widget.status!):HomePage()),
     ));
   }
   Widget getMain(double width){
-    /**return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        headerTk(widget.key, widget.user, "Consultor", listModel.length),
-        listView(),
-      ],
-    );**/
     return SafeArea(
       child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -387,7 +358,7 @@ class _TicketsPageState extends State<TicketsPage> {
           children: <Widget>[
             Stack(
               children: [
-                headerTk(_scaffoldKey, widget.user,context, perfil, listModel.length,width,stats,goBack),
+                headerTk(_scaffoldKey, widget.user!,context, perfil, listModel.length,width,stats,goBack),
                 Positioned(child:
                 SearchBox(
                     cardColor: Colors.white,
@@ -495,22 +466,22 @@ class _TicketsPageState extends State<TicketsPage> {
               children: [
                 Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Text("#"+tech.id, style: TextStyle(fontWeight: FontWeight.w500,color: cl))],
+                  children: [Text("#"+tech.id!, style: TextStyle(fontWeight: FontWeight.w500,color: cl))],
                 ),
                 SizedBox(height: 1.5,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Text(tech.user,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
+                  children: [Text(tech.user!,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                 ),
                 SizedBox(height: 1.5,),
                 Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                  children: [Expanded(child: Text(tech.title,style: TextStyle(fontSize: 16.0, color: clTexto)))],
+                  children: [Expanded(child: Text(tech.title!,style: TextStyle(fontSize: 16.0, color: clTexto)))],
                 ),
                 SizedBox(height: 5,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
+                  children: [Text(tech.status!,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -521,9 +492,9 @@ class _TicketsPageState extends State<TicketsPage> {
                             color: HexColor(Constants.grey),
                             borderRadius: BorderRadius.circular(5)
                         ),
-                        child: Expanded(child:Text(tech.empresa,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold)))
+                        child: Text(tech.empresa!,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold))
                     ),
-                    Text(tech.tecnico,style: TextStyle(fontWeight: FontWeight.w500),)],
+                    Text(tech.tecnico!,style: TextStyle(fontWeight: FontWeight.w500),)],
                 ),
                 SizedBox(height: 3,)
               ],

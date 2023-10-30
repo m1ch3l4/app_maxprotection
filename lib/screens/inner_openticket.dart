@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -9,12 +8,9 @@ import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/widgets/searchempresa_wdt.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
-import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
@@ -58,11 +54,7 @@ class InnerOpenTicket extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            home: new OpenTicketPage(title: 'Abrir Chamado', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new OpenTicketPage(title: 'Abrir Chamado', user: snapshot.data as Map<String, dynamic>) : CircularProgressIndicator());
         },
       ),
     );
@@ -71,10 +63,10 @@ class InnerOpenTicket extends StatelessWidget {
 
 class OpenTicketPage extends StatefulWidget {
 
-  OpenTicketPage({Key key, this.title,this.user}) : super(key: key);
+  OpenTicketPage({this.title,this.user}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -90,7 +82,7 @@ class _MyAppState extends State<OpenTicketPage> {
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
   EmpresasSearch _empSearch = new EmpresasSearch();
-  Empresa empSel;
+  Empresa? empSel;
 
   int pos = 0;
   double dbLevel = 0;
@@ -98,7 +90,7 @@ class _MyAppState extends State<OpenTicketPage> {
   String statusText = "Pronto para gravar";
   bool isComplete = false;
   bool isGravando = false;
-  String recordFilePath;
+  String? recordFilePath;
 
   String currentTime = "", endTime = "";
   double minDuration = 0, maxDuration = 0, currentDuration = 0;
@@ -109,39 +101,39 @@ class _MyAppState extends State<OpenTicketPage> {
   bool isTecnico = false;
   String idTicket = "-1";
 
-  searchEmpresa searchEmpresaWdt;
-  SeekBar _seekBar;
+  searchEmpresa? searchEmpresaWdt;
+  SeekBar? _seekBar;
 
   bool flag = true;
-  Stream<int> timerStream;
-  StreamSubscription<int> timerSubscription;
+  late Stream<int> timerStream;
+  late StreamSubscription<int> timerSubscription;
 
   String minutesStr = '00';
   String secondsStr = '00';
   String hoursStr = '00';
 
-  Directory appDirectory;
+  Directory? appDirectory;
 
-  WaveAudio wave;
+  WaveAudio? wave;
 
   Stream<int> stopWatchStream() {
-    StreamController<int> streamController;
-    Timer timer;
+    late StreamController<int> streamController;
+    late Timer timer;
     Duration timerInterval = Duration(seconds: 1);
     int counter = 0;
 
     void stopTimer() {
       if (timer != null) {
-        timer.cancel();
-        timer = null;
+        timer!.cancel();
+        //timer = null;
         counter = 0;
-        streamController.close();
+        streamController!.close();
       }
     }
 
     void tick(_) {
       counter++;
-      streamController.add(counter);
+      streamController!.add(counter);
       if (!flag) {
         stopTimer();
       }
@@ -163,18 +155,24 @@ class _MyAppState extends State<OpenTicketPage> {
 
   /// Collects the data useful for displaying in a seek bar, using a handy
   /// feature of rx_dart to combine the 3 streams of interest into one.
-  Stream<PositionData> get _positionDataStream =>
+  /**Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration, PositionData>(
           _player.positionStream,
           _player.bufferedPositionStream,
           _player.durationStream,
               (position, bufferedPosition, duration) => PositionData(
-              position, bufferedPosition, duration ?? Duration.zero));
+              position, bufferedPosition, duration ?? Duration.zero)); **/
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
@@ -185,13 +183,13 @@ class _MyAppState extends State<OpenTicketPage> {
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
     empSel = null;
   }
 
-  @override
-  void dispose() {
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
@@ -205,7 +203,7 @@ class _MyAppState extends State<OpenTicketPage> {
 
   @override
   Widget build(BuildContext context) {
-    Usuario usr = Usuario.fromSharedPref(widget.user);
+    Usuario usr = Usuario.fromSharedPref(widget.user!);
     usr.empresas.add(_empSearch.defaultValue);
     _empSearch.setOptions(usr.empresas);
     empSel = _empSearch.defaultOpt;
@@ -228,7 +226,7 @@ class _MyAppState extends State<OpenTicketPage> {
         backgroundColor: HexColor(Constants.grey),
         body: getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('openticket',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('openticket',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -240,7 +238,7 @@ class _MyAppState extends State<OpenTicketPage> {
           children: <Widget>[
       Stack(
       children: [
-          headerAlertas(_scaffoldKey, widget.user, context, width,200, "Abrir chamados por voz"),
+          headerAlertas(_scaffoldKey, widget.user!, context, width,200, "Abrir chamados por voz"),
           Positioned(
           child: Container(width:width,alignment:Alignment.center,child: searchEmpresaWdt),
         top:175,
@@ -367,9 +365,9 @@ class _MyAppState extends State<OpenTicketPage> {
                             iconSize: 24,
                             color: Colors.white,
                             onPressed: () {
-                              isComplete ? WaveAudio.state.controller.startPlayer(
+                              isComplete ? WaveAudio.state!.controller!.startPlayer(
                                 finishMode: FinishMode.pause,
-                              ):WaveAudio.state.controller.pausePlayer();
+                              ):WaveAudio.state!.controller!.pausePlayer();
                                   //play() :
                               //pauseRecord();
                             },
@@ -411,16 +409,16 @@ class _MyAppState extends State<OpenTicketPage> {
     setState(() {
       isGravando=true;
       isComplete=false;
-      if(searchEmpresaWdt.state!=null)
-      empSel = searchEmpresaWdt.state.empSel;
+      if(searchEmpresaWdt!.state!=null)
+      empSel = searchEmpresaWdt!.state!.empSel;
     });
     bool hasPermission = await checkPermission();
     if (hasPermission) {
-      if(empSel!=null && empSel.id !="0") {
+      if(empSel!=null && empSel!.id !="0") {
         startCronometer();
         print("Recording...");
         recordFilePath = await getFilePath();
-        RecordMp3.instance.start(recordFilePath, (type) {
+        RecordMp3.instance.start(recordFilePath!, (type) {
           print("Record error--->$type");
           setState(() {
             print('startRecording...');
@@ -466,16 +464,20 @@ class _MyAppState extends State<OpenTicketPage> {
     if (s) {
       statusText = "Gravação Finalizada";
       setState(() {
-        _player.setFilePath(recordFilePath);
+        _player.setFilePath(recordFilePath!);
       });
     }
   }
 
   void abrirChamado(){
-    if(isTecnico){
-      _OpenTicket(widget.user["id"]);
-    }else {
-      _asyncFileUpload(widget.user["id"]);
+    if(!isGravando && recordFilePath!=null) {
+      if (isTecnico) {
+        _OpenTicket(widget.user!["id"]);
+      } else {
+        _asyncFileUpload(widget.user!["id"]);
+      }
+    }else{
+      Message.showMessage("Não é possível abrir o chamado sem um aúdio completo.");
     }
   }
 
@@ -484,7 +486,7 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     var ssl = false;
     var response = null;
@@ -498,7 +500,7 @@ class _MyAppState extends State<OpenTicketPage> {
 
     Map params = {
       'cliente': text,
-      'org' : empSel.id,
+      'org' : empSel!.id,
       'descricao':'Abertura de chamado pelo SecurityApp'
     };
 
@@ -561,7 +563,7 @@ class _MyAppState extends State<OpenTicketPage> {
       isLoading=true;
     });
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     var ssl = false;
     var request  = null;
@@ -579,9 +581,9 @@ class _MyAppState extends State<OpenTicketPage> {
     await Future.delayed(Duration(seconds: 3));
 
     var url =Constants.urlEndpoint+'tech/upload';
-    File file = File(recordFilePath);
+    File file = File(recordFilePath!);
 
-    print("arquivo..."+recordFilePath);
+    print("arquivo..."+recordFilePath!);
 
     if(ssl){
       Dio dio = HttpsClient().dioClient;
@@ -590,8 +592,8 @@ class _MyAppState extends State<OpenTicketPage> {
 
       var formData = FormData.fromMap({
         "id":text,
-        "empresa":empSel.name,
-        "file":await multipart.MultipartFile.fromFile(recordFilePath,filename:'file.mp3')
+        "empresa":empSel!.name,
+        "file":await multipart.MultipartFile.fromFile(recordFilePath!,filename:'file.mp3')
       });
 
       response = await dio.post(url,
@@ -609,7 +611,7 @@ class _MyAppState extends State<OpenTicketPage> {
       request.headers.addAll(h);
       //add text fields
       request.fields["id"] = text;
-      request.fields["empresa"] = empSel.name;
+      request.fields["empresa"] = empSel!.name;
       //create multipart using filepath, string or bytes
       var mp3 = await http.MultipartFile.fromPath("file", file.path);
       //add multipart to request
@@ -631,21 +633,35 @@ class _MyAppState extends State<OpenTicketPage> {
 
     final data = jsonDecode(responseString);
     ChamadoMp3 cmp3 = ChamadoMp3.fromJson(data);
-    if(cmp3!=null && cmp3.name!=null && cmp3.size>0){
+    if(cmp3!=null && cmp3.name!=null && cmp3.size!>0){
       Message.showMessage("Chamado enviado para servidor.\nEm breve entrará listagem da empresa.");
       delete();
+      Future.delayed(const Duration(seconds: 1), () {
+        goBack();
+      });
     }else{
       Message.showMessage("Erro ao enviar o chamado para o servidor.\nPor favor entre em contato com nosso suporte.");
     }
   }
 
+  goBack(){
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
+  }
   _updateTicket() async{
     setState(() {
       isLoading=true;
     });
 
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     var ssl = false;
     var request  = null;
@@ -661,9 +677,9 @@ class _MyAppState extends State<OpenTicketPage> {
     };
 
     var url =Constants.urlEndpoint+'tech/updateTicket';
-    File file = File(recordFilePath);
+    File file = File(recordFilePath!);
 
-    print("updateTicket...arquivo..."+recordFilePath);
+    print("updateTicket...arquivo..."+recordFilePath!);
 
     if(ssl){
       Dio dio = HttpsClient().dioClient;
@@ -672,7 +688,7 @@ class _MyAppState extends State<OpenTicketPage> {
 
       var formData = FormData.fromMap({
         "idticket":idTicket,
-        "file":await multipart.MultipartFile.fromFile(recordFilePath,filename:'file.mp3')
+        "file":await multipart.MultipartFile.fromFile(recordFilePath!,filename:'file.mp3')
       });
 
       response = await dio.post(url,
@@ -712,6 +728,9 @@ class _MyAppState extends State<OpenTicketPage> {
       Message.showMessage(
           "Chamado ID "+idTicket+" enviado para servidor.\nEm breve entrará listagem da empresa.");
       delete();
+      Future.delayed(const Duration(seconds: 1), () {
+        goBack();
+      });
     }
 
     idTicket="-1";
@@ -731,8 +750,8 @@ class _MyAppState extends State<OpenTicketPage> {
 
   void play() async{
     print("playRecord....");
-    if (recordFilePath != null && File(recordFilePath).existsSync()) {
-      _player.setFilePath(recordFilePath);
+    if (recordFilePath != null && File(recordFilePath!).existsSync()) {
+      _player.setFilePath(recordFilePath!);
       _player.play();
       setState(() {
         isComplete=false;
@@ -742,7 +761,7 @@ class _MyAppState extends State<OpenTicketPage> {
 
   void delete(){
     print("deleteRecord....");
-    File f = File(recordFilePath);
+    File f = File(recordFilePath!);
     if(f!=null){
       f.deleteSync(recursive: true);
       recordFilePath = null;

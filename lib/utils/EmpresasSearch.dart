@@ -1,4 +1,3 @@
- // @dart=2.10
 import 'package:flutter/cupertino.dart';
 import '../model/empresa.dart';
 
@@ -10,7 +9,7 @@ class EmpresasSearch{
     return _instance;
   }
 
-  Empresa defaultOption;
+  late Empresa defaultOption;
   Empresa defaultValue = Empresa("0","Selecione a empresa");
   List<Empresa> options = [];
 

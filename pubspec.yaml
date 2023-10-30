@@ -4,7 +4,7 @@ description: A new Flutter project.
 version: 2.0.0+1
 
 environment:
-  sdk: ">=2.14.0 <3.0.0"
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   device_preview: ^1.1.0
@@ -15,46 +15,48 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  intl: 0.17.0
+  intl: ^0.18.1
   cupertino_icons: ^1.0.0
-  popup_window: ^1.1.2
   sliding_up_panel: ^2.0.0+1
   http: ^0.13.1
   url_launcher: ^6.0.3
   equatable: ^2.0.0
-  firebase_analytics: ^8.0.2
-  firebase_core: ^1.1.0
-  firebase_core_platform_interface: 4.5.1
-  firebase_messaging: ^10.0.9
+  firebase_analytics: ^10.5.1
+  firebase_core: ^2.1.4
+  firebase_core_platform_interface: ^5.0.0
+  firebase_messaging: ^14.6.3
   fluttertoast: ^8.0.8
-  contactus: ^1.1.9
+  contactus: 1.2.3
   mask_text_input_formatter: ^2.1.0
-  local_auth: 1.1.0
+  local_auth: ^2.1.7
   shared_preferences: ^2.1.0
-  flutter_html: ^2.2.1
+  flutter_html: ^3.0.0-beta.2
   open_file_safe: ^3.2.3
   path_provider: ^2.0.9
   pdf: ^3.7.3
   just_audio: ^0.9.20
-  flutter_swiper: ^1.1.6
   record_mp3: ^3.0.0
-  permission_handler: ^8.1.6
+  permission_handler: ^11.0.1
   rxdart: ^0.27.3
-  flutter_local_notifications: 9.5.0
+  flutter_local_notifications: ^12.0.4
   localstorage: ^4.0.0+1
   flutter_phone_direct_caller: ^2.1.1
-  back_button_interceptor: ^6.0.0
+  back_button_interceptor: ^7.0.0
   new_version: ^0.3.0
-  syncfusion_flutter_charts: 20.3.58
-  dio: ^4.0.6
-  speech_to_text: 5.6.1
+  syncfusion_flutter_charts: ^23.1.41
+  dio: ^5.3.3
+  speech_to_text: ^6.3.0
   audio_waveforms: ^1.0.4
   file_picker: ^4.5.0
-  image_picker: 0.8.4
+  image_picker: ^1.0.4
   animated_widgets: ^1.1.0
+
 
 dependency_overrides:
   path_provider_android: 2.0.11
+  flutter_layout_grid: 2.0.5
+  flutter_math_fork: 0.6.0
+  package_info_plus: any
 
 dev_dependencies:
   flutter_test:

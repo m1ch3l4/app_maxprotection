@@ -33,6 +33,8 @@ class LoginScreenState extends State<LoginScreen> {
   final loginCtrl = TextEditingController();
   final passCtrl = TextEditingController();
 
+  var senhaFocus = FocusNode();
+
   FingerPrintAuth fp = new FingerPrintAuth();
   SharedPref sharedPref = SharedPref();
 
@@ -203,8 +205,12 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   void _togglePasswordView() {
+    print("toggle....");
     setState(() {
       _isHidden = !_isHidden;
+      passCtrl.selection =
+          TextSelection.collapsed(offset: passCtrl.text.length);
+      FocusScope.of(context).requestFocus(senhaFocus);
     });
   }
 
@@ -244,9 +250,10 @@ class LoginScreenState extends State<LoginScreen> {
           maxLength: 40,
         ),
         new TextFormField(
-          cursorColor: Colors.white,
+          cursorColor: HexColor(Constants.red),
           obscureText: _isHidden,
           controller: passCtrl,
+          focusNode: senhaFocus,
           style: TextStyle(color: Colors.white),
           decoration: new InputDecoration(hintText: 'Senha', hintStyle: TextStyle(color: Colors.white),
               enabledBorder: UnderlineInputBorder(
@@ -255,6 +262,7 @@ class LoginScreenState extends State<LoginScreen> {
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
               ),
+              focusColor: HexColor(Constants.red),
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
               ),errorStyle: TextStyle(color: Colors.white),

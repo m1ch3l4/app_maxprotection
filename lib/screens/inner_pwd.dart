@@ -1,4 +1,4 @@
-//@dart=2.10
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/Logoff.dart';
@@ -7,6 +7,7 @@ import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
@@ -37,11 +38,7 @@ class InnerPwd extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            home: new PwdPage(title: 'Mudar Senha', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new PwdPage(title: 'Mudar Senha', user: snapshot.data as Map<String, dynamic>): CircularProgressIndicator());
         },
       ),
     );
@@ -49,10 +46,10 @@ class InnerPwd extends StatelessWidget {
 }
 
 class PwdPage extends StatefulWidget {
-  PwdPage({Key key, this.title,this.user}) : super(key: key);
+  PwdPage({this.title,this.user}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
 
   @override
@@ -68,33 +65,39 @@ class _PwdPageState extends State<PwdPage> {
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
-  bool consultant;
+  bool consultant=false;
   GlobalKey<FormState> _key = new GlobalKey();
   bool _validate = false;
   // Initially password is obscure
   bool _obscureText = true;
   bool _obscureTextc = true;
-  String senha, confsenha;
+  late String senha, confsenha;
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
+    BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
-    consultant = (widget.user["tipo"]=="C"?true:false);
+    BackButtonInterceptor.add(myInterceptor);
+    consultant = (widget.user!["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
 
   }
@@ -128,7 +131,7 @@ class _PwdPageState extends State<PwdPage> {
         resizeToAvoidBottomInset : false,
         body: getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('password',widget.user,textTheme,(width*0.6)),
+          child: SliderMenu('password',widget.user!,textTheme,(width*0.6)),
         )
     );
   }
@@ -164,7 +167,7 @@ class _PwdPageState extends State<PwdPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-                headerAlertas(_scaffoldKey, widget.user, context, width, 185, "Alteração de Senha"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width, 185, "Alteração de Senha"),
                 Spacer(),
                 Container(
                     width: width*0.9,
@@ -235,17 +238,18 @@ class _PwdPageState extends State<PwdPage> {
               border: OutlineInputBorder(
                 borderSide: BorderSide(width:2,color: clTitle),
                 borderRadius: BorderRadius.circular(15.0),
-              ),errorStyle: TextStyle(color: clTitle)),
+              ),errorStyle: TextStyle(fontWeight:FontWeight.bold,color: HexColor(Constants.blue))),
           maxLength: 12,
           validator: _validarSenha,
           onChanged: (String val){
             senha = val;
           },
-          onSaved: (String val) {
-            senha = val;
+          onSaved: (String? val) {
+            senha = val!;
           },
           obscureText: _obscureText,
         ),
+        SizedBox(height: 10,),
         Row(mainAxisAlignment: MainAxisAlignment.start,children:[SizedBox(width: 13,),Text("Confirmação Senha",style: TextStyle(color:clTitle,fontWeight: FontWeight.bold))]),
         SizedBox(height: 2,),
         new TextFormField(
@@ -273,11 +277,11 @@ class _PwdPageState extends State<PwdPage> {
               border: OutlineInputBorder(
                 borderSide: BorderSide(width:2,color: clTitle),
                 borderRadius: BorderRadius.circular(15.0),
-              ),errorStyle: TextStyle(color: clTitle)),
+              ),errorStyle: TextStyle(fontWeight:FontWeight.bold,color: HexColor(Constants.blue))),
           maxLength: 12,
           validator: _validarConfSenha,
-          onSaved: (String val) {
-            confsenha = val;
+          onSaved: (String? val) {
+            confsenha = val!;
           },
           obscureText: _obscureTextc,
         ),
@@ -285,21 +289,20 @@ class _PwdPageState extends State<PwdPage> {
     );
   }
 
-  String _validarSenha(String value) {
+  String? _validarSenha(String? value) {
+    var atual =widget.user!["password"].toString();
     RegExp regex =
     RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{12,}$');
-    /** if (value.length == 0) {
-        return "Informe a senha";
-        } else if(value.length != 12){
-        return "A senha deve ter 12 caracteres";
-        }**/
-    if(!regex.hasMatch(value)){
+    if(!regex.hasMatch(value!)){
       return "A senha deve ter 12 caracteres incluindo pelo menos 1 letra maiúscula, número e caracter especial";
+    }
+    if(value == atual){
+      return "A Nova senha deve ser diferente da anterior!";
     }
     return null;
   }
 
-  String _validarConfSenha(String value) {
+  String? _validarConfSenha(String? value) {
     if (value!=senha) {
       return "A senha e a confirmação devem ser iguais";
     }
@@ -307,12 +310,12 @@ class _PwdPageState extends State<PwdPage> {
   }
 
   _sendForm() {
-    if (_key.currentState.validate()) {
+    if (_key.currentState!.validate()) {
       // Sem erros na validação
-      _key.currentState.save();
+      _key.currentState!.save();
       print("Senha $senha");
       print("Confsenha $confsenha");
-      changePass(widget.user['id'].toString(), senha);
+      changePass(widget.user!['id'].toString(), senha);
     } else {
       print("Diz q. não está correto...");
       // erro de validação
@@ -323,16 +326,17 @@ class _PwdPageState extends State<PwdPage> {
   }
 
   Future<String> changePass(String iduser,String newpass) {
-    return ChangePassApi.changePass(widget.user["token"],iduser, newpass,consultant).then((resp) {
+    return ChangePassApi.changePass(widget.user!["token"],iduser, newpass,consultant).then((resp) {
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Message.showMessage("Não foi possível alterar sua senha!");
+        Message.showMessage(utf8.decode(resp.msg.codeUnits));
         return 'user not exists';
       }else {
 
         Message.showMessage("Senha Alterada com sucesso!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
 
-        Logoff.logoff();
+        Logoff.logoffSenha();
 
         return 'senha alterada';
       }

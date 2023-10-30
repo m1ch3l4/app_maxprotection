@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:flutter/material.dart';
 
@@ -8,16 +7,16 @@ import 'constants.dart';
 import 'custom_route.dart';
 
 class ActiveProjectsCard extends StatelessWidget {
-  final Color cardColor;
-  Widget icon;
-  final String title;
-  final Widget action;
-  BuildContext ctx;
-  final Function onclickF;
-  final width;
-  final bool r;
+  final Color? cardColor;
+  Widget? icon;
+  final String? title;
+  final Widget? action;
+  BuildContext? ctx;
+  final Function? onclickF;
+  final double? width;
+  final bool? r;
 
-  Function disableBlink;
+  Function? disableBlink;
 
   ActiveProjectsCard({
     this.cardColor,
@@ -39,14 +38,14 @@ class ActiveProjectsCard extends StatelessWidget {
      */
     return InkWell(
         onTap: (){
-         if(r){
-            onclickF();
+         if(r!){
+            onclickF!();
          }else {
            if(title == "Leads"){
-              disableBlink();
+              disableBlink!();
            }
-           Navigator.of(ctx).push(FadePageRoute(
-             builder: (context) => action,
+           Navigator.of(ctx!).push(FadePageRoute(
+             builder: (context) => action!,
            ));
          }
     } ,
@@ -69,10 +68,10 @@ class ActiveProjectsCard extends StatelessWidget {
               //crossAxisAlignment: CrossAxisAlignment.end,
               //mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                (icon!=null?icon:SizedBox(width:1)),
+                (icon!=null?icon!:SizedBox(width:1)),
                 SizedBox(width:13),
                 Expanded(child: Text(
-                  title,
+                  title!,
                   style: TextStyle(
                     fontSize: 12.0,
                     color: HexColor(Constants.black),

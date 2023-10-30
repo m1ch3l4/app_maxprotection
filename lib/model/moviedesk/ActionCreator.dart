@@ -1,9 +1,8 @@
-// @dart=2.9
 class ActionCreator{
-  String businessName;
-  String email;
-  String id;
-  String phone;
+  String? businessName;
+  String? email;
+  String? id;
+  String? phone;
 
   ActionCreator.data([this.businessName,this.email,this.id,this.phone]){
     this.businessName ??= "-";

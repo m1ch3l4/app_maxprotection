@@ -1,15 +1,16 @@
-// @dart=2.9
+import 'package:flutter/cupertino.dart';
+
 class DashboardData{
-  int siem;
-  int zabbix;
-  int open;
-  int novo;
-  int close;
-  int waiting;
-  int msgSiem;
-  int msgZabbix;
-  int msgTicket;
-  int msgLead;
+  int? siem;
+  int? zabbix;
+  int? open;
+  int? novo=0;
+  int? close;
+  int? waiting;
+  int? msgSiem;
+  int? msgZabbix;
+  int? msgTicket;
+  int? msgLead;
 
   DashboardData.data([this.siem,this.zabbix,this.open,this.close,this.waiting,this.novo]) {
     this.siem ??= 0;
@@ -30,8 +31,8 @@ class DashboardData{
     close = json['close'];
     waiting = json['waiting'];
     novo = (json['novo']!=null?json['novo']:0);
-    novo += waiting;
-    novo += open;
+    novo = novo! + waiting!;
+    novo = novo! + open!;
     msgLead = (json['msgLead']!=null?json['msgLead']:0);
     msgSiem = (json['msgSiem']!=null?json['msgSiem']:0);
     msgZabbix = (json['msgZabbix']!=null?json['msgZabbix']:0);

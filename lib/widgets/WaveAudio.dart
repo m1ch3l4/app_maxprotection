@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'dart:async';
 import 'dart:io';
 
@@ -9,35 +8,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class WaveAudio extends StatefulWidget {
-  final bool isSender;
-  final int index;
-  final String path;
-  final double width;
-  final Directory appDirectory;
+  final bool? isSender;
+  final int? index;
+  final String? path;
+  final double? width;
+  final Directory? appDirectory;
 
-  static _WaveBubbleState state;
+  static _WaveBubbleState? state;
 
   const WaveAudio({
-    Key key,
     this.appDirectory,
     this.width,
     this.index,
     this.isSender = false,
     this.path,
-  }) : super(key: key);
+  });
 
   @override
   State<WaveAudio> createState(){
     state = _WaveBubbleState();
-    return state;
+    return state!;
   }
 }
 
 class _WaveBubbleState extends State<WaveAudio> {
-  File file;
+  File? file;
 
-  PlayerController controller;
-  StreamSubscription<PlayerState> playerStateSubscription;
+  PlayerController? controller;
+  StreamSubscription<PlayerState>? playerStateSubscription;
 
   final playerWaveStyle = PlayerWaveStyle(
     fixedWaveColor: HexColor(Constants.darkGrey),
@@ -50,7 +48,7 @@ class _WaveBubbleState extends State<WaveAudio> {
     super.initState();
     controller = PlayerController();
     _preparePlayer();
-    playerStateSubscription = controller.onPlayerStateChanged.listen((_) {
+    playerStateSubscription = controller!.onPlayerStateChanged.listen((_) {
       setState(() {});
     });
   }
@@ -58,8 +56,8 @@ class _WaveBubbleState extends State<WaveAudio> {
   void _preparePlayer() async {
     // Opening file from assets folder
     if (widget.index != null) {
-      file = File('${widget.appDirectory.path}/audio${widget.index}.mp3');
-      await file.writeAsBytes(
+      file = File('${widget.appDirectory!.path}/audio${widget.index}.mp3');
+      await file!.writeAsBytes(
           (await rootBundle.load('assets/audios/audio${widget.index}.mp3'))
               .buffer
               .asUint8List());
@@ -68,15 +66,15 @@ class _WaveBubbleState extends State<WaveAudio> {
       return;
     }
     // Prepare player with extracting waveform if index is even.
-    controller.preparePlayer(
-      path: widget.path ?? file.path,
+    controller!.preparePlayer(
+      path: widget.path ?? file!.path,
       shouldExtractWaveform: widget.index?.isEven ?? true,
     );
     // Extracting waveform separately if index is odd.
     if (widget.index?.isOdd ?? false) {
-      controller
+      controller!
           .extractWaveformData(
-        path: widget.path ?? file.path,
+        path: widget.path ?? file!.path,
         noOfSamples:
         playerWaveStyle.getSamplesForWidth(widget.width ?? 200),
       )
@@ -86,8 +84,8 @@ class _WaveBubbleState extends State<WaveAudio> {
 
   @override
   void dispose() {
-    playerStateSubscription.cancel();
-    controller.dispose();
+    playerStateSubscription!.cancel();
+    controller!.dispose();
     super.dispose();
   }
 
@@ -99,7 +97,7 @@ class _WaveBubbleState extends State<WaveAudio> {
       child: Container(
         padding: EdgeInsets.only(
           bottom: 6,
-          right: widget.isSender ? 0 : 10,
+          right: widget.isSender! ? 0 : 10,
           top: 6,
         ),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -132,13 +130,13 @@ class _WaveBubbleState extends State<WaveAudio> {
               ),**/
             AudioFileWaveforms(
               size: Size(MediaQuery.of(context).size.width / 2, 70),
-              playerController: controller,
+              playerController: controller!,
               waveformType: widget.index?.isOdd ?? false
                   ? WaveformType.fitWidth
                   : WaveformType.long,
               playerWaveStyle: playerWaveStyle,
             ),
-            if (widget.isSender) const SizedBox(width: 10),
+            if (widget.isSender!) const SizedBox(width: 10),
           ],
         ),
       ),

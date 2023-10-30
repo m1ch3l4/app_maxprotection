@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/model/MessageModel.dart';
@@ -50,14 +49,7 @@ class InnerTodosTk extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new TodosTkPage(title: '', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new TodosTkPage(title: '', user: snapshot.data as Map<String, dynamic>) : CircularProgressIndicator());
         },
       ),
     );
@@ -65,10 +57,10 @@ class InnerTodosTk extends StatelessWidget {
 }
 
 class TodosTkPage extends StatefulWidget {
-  TodosTkPage({Key key, this.title,this.user}) : super(key: key);
+  TodosTkPage({this.title,this.user});
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _TodosTkPageState createState() => new _TodosTkPageState();
@@ -93,16 +85,22 @@ class _TodosTkPageState extends State<TodosTkPage> {
   double altura = 0.0;
 
 
-  /** bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
-  }**/
+  }
 
   void initState() {
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     getData();
     _fabHeight = _initFabHeight;
   }
@@ -114,6 +112,8 @@ class _TodosTkPageState extends State<TodosTkPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+
+    print("todos os tickets....");
 
     languageCode = Localizations.localeOf(context).languageCode;
     width = MediaQuery.of(context).size.width;
@@ -139,17 +139,18 @@ class _TodosTkPageState extends State<TodosTkPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
   //
   Widget getMain(double width){
     double tam = (altura<700?altura-70:altura-30);
+    print("....tamanho: "+listModel.length.toString());
     return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -168,10 +169,11 @@ class _TodosTkPageState extends State<TodosTkPage> {
   }
 
   Widget menuTickets(){
+    print("menuTickets....");
     return Container(
         alignment: Alignment.center,
         margin:EdgeInsets.only(left: width*0.04),
-        padding:  EdgeInsets.only(top:250),
+        padding:  EdgeInsets.only(top:180),
         width: width*.9,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,19 +207,19 @@ class _TodosTkPageState extends State<TodosTkPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    if(widget.user["tipo"]=="D") {
+    if(widget.user!["tipo"]=="D") {
       urlApi = Constants.urlEndpoint + "tech/list/emp/" +
-          widget.user['company_id'].toString();
+          widget.user!['company_id'].toString();
     }else{
       urlApi = Constants.urlEndpoint + "tech/list/tecnico/" +
-          widget.user['id'].toString();
+          widget.user!['id'].toString();
     }
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -235,7 +237,7 @@ class _TodosTkPageState extends State<TodosTkPage> {
       print("source..."+source);
       final data = jsonDecode(source);
       setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           var c = i["cliente"];
           var e = i["empresa"];
           var o = i["owner"];
@@ -298,7 +300,7 @@ class _TodosTkPageState extends State<TodosTkPage> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TicketDetail(tech,widget.user["empresa"],0), // <-- document instance
+                builder: (context) => TicketDetail(tech,widget.user!["empresa"],0), // <-- document instance
               ));},
         child: Card(
             child:
@@ -322,22 +324,22 @@ class _TodosTkPageState extends State<TodosTkPage> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          children: [Text("#"+tech.id, style: TextStyle(fontWeight: FontWeight.w500,color: cl))],
+                          children: [Text("#"+tech.id!, style: TextStyle(fontWeight: FontWeight.w500,color: cl))],
                         ),
                         SizedBox(height: 1.5,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          children: [Text(tech.user,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
+                          children: [Text(tech.user!,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                         ),
                         SizedBox(height: 1.5,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          children: [Expanded(child: Text(tech.title,style: TextStyle(fontSize: 16.0, color: clTexto)))],
+                          children: [Expanded(child: Text(tech.title!,style: TextStyle(fontSize: 16.0, color: clTexto)))],
                         ),
                         SizedBox(height: 5,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [Text(tech.status,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
+                          children: [Text(tech.status!,style: TextStyle(fontWeight: FontWeight.w500, color:clTexto))],
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -348,9 +350,9 @@ class _TodosTkPageState extends State<TodosTkPage> {
                                     color: HexColor(Constants.grey),
                                     borderRadius: BorderRadius.circular(5)
                                 ),
-                                child: Expanded(child:Text(tech.empresa,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold)))
+                                child: Text(tech.empresa!,style:TextStyle(color:HexColor(Constants.darkGrey),fontWeight: FontWeight.bold))
                             ),
-                            Text(tech.tecnico,style:TextStyle(fontWeight: FontWeight.w500))],
+                            Text(tech.tecnico!,style:TextStyle(fontWeight: FontWeight.w500))],
                         ),
                         SizedBox(height: 3,)
                       ],

@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/screens/noticia_detail.dart';
@@ -30,6 +29,8 @@ import 'home_page.dart';
 
 void main() => runApp(new InnerNoticias());
 
+GlobalKey<_NoticiasPageState> keyNP = new GlobalKey<_NoticiasPageState>();
+
 class InnerNoticias extends StatelessWidget {
 
   static const routeName = '/news';
@@ -41,14 +42,7 @@ class InnerNoticias extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new NoticiasPage(title: 'Noticias', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new NoticiasPage(key: keyNP, title: 'Noticias', user: snapshot.data as Map<String, dynamic>): CircularProgressIndicator());
         },
       ),
     );
@@ -56,10 +50,10 @@ class InnerNoticias extends StatelessWidget {
 }
 
 class NoticiasPage extends StatefulWidget {
-  NoticiasPage({Key key, this.title,this.user}) : super(key: key);
+  NoticiasPage({required Key key, this.title,this.user}) : super(key: key);
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _NoticiasPageState createState() => new _NoticiasPageState();
@@ -73,7 +67,7 @@ class _NoticiasPageState extends State<NoticiasPage> {
   double _fabHeight = 0;
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
-  bool consultant;
+  bool consultant=false;
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
@@ -90,18 +84,14 @@ class _NoticiasPageState extends State<NoticiasPage> {
       loading = true;
     });
 
-    //String urlApi = Constants.urlEndpoint+"news/last";
     String urlApi = Constants.urlEndpoint+"news";
-    print("****URL API: ");
-    print(urlApi);
-    print("**********");
     var ssl = false;
     var responseData = null;
 
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -119,11 +109,12 @@ class _NoticiasPageState extends State<NoticiasPage> {
       String source = Utf8Decoder().convert(responseData.bodyBytes);
       final data = jsonDecode(source);
       setState(() {
-        for(Map i in data){
+        for(Map<String,dynamic> i in data){
           NoticiaData tmp = NoticiaData.fromJson(i);
+          //print("noticia...."+tmp.titulo+"|"+tmp.imageFile);
           listModel.add(tmp);
           if(!categorias.contains(tmp.categoria))
-            categorias.add(tmp.categoria);
+            categorias.add(tmp.categoria!);
         }
         destaques = listModel.sublist(0,2);
         outros = listModel.sublist(2);
@@ -145,9 +136,15 @@ class _NoticiasPageState extends State<NoticiasPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
@@ -156,6 +153,11 @@ class _NoticiasPageState extends State<NoticiasPage> {
     BackButtonInterceptor.add(myInterceptor);
     getData();
     _fabHeight = _initFabHeight;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
   }
 
   void updateState(double pos){
@@ -186,11 +188,11 @@ class _NoticiasPageState extends State<NoticiasPage> {
               topLeft: Radius.circular(10.0),
               topRight: Radius.circular(10.0)),
           onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
+          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user!),
           body: loading ? Center (child: CircularProgressIndicator()) : getMain(width,height),
         ),
         drawer:  Drawer(
-          child: SliderMenu('noticias',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('noticias',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -306,11 +308,27 @@ class _NoticiasPageState extends State<NoticiasPage> {
                     borderRadius: BorderRadius.circular(10.0),
                     color: HexColor(Constants.greyContainer)
                 ),margin: EdgeInsets.only(right: 10),
-                  child: (outros[i].imageFile!=null?Image.network (
-                      outros[i].imageFile,
-                      fit:BoxFit.cover):SizedBox(height: 1,)),
+                  child: (outros[i].imageFile!=null?
+                  Image.network(
+                  outros[i].imageFile!,fit:BoxFit.cover,
+                  loadingBuilder: (BuildContext? context, Widget? child,
+                      ImageChunkEvent? loadingProgress) {
+            if (loadingProgress == null) {
+            return child!;
+            }
+            return Center(
+            child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+            ? loadingProgress.cumulativeBytesLoaded /
+            loadingProgress.expectedTotalBytes!
+                : null,
+            ),
+            );
+            },
+            )
+                      :SizedBox(height: 1,)),
                 ),
-            Text(outros[i].categoria,style: TextStyle(color:HexColor(Constants.blueTxt)))]),
+            Text(outros[i].categoria!,style: TextStyle(color:HexColor(Constants.blueTxt)))]),
               decoration: BoxDecoration(
                 border: Border.all(
                     color: HexColor(Constants.greyContainer),
@@ -353,8 +371,6 @@ class _NoticiasPageState extends State<NoticiasPage> {
     });
   }
   Widget getNoticia(NoticiaData noticia){
-    DateFormat dayOfWeek = DateFormat('EEEE',languageCode);
-    DateTime dia = DateTime.parse(noticia.data);
     return GestureDetector(
       onTap: (){Navigator.push(
           context,
@@ -363,34 +379,62 @@ class _NoticiasPageState extends State<NoticiasPage> {
           ));},
     child:
     Container(
-          margin: EdgeInsets.all(5.0),
-          padding: EdgeInsets.all(20),
-          //color: HexColor(Constants.greyContainer),
-          height: 550,
-          width: 200,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
-              image:(noticia.imageFile!=null?DecorationImage(
-
-                image: Image.network(noticia.imageFile).image,
-                fit: BoxFit.cover,
-              ):DecorationImage(image:Image.asset("images/Fundo.png").image,opacity:85, fit: BoxFit.fill)),
+            height: 550,
+            width: 200,
+            margin: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
             color: HexColor(Constants.greyContainer)
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [Expanded(child: Text(noticia.titulo,softWrap:true,style: TextStyle(
+            ),
+            child:
+            Stack(
+              children: [
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child:(noticia.imageFile!=null?
+                    Image.network(
+                      noticia.imageFile!,fit:BoxFit.cover,
+                      loadingBuilder: (BuildContext? context, Widget? child,
+                          ImageChunkEvent? loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child!;
+                        }
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    )
+                        :Image.asset("images/Fundo.png"))),
+        Container(
+          alignment: Alignment.bottomCenter,
+          padding: EdgeInsets.only(bottom: 20),
+          child:
+                Text(noticia.titulo!,softWrap:true,style: TextStyle(
                   fontSize: 24.0,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                )))],
-              )
-            ],
-          ),
-        ));
+                )))
+              ],
+            )
+            /**
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(noticia.titulo!,softWrap:true,style: TextStyle(
+                  fontSize: 24.0,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ))
+              ],
+            ),**/
+        )
+    );
   }
   void _launchURL(_url) async =>
       await launch(_url) ? await launch(_url) : Message.showMessage("Não foi possível abrir a URL: "+_url);

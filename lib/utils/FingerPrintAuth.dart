@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:local_auth/auth_strings.dart';
 import 'package:local_auth/local_auth.dart';
 
 class FingerPrintAuth{
@@ -35,7 +34,7 @@ class FingerPrintAuth{
   Future<bool> authWithBiometrics() async {
     bool authenticated = false;
     try {
-      const iosStrings = const IOSAuthMessages(
+      /**const iosStrings = const IOSAuthMessages(
           cancelButton: 'Cancelar',
           goToSettingsButton: 'configurações',
           goToSettingsDescription: 'Please set up your Touch ID.',
@@ -44,18 +43,24 @@ class FingerPrintAuth{
           cancelButton: 'Cancelar',
           signInTitle: 'Autenticação Requerida',
           biometricHint: 'Verificar Identidade'
-      );
+      );**/
 
       _isAuthenticating = true;
       _authorized = 'Autenticando';
+
       authenticated = await auth.authenticate(
+          localizedReason:
+          'Coloque sua digital no sensor para autenticar',
+          );
+
+      /**authenticated = await auth.authenticate(
           localizedReason:
           'Coloque sua digital no sensor para autenticar',
           stickyAuth: true,
           useErrorDialogs: false,
           iOSAuthStrings: iosStrings,
           androidAuthStrings: androidStrings,
-          biometricOnly: true);
+          biometricOnly: true);**/
 
       _isAuthenticating = false;
       _authorized = 'Autenticando';

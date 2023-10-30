@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'dart:convert';
 
 import 'package:app_maxprotection/screens/inner_zabbix.dart';
@@ -14,48 +13,45 @@ import 'constants.dart';
 // ignore: must_be_immutable
 class searchEmpresa extends StatefulWidget {
 
-  final Function onchangeF;
-  final BuildContext context;
-  final double width;
-  final Function(Empresa) notifyParent;
+  final Function? onchangeF;
+  final BuildContext? context;
+  final double? width;
+  final Function(Empresa)? notifyParent;
 
   searchEmpresa({ this.onchangeF, this.context,this.width,this.notifyParent});
 
-  _searchEmpresa state;
+  _searchEmpresa? state;
 
   _searchEmpresa createState() {
     state = _searchEmpresa();
-    return state;
+    return state!;
   }
 }
 
 class _searchEmpresa extends State<searchEmpresa>{
   static EmpresasSearch _empSearch = EmpresasSearch();
-  Empresa empSel;
+  Empresa? empSel;
 
   static List<DropdownMenuItem<Empresa>> _data = [];
-  DropdownButtonFormField<Empresa> drop;
+  DropdownButtonFormField<Empresa>? drop;
 
   GlobalKey _dropdownButtonKey = GlobalKey();
 
   void openDropdown() {
-    GestureDetector detector;
+    GestureDetector? detector;
     void searchForGestureDetector(BuildContext element) {
       element.visitChildElements((element) {
         if (element.widget != null && element.widget is GestureDetector) {
-          detector = element.widget;
-          return false;
-
+          detector = element.widget as GestureDetector?;
+          //return false;
         } else {
           searchForGestureDetector(element);
         }
-
-        return true;
+        //return true;
       });
     }
-    searchForGestureDetector(_dropdownButtonKey.currentContext);
-    assert(detector != null);
-    detector.onTap();
+    searchForGestureDetector(_dropdownButtonKey.currentContext!);
+    detector!.onTap!();
   }
 
   void initState() {
@@ -73,7 +69,7 @@ class _searchEmpresa extends State<searchEmpresa>{
         _data.add(
             new DropdownMenuItem(
                 value: bean,
-                child: Text(bean.name, overflow: TextOverflow.fade,)));}
+                child: Text(bean.name!, overflow: TextOverflow.fade,)));}
       }
       drop = new DropdownButtonFormField<Empresa>(
           iconSize: 0,
@@ -93,13 +89,13 @@ class _searchEmpresa extends State<searchEmpresa>{
               )),
           isDense: true,
           style: TextStyle(color: HexColor(Constants.red),fontStyle: FontStyle.italic),
-          onChanged: (Empresa newValue) {
+          onChanged: (Empresa? newValue) {
             setState(() {
-              print("----"+newValue.id);
+              print("----"+newValue!.id!);
               empSel = newValue;
               _empSearch.setDefaultOpt(newValue);
-              widget.notifyParent(newValue);
-              widget.onchangeF!=null?widget.onchangeF():print("No Function Onchange...");
+              widget.notifyParent!(newValue);
+              widget.onchangeF!=null?widget.onchangeF!():print("No Function Onchange...");
             });
           },
           items: _data
@@ -109,7 +105,7 @@ class _searchEmpresa extends State<searchEmpresa>{
 
 
   Widget build(BuildContext context){
-    double largura = widget.width-26;
+    double largura = widget.width!-26;
     print("search.width: "+largura.toString());
 
     return Container(

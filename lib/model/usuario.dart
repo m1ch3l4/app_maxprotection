@@ -1,27 +1,26 @@
-//@dart=2.9
 import 'package:flutter/cupertino.dart';
 
 import 'RoleModel.dart';
 import 'empresa.dart';
 
 class Usuario extends ChangeNotifier{
-  String id;
-  String name;
-  String login;
-  String senha;
-  String message;
-  String idempresa;
-  String empresa;
-  bool pmElastic;
-  bool pmZabbix;
-  bool pmTickets;
-  bool hasAccess;
-  String tipo; //T - Tecnico, C - consultor, D- Diretor
-  List<Empresa> empresas; //se for [C]onsultor tera uma lista de empresas...
-  Role role;
-  String phone;
-  bool interno;
-  String token;
+  String? id;
+  String? name;
+  String? login;
+  String? senha;
+  String? message;
+  String? idempresa;
+  String? empresa;
+  bool? pmElastic;
+  bool? pmZabbix;
+  bool? pmTickets;
+  bool? hasAccess;
+  String? tipo; //T - Tecnico, C - consultor, D- Diretor
+  List<Empresa> empresas=[]; //se for [C]onsultor tera uma lista de empresas...
+  Role? role;
+  String? phone;
+  bool? interno;
+  String? token;
 
   Usuario({this.id="", this.name="", this.login="", this.senha="", this.message="",this.idempresa="",this.empresa="",this.pmElastic=false,this.pmZabbix=false,this.pmTickets=false,tipo="T",this.interno=false,this.token=""});
 
@@ -132,7 +131,7 @@ class Usuario extends ChangeNotifier{
     data['pm_tickets'] = this.pmTickets;
     data['phone'] = this.phone;
     data["tipo"] = this.tipo;
-    data["role"] = this.role.toJson();
+    data["role"] = this.role?.toJson();
     data['empresas'] =  this.empresas != null ? this.empresas.map((i) => i.toJson()).toList() : null;
     data['hasAccess'] = this.hasAccess;
     data['interno'] = this.interno;
@@ -141,6 +140,6 @@ class Usuario extends ChangeNotifier{
   }
 
   String toString(){
-    return this.id.toString()+"|"+this.name+"|"+this.login;
+    return this.id.toString()+"|"+this.name!+"|"+this.login!;
   }
 }

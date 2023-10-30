@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:app_maxprotection/screens/home_page.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
 import 'package:app_maxprotection/screens/inner_noticias.dart';
@@ -24,10 +23,10 @@ class HomeSearchDelegate extends SearchDelegate{
 
   Map<String,Route> searchScreen = {
     'zabbix':FadePageRoute(
-      builder: (context) =>InnerZabbix(null, null),
+      builder: (context) =>InnerZabbix("",""),
     ),
     'siem': FadePageRoute(
-      builder: (context) =>InnerElastic(null, null),
+      builder: (context) =>InnerElastic("",""),
     ),
     'senha':FadePageRoute(
       builder: (context) =>InnerPwd(),
@@ -38,8 +37,12 @@ class HomeSearchDelegate extends SearchDelegate{
     'abrir':FadePageRoute(
       builder: (context) =>InnerOpenTicket(),
     ),
-    'falar':null,
-    'fale':null,
+    'falar':FadePageRoute(
+      builder: (context) =>HomePage(),
+    ),
+    'fale':FadePageRoute(
+      builder: (context) =>HomePage(),
+    ),
     'leads':FadePageRoute(
       builder: (context) =>InnerMessages(4),
     ),
@@ -85,6 +88,9 @@ class HomeSearchDelegate extends SearchDelegate{
     searchResult =
     searchTerms.where((element) => element.startsWith(query)).toList();
 
+    if(searchResult.length<1)
+      searchResult.add("Sem Resultados");
+
     return Container(
     margin: EdgeInsets.all(20),
     child: ListView(
@@ -98,10 +104,14 @@ class HomeSearchDelegate extends SearchDelegate{
         child:
         Container(padding: EdgeInsets.all(16), child: Text(item,style: TextStyle(color: HexColor(Constants.red)),)),
         onTap: (){
-          if(item!="fale"&&item!="falar")
-            Navigator.of(context).push(searchScreen[item]);
-          else
-            MyHomePage.state.faleComDiretor(context);
+          if(item=="Sem Resultados"){
+             query = "";
+          }else {
+            if (item != "fale" && item != "falar")
+              Navigator.of(context).push(searchScreen[item]!);
+            else
+              MyHomePage.state!.faleComDiretor(context);
+          }
         },
       ),
     );

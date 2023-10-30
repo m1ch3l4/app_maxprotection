@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:collection';
 import 'dart:io';
 
@@ -32,14 +31,15 @@ import 'home_page.dart';
 
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+GlobalKey<_ElasticPageState> keyEP = new GlobalKey<_ElasticPageState>();
 
 class InnerElastic extends StatelessWidget {
 
   SharedPref sharedPref = SharedPref();
 
   static const routeName = '/elastic';
-  final String eid;
-  final String aid;
+  final String? eid;
+  final String? aid;
 
   InnerElastic(this.eid, this.aid);
 
@@ -49,12 +49,7 @@ class InnerElastic extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-
-            home: new ElasticPage(title: 'Alertas SIEM', user: snapshot.data, eid:eid, aid: aid),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new ElasticPage(key:keyEP, title: 'Alertas SIEM', user: snapshot.data as Map<String, dynamic>, eid:eid, aid: aid): CircularProgressIndicator());
         },
       ),
     );
@@ -62,12 +57,12 @@ class InnerElastic extends StatelessWidget {
 }
 
 class ElasticPage extends StatefulWidget {
-  ElasticPage({Key key, this.title,this.user,this.eid,this.aid}) : super(key: key);
+  ElasticPage({required Key key, this.title,this.user,this.eid,this.aid}) : super(key: key);
 
-  final String title;
-  final String eid;
-  final String aid;
-  final Map<String, dynamic> user;
+  final String? title;
+  final String? eid;
+  final String? aid;
+  final Map<String, dynamic>? user;
 
   @override
   _ElasticPageState createState() => new _ElasticPageState();
@@ -82,8 +77,8 @@ class _ElasticPageState extends State<ElasticPage> {
   double _panelHeightOpen = 0;
   double _panelHeightClosed = 50.0;
   DateTime minDate = DateTime.now();
-  DateTime firstDate;
-  DateTime initDate,endDate;
+  late DateTime firstDate;
+  late DateTime initDate,endDate;
 
   final df = new DateFormat('dd/MM/yyyy');
   final dbFormat = new DateFormat('yyyy-MM-dd');
@@ -103,13 +98,13 @@ class _ElasticPageState extends State<ElasticPage> {
   bool isConsultor = false;
   static EmpresasSearch _empSearch = EmpresasSearch();
 
-  Empresa empSel;
+  Empresa? empSel;
 
-  searchEmpresa widgetSearchEmpresa;
+  searchEmpresa? widgetSearchEmpresa;
 
   List<_ChartData> data = [];
-  TooltipBehavior _tooltip;
-  HashMap<String,int> dados;
+  TooltipBehavior? _tooltip;
+  HashMap<String,int>? dados;
 
   bool firstLoad = true;
 
@@ -119,24 +114,23 @@ class _ElasticPageState extends State<ElasticPage> {
   Color clWarning = Colors.yellow;
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime pickedDate = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
         initialDatePickerMode: DatePickerMode.day,
         initialEntryMode: DatePickerEntryMode.calendar,
         context: context,
         initialDate: minDate,
         firstDate: minDate.subtract(Duration(days:180)),
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -150,22 +144,21 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   Future<void> _selectDate2(BuildContext context) async {
-    final DateTime pickedDate2 = await showDatePicker(
+    final DateTime? pickedDate2 = await showDatePicker(
         context: context,
         initialDate: initDate,
         firstDate: initDate,
         lastDate: minDate,
-        builder: (BuildContext context, Widget child) {
+        builder: (BuildContext? context, Widget? child) {
           return Theme(
             data: ThemeData.light().copyWith(
               primaryColor: HexColor(Constants.red),
-              accentColor: HexColor(Constants.red),
               colorScheme: ColorScheme.light(primary: HexColor(Constants.red)),
               buttonTheme: ButtonThemeData(
                   textTheme: ButtonTextTheme.primary
               ),
             ),
-            child: child,
+            child: child!,
           );
         }
     );
@@ -193,9 +186,9 @@ class _ElasticPageState extends State<ElasticPage> {
       ssl = true;
 
       urlApi = Constants.urlEndpoint + "alert/elastic/initial/" +
-          widget.user["id"] + "/" + dtParam1 + "/" + dtParam2;
+          widget.user!["id"] + "/" + dtParam1 + "/" + dtParam2;
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -214,7 +207,7 @@ class _ElasticPageState extends State<ElasticPage> {
       final dataj = jsonDecode(source);
       setState(() {
         initialEmpresa.clear();
-        for(Map i in dataj){
+        for(Map<String, dynamic> i in dataj){
           var e = Empresa.fromJson(i);
           initialEmpresa.add(e);
         }
@@ -246,24 +239,24 @@ class _ElasticPageState extends State<ElasticPage> {
 
 
     //TODO: aqui fazer a condicão se é consultour ou cliente
-    if(widget.user["tipo"]=="C")
+    if(widget.user!["tipo"]=="C")
       urlApi = Constants.urlEndpoint + "alert/elastic/" +
-          empSel.id + "/" + dtParam1 + "/" + dtParam2;
+          empSel!.id!+ "/" + dtParam1 + "/" + dtParam2;
       //urlApi = Constants.urlEndpoint+"alert/consultor/"+widget.user['id'].toString()+"/elastic/"+dtParam1+"/"+dtParam2;
     else
-    if(widget.user["tipo"]=="T"){
+    if(widget.user!["tipo"]=="T"){
       urlApi = Constants.urlEndpoint + "alert/elastic/" +
-          widget.user['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
+          widget.user!['empresas'][0]['id'].toString() + "/" + dtParam1 + "/" + dtParam2;
     }else {
       urlApi = Constants.urlEndpoint + "alert/elastic/" +
-          widget.user['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
+          widget.user!['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
     }
 
     print("****URL API: ");
     print(urlApi);
     print("**********");
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
@@ -284,7 +277,7 @@ class _ElasticPageState extends State<ElasticPage> {
         listModel.clear();
         data = [];
         dados = new HashMap<String,int>();
-        for(Map i in dataj){
+        for(Map<String,dynamic> i in dataj){
           var ent = i["company"];
           var alert = AlertData.fromJson(i);
           alert.setEmpresa(ent["name"]);
@@ -295,17 +288,17 @@ class _ElasticPageState extends State<ElasticPage> {
           }else {
             listModel.add(alert);
           }
-          if(!dados.containsKey(alert.status)){
-            dados.putIfAbsent(alert.status, () => 1);
+          if(!dados!.containsKey(alert.status)){
+            dados!.putIfAbsent(alert.status!, () => 1);
           }else{
-            dados.update(alert.status, (value) => value+1);
+            dados!.update(alert.status!, (value) => value+1);
           }
         }
 
         loading = false;
       });
       //dados.forEach((k,v) => data.add(_ChartData(k, v)));
-      dados.forEach((k,v){
+      dados!.forEach((k,v){
         if(k=="WARNING")
           data.add(_ChartData(k, v, clWarning));
         if(k=="LOW")
@@ -329,8 +322,13 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   FutureOr<http.Response> _onTimeout(){
-    print("não foi possível conectar em 8sec");
-    loading=false;
+    http.Response r = http.Response('Timeout',403);
+
+    setState(() {
+      loading=false;
+      print("não foi possível conectar em 8sec");
+    });
+    return r;
   }
 
   //TODO: Como exibir uma lista inicial....
@@ -362,7 +360,7 @@ class _ElasticPageState extends State<ElasticPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
+                              Flexible(child: Text(emp.name!, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
                             ],
                           ),
                         ]
@@ -373,14 +371,20 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
   void initState() {
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 90));
     txt.text = df.format(firstDate);
     txt2.text = df.format(minDate);
@@ -389,20 +393,28 @@ class _ElasticPageState extends State<ElasticPage> {
 
     firstLoad = true;
 
-    if(widget.user["tipo"]=="C") {
+    if(widget.user!["tipo"]=="C") {
       isConsultor = true;
       initialEnterpriseData();
     }else {
       getData();
     }
 
-    if(widget.eid!=null){
-      empSel = Empresa(widget.eid,"");
+    if(widget.eid!=null) {
+      firstDate = minDate.subtract(Duration(days:2));
+      dtParam1 = dbFormat.format(firstDate);
+      Empresa e = Empresa(widget.eid,"");
+      setSelectedEmpresa(e);
       getData();
     }
 
     super.initState();
     _fabHeight = _initFabHeight;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
   }
 
   void updateState(double pos){
@@ -433,14 +445,16 @@ class _ElasticPageState extends State<ElasticPage> {
               topLeft: Radius.circular(10.0),
               topRight: Radius.circular(10.0)),
           onPanelSlide: (double pos) => updateState(pos),
-          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user),
+          panelBuilder: (sc) => BottomMenu(context,sc,width,widget.user!),
           body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         ),
         drawer:  Drawer(
-          child: SliderMenu('elastic',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('elastic',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
+
+
 
   Widget warming(){
     return Container(
@@ -470,7 +484,7 @@ class _ElasticPageState extends State<ElasticPage> {
         children: <Widget>[
         Stack(
         children: [
-        headerAlertas(_scaffoldKey, widget.user, context, width, 200, "Alertas Siem"),
+        headerAlertas(_scaffoldKey, widget.user!, context, width, 200, "Alertas Siem"),
     Container(
       alignment: Alignment.center,
     padding: EdgeInsets.only(top:170),
@@ -636,7 +650,7 @@ class _ElasticPageState extends State<ElasticPage> {
       children: [
         _criarLinhaTable("Título, Data, Severidade",0,"-1"),
         for (int i = 0; i < listModel.length; i++)
-          _criarLinhaTable(listModel[i].title+","+listModel[i].data+","+listModel[i].status,(i+1),listModel[i].id),
+          _criarLinhaTable(listModel[i].title!+","+listModel[i].data!+","+listModel[i].status!,(i+1),listModel[i].id!),
       ],
     ):SizedBox(width: 1,);
   }
@@ -781,7 +795,7 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   Widget detalhes(AlertData tech){
-    print("ocorrencias...."+tech.total);
+    print("ocorrencias...."+tech.total!);
     return Card(
         elevation: 0,
         child:
@@ -802,7 +816,7 @@ class _ElasticPageState extends State<ElasticPage> {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(tech.data, style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
+                        Text(tech.data!, style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red)))
                       ],)
                   ],
                 ),
@@ -815,7 +829,7 @@ class _ElasticPageState extends State<ElasticPage> {
                         Column(
                             mainAxisSize: MainAxisSize.max,
                             children:[
-                              Text(tech.title,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
+                              Text(tech.title!,style: TextStyle(color:HexColor(Constants.blue)),softWrap: true),
                             ])),
                   ],
                 ),
@@ -828,7 +842,7 @@ class _ElasticPageState extends State<ElasticPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text(tech.text))
+                    Text(tech.text!))
                   ],
                 ),
                 SizedBox(height: 15,),
@@ -840,14 +854,14 @@ class _ElasticPageState extends State<ElasticPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Expanded(child:
-                    Text((tech.total!=null&&tech.total!="null"?tech.total:"-")))
+                    Text((tech.total!=null&&tech.total!="null"?tech.total!:"-")))
                   ],
                 ),
                 SizedBox(height: 15,),
                 Row(
                   children: [Text("Status:",style:TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold,color: HexColor(Constants.red)))]),
                 Row(
-                    children: [Text((tech.status!=null?tech.status:"-"),style: TextStyle(fontWeight: FontWeight.normal,color: HexColor(Constants.blue))),
+                    children: [Text((tech.status!=null?tech.status!:"-"),style: TextStyle(fontWeight: FontWeight.normal,color: HexColor(Constants.blue))),
                   ],
                 ),
               ],

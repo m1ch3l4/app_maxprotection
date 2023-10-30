@@ -12,14 +12,24 @@ class Logoff{
 
   static void confirmarLogoff(BuildContext context){
     AlertDialog alert;
-    Widget cancelButton = FlatButton(
+    Widget cancelButton = ElevatedButton(
       child: Text("Cancelar"),
+      style: ElevatedButton.styleFrom(
+          foregroundColor: HexColor(Constants.red),
+          backgroundColor: Colors.transparent,
+          elevation: 0
+      ),
       onPressed:  () {
         Navigator.of(context, rootNavigator: true).pop('dialog');
       },
     );
-    Widget launchButton = FlatButton(
+    Widget launchButton = ElevatedButton(
       child: Text("Quero sair!"),
+      style: ElevatedButton.styleFrom(
+         foregroundColor: HexColor(Constants.red),
+          backgroundColor: Colors.transparent,
+          elevation: 0
+      ),
       onPressed:  () {
         logoff();
       },
@@ -44,9 +54,25 @@ class Logoff{
 
   static logoff() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.clear();
+    preferences.setString("logoff", "true");
+    //await preferences.clear();
     FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
     FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
     exit(0);
+  }
+  static logoffSenha() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    preferences.setString("logoff", "true");
+    preferences.setString("fl","false");
+    FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+    FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
+    exit(0);
+  }
+  static cleanDados() async{
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    preferences.setString("logoff", "true");
+    preferences.setString("fl","true");
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:dio/adapter.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:http/io_client.dart' as ioclient;
 
 class HttpsClient{

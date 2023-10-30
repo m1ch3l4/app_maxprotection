@@ -1,10 +1,9 @@
-//@dart=2.9
 import 'PermissaoModel.dart';
 
 class Role{
-  int id;
-  String nome;
-  List<Permissao> permissoes;
+  int? id;
+  String? nome;
+  List<Permissao> permissoes=[];
 
   Role.fromJson(Map<String, dynamic> json){
     id = json["id"];

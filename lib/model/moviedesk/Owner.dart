@@ -1,11 +1,10 @@
-// @dart=2.9
 class Owner{
-  String id;
-  int personType;
-  int profileType;
-  String businessName;
-  String email;
-  String phone;
+  String? id;
+  int? personType;
+  int? profileType;
+  String? businessName;
+  String? email;
+  String? phone;
 
   Owner.data([this.businessName,this.email,this.id,this.phone]){
     this.businessName ??= "-";

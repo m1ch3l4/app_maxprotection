@@ -1,4 +1,4 @@
-// @dart=2.10
+
 import 'dart:convert';
 import 'package:app_maxprotection/model/usuario.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
@@ -37,14 +37,7 @@ class InnerOpenTicketbytext extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new OpenTicketbytextPage(title: 'Abrir Chamado', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new OpenTicketbytextPage(title: 'Abrir Chamado', user: snapshot.data as Map<String, dynamic>): CircularProgressIndicator());
         },
       ),
     );
@@ -53,10 +46,10 @@ class InnerOpenTicketbytext extends StatelessWidget {
 
 class OpenTicketbytextPage extends StatefulWidget {
 
-  OpenTicketbytextPage({Key key, this.title,this.user}) : super(key: key);
+  OpenTicketbytextPage({this.title,this.user}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -72,7 +65,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
   EmpresasSearch _empSearch = new EmpresasSearch();
-  Empresa empSel;
+  Empresa? empSel;
 
   TextEditingController _textFieldController = TextEditingController();
   String valueText="";
@@ -82,18 +75,32 @@ class _MyAppState extends State<OpenTicketbytextPage> {
   bool isTecnico = false;
   String idTicket = "-1";
 
-  searchEmpresa searchEmpresaWdt;
+  searchEmpresa? searchEmpresaWdt;
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
   void initState() {
     super.initState();
+    BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
     empSel=null;
+  }
+
+  void dispose(){
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
   }
 
   void updateState(double pos){
@@ -106,7 +113,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
 
   @override
   Widget build(BuildContext context) {
-    Usuario usr = Usuario.fromSharedPref(widget.user);
+    Usuario usr = Usuario.fromSharedPref(widget.user!);
     usr.empresas.add(_empSearch.defaultValue);
     _empSearch.setOptions(usr.empresas);
     empSel = _empSearch.defaultOpt;
@@ -140,13 +147,13 @@ class _MyAppState extends State<OpenTicketbytextPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
 
   Widget getMain(double width){
@@ -156,7 +163,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
         children: <Widget>[
           Stack(
               children: [
-                headerAlertas(_scaffoldKey, widget.user, context, width,200, "Abrir chamados por Texto"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width,200, "Abrir chamados por Texto"),
                 Positioned(
                   child: Container(width:width,alignment:Alignment.center,child: searchEmpresaWdt),
                   top:175,
@@ -228,8 +235,8 @@ class _MyAppState extends State<OpenTicketbytextPage> {
 
   void abrirChamado(){
     if(_textFieldController.value.text!="") {
-      if(empSel!=null && empSel.id!="0") {
-        _asyncFileUpload(widget.user["id"]);
+      if(empSel!=null && empSel!.id!="0") {
+        _asyncFileUpload(widget.user!["id"]);
       }else{
         Message.showMessage("Selecione a empresa para abrir o chamado!");
       }
@@ -243,7 +250,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
       isLoading=true;
     });
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
     var ssl = false;
     var response = null;
 
@@ -256,7 +263,7 @@ class _MyAppState extends State<OpenTicketbytextPage> {
 
     Map params = {
       'cliente': text,
-      'org' : empSel.id,
+      'org' : empSel!.id,
       'descricao':valueText
     };
 
@@ -296,6 +303,9 @@ class _MyAppState extends State<OpenTicketbytextPage> {
       if(response.body!=null){
         Map<String,dynamic> mapResponse = json.decode(response.body);
         Message.showMessage("Ticket Aberto com o número: "+mapResponse['id'].toString());
+        Future.delayed(const Duration(seconds: 1), () {
+          goBack();
+        });
       }else{
         Message.showMessage("Não foi possível abrir o ticket.\nEntre em contato com o nosso suporte.");
       }
@@ -308,6 +318,18 @@ class _MyAppState extends State<OpenTicketbytextPage> {
         isLoading=false;
       });
     }
+  }
+
+  goBack(){
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
   }
 
 

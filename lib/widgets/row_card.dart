@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'package:flutter/material.dart';
 
 
@@ -7,11 +6,11 @@ import 'constants.dart';
 import 'custom_route.dart';
 
 class RowCard extends StatelessWidget {
-  final Color cardColor;
-  final Icon iconprefix;
-  final String title;
-  final Icon iconsufix;
-  final Widget action;
+  final Color? cardColor;
+  final Icon? iconprefix;
+  final String? title;
+  final Icon? iconsufix;
+  final Widget? action;
 
   RowCard({
     this.cardColor,
@@ -39,7 +38,7 @@ class RowCard extends StatelessWidget {
         InkWell(
         onTap: (){
       Navigator.of(context).pushReplacement(FadePageRoute(
-        builder: (context) => action,
+        builder: (context) => action!,
       ));
     } ,
     child:
@@ -74,7 +73,7 @@ class RowCard extends StatelessWidget {
                 ),
                 SizedBox(width: 10,),
                 Expanded(child: Text(
-                  title,
+                  title!,
                   style: TextStyle(
                     fontSize: 14.0,
                     color: HexColor(Constants.black),
@@ -82,7 +81,7 @@ class RowCard extends StatelessWidget {
                   ),
                 )),
                 SizedBox(width:30),
-                iconsufix
+                iconsufix!
               ],
             ),
           ],

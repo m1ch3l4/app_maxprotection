@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
 import 'package:app_maxprotection/utils/Message.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
@@ -27,9 +26,9 @@ import '../widgets/slider_menu.dart';
 
 class TicketDetail extends StatelessWidget {
 
-  final TechSupportData ticket;
-  final Empresa emp;
-  final int status;
+  final TechSupportData? ticket;
+  final Empresa? emp;
+  final int? status;
   SharedPref sharedPref = SharedPref();
 
   TicketDetail(this.ticket,this.emp,this.status){
@@ -41,14 +40,8 @@ class TicketDetail extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new TicketsPage(title: ticket.id+"-"+ticket.title, user: snapshot.data,ticket: ticket, emp:emp,status:status),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new TicketsPage(title: ticket!.id!+"-"+ticket!.title!, user: snapshot.data as Map<String, dynamic>,ticket: ticket!, emp:emp!,status:status!)
+          : CircularProgressIndicator());
         },
       ),
     );
@@ -56,20 +49,20 @@ class TicketDetail extends StatelessWidget {
 }
 
 class TicketsPage extends StatefulWidget {
-  TicketsPage({Key key, this.title,this.user,this.ticket,this.emp,this.status}) : super(key: key);
+  TicketsPage({this.title,this.user,this.ticket,this.emp,this.status});
 
-  final String title;
-  final Map<String, dynamic> user;
-  final TechSupportData ticket;
-  final Empresa emp;
-  final int status;
+  final String? title;
+  final Map<String, dynamic>? user;
+  final TechSupportData? ticket;
+  final Empresa? emp;
+  final int? status;
 
   @override
   _TicketsPageState createState() => new _TicketsPageState();
 }
 
 class _TicketsPageState extends State<TicketsPage> {
-  Ticket detail;
+  Ticket? detail;
   var loading = false;
   bool isConsultor = false;
 
@@ -93,15 +86,15 @@ class _TicketsPageState extends State<TicketsPage> {
       ssl = true;
 
 
-    urlApi = Constants.urlEndpoint+"tech/full/"+tk.id;
+    urlApi = Constants.urlEndpoint+"tech/full/"+tk.id!;
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,
     };
 
-    if(widget.user["tipo"]=="C")
+    if(widget.user!["tipo"]=="C")
       isConsultor = true;
     else
       isConsultor = false;
@@ -161,7 +154,7 @@ class _TicketsPageState extends State<TicketsPage> {
   void initState() {
     super.initState();
     //BackButtonInterceptor.add(myInterceptor);
-    getData(widget.ticket);
+    getData(widget.ticket!);
   }
 
   void updateState(double pos){
@@ -169,7 +162,7 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   Widget _panel(ScrollController sc, double width, BuildContext ctx) {
-    return BottomMenu(ctx,sc,width,widget.user);
+    return BottomMenu(ctx,sc,width,widget.user!);
   }
 
   @override
@@ -215,14 +208,14 @@ class _TicketsPageState extends State<TicketsPage> {
         body: loading ? Center (child: CircularProgressIndicator()) : getMain(width,h),
       ),
       drawer: Drawer(
-        child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+        child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
       )
     );
   }
 
   goBack(){
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => TicketlistConsultor(widget.emp,widget.status),
+    Navigator.of(context).push(FadePageRoute(
+      builder: (context) => TicketlistConsultor(widget.emp!,widget.status!),
     ));
   }
 
@@ -232,7 +225,7 @@ class _TicketsPageState extends State<TicketsPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-                headerTkDetail(_scaffoldKey,context, width,detail.title,detail.type,detail.id,goBack),
+                headerTkDetail(_scaffoldKey,context, width,detail!.title!,detail!.type!,detail!.id!,goBack),
                 Container(
                   width: width,
                   height: MediaQuery.of(context).size.height-(h<700?195:105),
@@ -294,21 +287,21 @@ class _TicketsPageState extends State<TicketsPage> {
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: [Flexible(child: Text(detail.title,style: TextStyle(fontSize:14, fontWeight: FontWeight.w500)))],
+                    children: [Flexible(child: Text(detail!.title!,style: TextStyle(fontSize:14, fontWeight: FontWeight.w500)))],
                   )),
               Container(
                   margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: [Text("Ticket aberto em: "+detail.created,style: TextStyle(fontSize:14))],
+                    children: [Text("Ticket aberto em: "+detail!.created!,style: TextStyle(fontSize:14))],
                   )),
               Container(
                   margin: EdgeInsets.only(top:10.0, left:20.0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: [Text("Status: ",style: TextStyle(fontSize:14)),Text(detail.status,style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500))],
+                    children: [Text("Status: ",style: TextStyle(fontSize:14)),Text(detail!.status!,style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500))],
                   )),
               Container(
                   margin: EdgeInsets.only(top:10.0, left:20.0),
@@ -334,10 +327,10 @@ class _TicketsPageState extends State<TicketsPage> {
           margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Text(detail.client.businessName,style: TextStyle(fontSize: 17,fontWeight: FontWeight.bold,color: HexColor(Constants.blue)),)]),
-              Row(children: [Text(detail.client.email!=null?detail.client.email:"-",style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
-              Row(children: [Text(detail.client.phone,style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
-              Row(children: [Text((detail.client.organization!=null?detail.client.organization.businessName:"-"),style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
+              Row(children: [Text(detail!.client!.businessName!,style: TextStyle(fontSize: 17,fontWeight: FontWeight.bold,color: HexColor(Constants.blue)),)]),
+              Row(children: [Text(detail!.client!.email!=null?detail!.client!.email!:"-",style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
+              Row(children: [Text(detail!.client!.phone!,style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
+              Row(children: [Text((detail!.client!.organization!=null?detail!.client!.organization!.businessName!:"-"),style:TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.blue)))]),
             ],
           ),
     );
@@ -355,8 +348,8 @@ class _TicketsPageState extends State<TicketsPage> {
       margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Flexible(child: Text((detail.serviceFirstLevel!=null?detail.serviceFirstLevel:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16,color: HexColor(Constants.blue))))]),
-              Row(children: [Text((detail.serviceSecondLevel!=null?detail.serviceSecondLevel:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
+              Row(children: [Flexible(child: Text((detail!.serviceFirstLevel!=null?detail!.serviceFirstLevel!:'-'),style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16,color: HexColor(Constants.blue))))]),
+              Row(children: [Text((detail!.serviceSecondLevel!=null?detail!.serviceSecondLevel!:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
             ],
           ),
     );
@@ -375,7 +368,7 @@ class _TicketsPageState extends State<TicketsPage> {
         margin: EdgeInsets.only(left:5, right: 5, top:2),
           child:Column(
             children: [
-              Row(children: [Text((detail.category!=null?detail.category:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
+              Row(children: [Text((detail!.category!=null?detail!.category!:'-'),style:TextStyle(color: HexColor(Constants.blue)))])
             ],
           ),
     );
@@ -396,19 +389,19 @@ class _TicketsPageState extends State<TicketsPage> {
                 children: [
                   Row(children: [
                     Flexible(
-                      child: Text((detail.cc!=null?detail.cc:"-"),style:TextStyle(color: HexColor(Constants.blue))),
+                      child: Text((detail!.cc!=null?detail!.cc!:"-"),style:TextStyle(color: HexColor(Constants.blue))),
                     )])]
             )
         );
   }
 
   Widget getUrgencia() {
-    Color cl;
-    if(detail.urgency=="Baixa")
+    Color cl=Colors.red;
+    if(detail!.urgency=="Baixa")
       cl = Colors.green;
-    if(detail.urgency=="Média")
+    if(detail!.urgency=="Média")
       cl = Colors.yellow;
-    if(detail.urgency=="Alta")
+    if(detail!.urgency=="Alta")
       cl = Colors.red;
     return  Container(
         padding: EdgeInsets.all((10.0)),
@@ -433,7 +426,7 @@ class _TicketsPageState extends State<TicketsPage> {
                   ),
 
                   //Icon(Icons.crop_square_outlined,color: Colors.green),
-                  Row(children: [Text((detail.urgency!=null?detail.urgency:"-"),style:TextStyle(color: HexColor(Constants.blue),fontWeight: FontWeight.bold))])],)
+                  Row(children: [Text((detail!.urgency!=null?detail!.urgency!:"-"),style:TextStyle(color: HexColor(Constants.blue),fontWeight: FontWeight.bold))])],)
               ],
             )
     );
@@ -444,8 +437,8 @@ class _TicketsPageState extends State<TicketsPage> {
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       children: [
-        for(var i=detail.actions.length-1;i>0;i--)
-          cardLog(detail.actions[i])
+        for(var i=detail!.actions.length-1;i>0;i--)
+          cardLog(detail!.actions[i])
       ],
     );
   }
@@ -460,23 +453,23 @@ class _TicketsPageState extends State<TicketsPage> {
           Column(
             children: [
               Row(
-                children: [Text(act.createdDate,style:TextStyle(color: HexColor(Constants.blue))),Spacer(),Text("Mensagem",style: TextStyle(fontStyle: FontStyle.italic,color:HexColor(Constants.blue)))],
+                children: [Text(act!.createdDate!,style:TextStyle(color: HexColor(Constants.blue))),Spacer(),Text("Mensagem",style: TextStyle(fontStyle: FontStyle.italic,color:HexColor(Constants.blue)))],
               ),
               Divider(color: HexColor(Constants.red),),
               Row(
                 children: [Text("De:",style:TextStyle(color: HexColor(Constants.blue))),Text(
-                    (act.createdBy!=null?act.createdBy.businessName:"-"),style:TextStyle(color: HexColor(Constants.blue))
+                    (act!.createdBy!=null?act!.createdBy!.businessName!:"-"),style:TextStyle(color: HexColor(Constants.blue))
                 )],
               ),
               Row(
-                children: [Text("Assunto: ",style:TextStyle(color: HexColor(Constants.blue))),Text(act.justification,style:TextStyle(color: HexColor(Constants.blue)))],
+                children: [Text("Assunto: ",style:TextStyle(color: HexColor(Constants.blue))),Text(act!.justification!,style:TextStyle(color: HexColor(Constants.blue)))],
               ),
               //Spacer(),
               Row(
                 children: [
                   Flexible(
                       child:
-                      Text(act.description,style:TextStyle(color: HexColor(Constants.blue)))
+                      Text(act!.description!,style:TextStyle(color: HexColor(Constants.blue)))
                   )
                 ],
               ),

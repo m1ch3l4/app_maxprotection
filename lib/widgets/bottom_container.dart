@@ -1,13 +1,12 @@
-// @dart=2.9
 import 'package:app_maxprotection/utils/HexColor.dart';
 import 'package:app_maxprotection/widgets/constants.dart';
 import 'package:flutter/material.dart';
 
 class BottomContainer extends StatelessWidget {
-  final double height;
-  final double width;
-  final Widget child;
-  final EdgeInsets padding;
+  final double? height;
+  final double? width;
+  final Widget? child;
+  final EdgeInsets? padding;
   BottomContainer({this.height, this.width, this.child, this.padding});
 
 

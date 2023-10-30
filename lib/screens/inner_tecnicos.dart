@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'dart:io';
 
 import 'package:back_button_interceptor/back_button_interceptor.dart';
@@ -37,24 +36,17 @@ class InnerTecnicos extends StatelessWidget {
     return Material(child: FutureBuilder
       (future: sharedPref.read("usuario"),
   builder: (context,snapshot){
-  return (snapshot.hasData ? new MaterialApp(
-  debugShowCheckedModeBanner: false,
-  title: 'TI & Segurança',
-  theme: new ThemeData(
-  primarySwatch: Colors.blue,
-  ),
-  home: new TecnicosPage(title: 'Técnicos', user: snapshot.data),
-  ) : CircularProgressIndicator());
+  return (snapshot.hasData ? new TecnicosPage(title: 'Técnicos', user: snapshot.data as Map<String, dynamic>) : CircularProgressIndicator());
   },),
   );
 }
 }
 
 class TecnicosPage extends StatefulWidget {
-  TecnicosPage({Key key, this.title,this.user}) : super(key: key);
+  TecnicosPage({this.title,this.user}) : super();
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
   @override
   _TecnicosPageState createState() => new _TecnicosPageState();
@@ -79,7 +71,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     });
     String urlApi = "";
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
     var ssl = false;
     var responseData = null;
 
@@ -91,7 +83,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     };
     //widget.user.forEach((k,v) => print("chave $k valor $v"));
 
-    urlApi = Constants.urlEndpoint+"diretor/tecnicos/"+widget.user['id'].toString();
+    urlApi = Constants.urlEndpoint+"diretor/tecnicos/"+widget.user!['id'].toString();
 
     print("****URL API: ");
     print(urlApi);
@@ -111,10 +103,10 @@ class _TecnicosPageState extends State<TecnicosPage> {
         final data = jsonDecode(source);
         print("data " + data.toString());
         setState(() {
-          for (Map i in data) {
+          for (Map<String, dynamic> i in data) {
             var alert = Usuario.fromJson(i);
             listModel.add(alert);
-            checked.add(alert.role.nome == "tec-nivel1" ? false : true);
+            checked.add(alert.role!.nome == "tec-nivel1" ? false : true);
           }
           loading = false;
         });
@@ -135,9 +127,15 @@ class _TecnicosPageState extends State<TecnicosPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
 
@@ -149,7 +147,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
   void initState() {
     getData();
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     _fabHeight = _initFabHeight;
   }
 
@@ -169,7 +167,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
         resizeToAvoidBottomInset : false,
         body: getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('tecnicos',widget.user,textTheme,(width*0.6)),
+          child: SliderMenu('tecnicos',widget.user!,textTheme,(width*0.6)),
         )
     );
   }
@@ -197,7 +195,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          headerAlertas(_scaffoldKey, widget.user, context, width, 185, 'Técnicos da '+(widget.user["company_name"]!=null?widget.user["company_name"]:"-")),
+          headerAlertas(_scaffoldKey, widget.user!, context, width, 185, 'Técnicos da '+(widget.user!["company_name"]!=null?widget.user!["company_name"]:"-")),
           Spacer(),
           Container(
               width: width*0.9,
@@ -259,7 +257,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     return ListView(
       children: <Widget>[
         for (int i = 0; i < listModel.length; i++)
-          getUsuario(i,listModel[i].id, listModel[i].name, listModel[i].login)
+          getUsuario(i,listModel[i].id!, listModel[i].name!, listModel[i].login!)
           //getAlert(listModel[i].name, listModel[i].login)
       ],
     );
@@ -278,9 +276,9 @@ class _TecnicosPageState extends State<TecnicosPage> {
               activeColor: HexColor(Constants.red),
               checkColor: Colors.white,
               value: checked[i],
-              onChanged: (bool value) {
+              onChanged: (bool? value) {
                 setState(() {
-                  if(value){
+                  if(value!){
                     permitirAcessoContrato(id,value);
                     checked[i] = value;
                   }
@@ -307,7 +305,7 @@ class _TecnicosPageState extends State<TecnicosPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    String basicAuth = "Bearer "+widget.user["token"];
+    String basicAuth = "Bearer "+widget.user!["token"];
 
     Map<String, String> h = {
       "Authorization": basicAuth,

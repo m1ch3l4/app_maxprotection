@@ -1,4 +1,3 @@
-// @dart=2.10
 import 'package:app_maxprotection/screens/ticketlist-consultor.dart';
 import 'package:app_maxprotection/utils/HttpsClient.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
@@ -43,11 +42,8 @@ class TicketsviewConsultor extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            home: new TicketsPage(title: 'Tickets MoviDesk', user: snapshot.data, tipo:tipo),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new TicketsPage(title: 'Tickets MoviDesk', user: snapshot.data as Map<String, dynamic>, tipo:tipo)
+          : CircularProgressIndicator());
         },
       ),
     );
@@ -55,11 +51,11 @@ class TicketsviewConsultor extends StatelessWidget {
 }
 
 class TicketsPage extends StatefulWidget {
-  TicketsPage({Key key, this.title,this.user,this.tipo}) : super(key: key);
+  TicketsPage({this.title,this.user,this.tipo});
 
-  final String title;
-  final Map<String, dynamic> user;
-  final int tipo;
+  final String? title;
+  final Map<String, dynamic>? user;
+  final int? tipo;
 
   @override
   _TicketsPageState createState() => new _TicketsPageState();
@@ -69,7 +65,7 @@ class _TicketsPageState extends State<TicketsPage> {
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   var loading = false;
   EmpresasSearch _empSearch = new EmpresasSearch();
-  List<Empresa> lstEmpresa;
+  late List<Empresa> lstEmpresa;
   List<Empresa> loaded = [];
   var novo = 0;
   var aguardando = 0;
@@ -145,9 +141,9 @@ class _TicketsPageState extends State<TicketsPage> {
           emp.setAtendimento(0);
           emp.setAguardando(0);
 
-          urlApi = Constants.urlEndpoint + "enterprise/stat/" + emp.id;
+          urlApi = Constants.urlEndpoint + "enterprise/stat/" + emp.id!;
 
-          String basicAuth = "Bearer "+widget.user["token"];
+          String basicAuth = "Bearer "+widget.user!["token"];
 
           Map<String, String> h = {
             "Authorization": basicAuth,
@@ -189,23 +185,23 @@ class _TicketsPageState extends State<TicketsPage> {
 }
 
   void dispose(){
-    //BackButtonInterceptor.remove(myInterceptor);
+    BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
   }
 
 
-  /** bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
     Navigator.of(context).pushReplacement(FadePageRoute(
       builder: (context) => HomePage(),
     ));
     return true;
-  }**/
+  }
 
   void initState() {
     print("TicketsView-consultor....");
     _controller.addListener(_onScroll);
     super.initState();
-    //BackButtonInterceptor.add(myInterceptor);
+    BackButtonInterceptor.add(myInterceptor);
     lstEmpresa = _empSearch.lstOptions;
     lazyLoad();
     //getData(lastIndex);
@@ -225,7 +221,7 @@ class _TicketsPageState extends State<TicketsPage> {
         backgroundColor: HexColor(Constants.grey),
         body: loading ? Center (child: CircularProgressIndicator()) : getMain(width),
         drawer:  Drawer(
-          child: SliderMenu('tickets',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('tickets',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -247,7 +243,7 @@ class _TicketsPageState extends State<TicketsPage> {
         children: <Widget>[
           Stack(
               children: [
-                headerAlertas(_scaffoldKey, widget.user, context, width, 185, "Tickets MoviDesk"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width, 185, "Tickets MoviDesk"),
       Container(
           width: width*.98,
           height: MediaQuery.of(context).size.height-100,
@@ -288,7 +284,7 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   Widget getAlert(Empresa emp, int i){
-    GestureDetector gd;
+    GestureDetector gd = GestureDetector();
     //print("widget.tipo ");print(widget.tipo);
     //print("Empresa: ");print(emp.id);
 
@@ -387,7 +383,7 @@ class _TicketsPageState extends State<TicketsPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text(emp.novo!=null&&emp.novo>0?"Novo":"",style:TextStyle(color: par,fontWeight: FontWeight.bold)),
+                          Text(emp.novo!=null&&emp.novo!>0?"Novo":"",style:TextStyle(color: par,fontWeight: FontWeight.bold)),
                           SizedBox(width: 5,),
                         ],
                       ),
@@ -395,21 +391,21 @@ class _TicketsPageState extends State<TicketsPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text(emp.atendimento!=null&&emp.atendimento>0?"Atendimento":"",style:TextStyle(color: par)),
+                            Text(emp.atendimento!=null&&emp.atendimento!>0?"Atendimento":"",style:TextStyle(color: par)),
                             SizedBox(width: 5,),
                           ],
                         ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Flexible(child: Text(emp.name, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
+                          Flexible(child: Text(emp.name!, overflow:TextOverflow.ellipsis,style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18)))
                         ],
                       ),
                       if(status==0 || status==3)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text(emp.aguardando>0?"Aguardando":"",style:TextStyle(color:clTexto)),
+                          Text(emp.aguardando!=null && emp.aguardando!>0?"Aguardando":"",style:TextStyle(color:clTexto)),
                           SizedBox(width: 5,),
                         ],
                       )

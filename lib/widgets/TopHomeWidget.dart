@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'package:flutter/material.dart';
 
 import '../utils/HexColor.dart';
@@ -6,14 +5,14 @@ import 'constants.dart';
 import 'custom_route.dart';
 
 class TopHomeWidget extends StatelessWidget{
-  final Color cardColor;
-  Widget icon;
-  final String title;
-  final Widget action;
-  BuildContext ctx;
-  final Function onclickF;
-  final width;
-  final bool r;
+  final Color? cardColor;
+  Widget? icon;
+  final String? title;
+  final Widget? action;
+  BuildContext? ctx;
+  final Function? onclickF;
+  final double? width;
+  final bool? r;
 
   TopHomeWidget({
   this.cardColor,
@@ -27,7 +26,7 @@ class TopHomeWidget extends StatelessWidget{
     this.disableBlink
   });
 
-  Function disableBlink;
+  Function? disableBlink;
 
   @override
   Widget build(BuildContext context) {
@@ -52,30 +51,30 @@ class TopHomeWidget extends StatelessWidget{
          ),
          //SizedBox(width: 5,),
          InkWell(
-           child: Container(alignment:Alignment.center,width: width*0.545,child:Text(title,textAlign:TextAlign.center,style: TextStyle(color:HexColor(Constants.textColor),fontSize: 11.0),)),
+           child: Container(alignment:Alignment.center,width: width!*0.545,child:Text(title!,textAlign:TextAlign.center,style: TextStyle(color:HexColor(Constants.textColor),fontSize: 11.0),)),
            onTap: (){
-    if(r){
-    onclickF();
+    if(r!){
+    onclickF!();
     }else {
     if(title == "Leads"){
-    disableBlink();
+    disableBlink!();
     }
-    Navigator.of(ctx).pushReplacement(FadePageRoute(
-    builder: (context) => action,
+    Navigator.of(ctx!).pushReplacement(FadePageRoute(
+    builder: (context) => action!,
     ));
     }},
          ),
          InkWell(
            child: Icon(Icons.arrow_forward_ios_outlined, color:HexColor(Constants.red)),
         onTap: (){
-        if(r){
-        onclickF();
+        if(r!){
+        onclickF!();
         }else {
         if(title == "Leads"){
-        disableBlink();
+        disableBlink!();
         }
-        Navigator.of(ctx).pushReplacement(FadePageRoute(
-        builder: (context) => action,
+        Navigator.of(ctx!).push(FadePageRoute(
+        builder: (context) => action!,
         ));
         }}
          )

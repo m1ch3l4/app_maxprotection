@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/Logoff.dart';
@@ -42,14 +41,7 @@ class InnerUser extends StatelessWidget {
       child: FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'TI & Segurança',
-            theme: new ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: new UserPage(title: 'Seus Dados Pessoais', user: snapshot.data),
-          ) : CircularProgressIndicator());
+          return (snapshot.hasData ? new UserPage(title: 'Seus Dados Pessoais', user: snapshot.data as Map<String, dynamic>): CircularProgressIndicator());
         },
       ),
     );
@@ -57,10 +49,10 @@ class InnerUser extends StatelessWidget {
 }
 
 class UserPage extends StatefulWidget {
-  UserPage({Key key, this.title,this.user}) : super(key: key);
+  UserPage({this.title,this.user});
 
-  final String title;
-  final Map<String, dynamic> user;
+  final String? title;
+  final Map<String, dynamic>? user;
 
 
   @override
@@ -76,19 +68,19 @@ class _UserPageState extends State<UserPage> {
 
   FCMInitConsultor _fcmInit = new FCMInitConsultor();
 
-  bool consultant;
+  bool consultant=false;
   GlobalKey<FormState> _key = new GlobalKey();
   bool _validate = false;
   // Initially password is obscure
   bool _obscureText = true;
-  String nome;
-  String login;
-  String fone;
+  String nome="";
+  String login="";
+  String fone="";
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  Usuario usr;
+  late Usuario usr;
 
   EmpresasSearch _empSearch = new EmpresasSearch();
-  Empresa empSel;
+  late Empresa empSel;
   bool changeLogin=false;
 
   MaskTextInputFormatter celularFormat = MaskTextInputFormatter(mask: "(##)#####-####",filter: { "#": RegExp(r'[0-9]') },type: MaskAutoCompletionType.lazy);
@@ -101,12 +93,18 @@ class _UserPageState extends State<UserPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    print("BACK BUTTON!"); // Do some stuff.
-    Navigator.of(context).pushReplacement(FadePageRoute(
-      builder: (context) => HomePage(),
-    ));
+    Navigator.of(context).maybePop(context).then((value) {
+      if (value == false) {
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+      }
+    });
     return true;
   }
+
   void dispose(){
     BackButtonInterceptor.remove(myInterceptor);
     super.dispose();
@@ -116,13 +114,13 @@ class _UserPageState extends State<UserPage> {
   void initState() {
     super.initState();
     BackButtonInterceptor.add(myInterceptor);
-    consultant = (widget.user["tipo"]=="C"?true:false);
+    consultant = (widget.user!["tipo"]=="C"?true:false);
     _fabHeight = _initFabHeight;
 
     print(widget.user.toString());
-    nome = widget.user["name"];
-    login = widget.user["login"];
-    fone = widget.user["phone"];
+    nome = widget.user!["name"];
+    login = widget.user!["login"];
+    fone = widget.user?["phone"]!=null?widget.user!["phone"]:"";
   }
 
   // Toggles the password show status
@@ -144,7 +142,7 @@ class _UserPageState extends State<UserPage> {
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "usuario");
 
-    usr = Usuario.fromSharedPref(widget.user);
+    usr = Usuario.fromSharedPref(widget.user!);
     usr.empresas.add(_empSearch.defaultValue);
     _empSearch.setOptions(usr.empresas);
     empSel = _empSearch.defaultOpt;
@@ -163,7 +161,7 @@ class _UserPageState extends State<UserPage> {
           // Add a ListView to the drawer. This ensures the user can scroll
           // through the options in the drawer if there isn't enough vertical
           // space to fit everything.
-          child: SliderMenu('usuario',widget.user,textTheme,(width*0.5)),
+          child: SliderMenu('usuario',widget.user!,textTheme,(width*0.5)),
         )
     );
   }
@@ -196,7 +194,7 @@ class _UserPageState extends State<UserPage> {
         children: <Widget>[
           Stack(
               children: [
-                headerAlertas(_scaffoldKey, widget.user, context, width, 185, "Dados Cadastrais"),
+                headerAlertas(_scaffoldKey, widget.user!, context, width, 185, "Dados Cadastrais"),
                 Container(
                     width: width*.98,
                     height: MediaQuery.of(context).size.height-100,
@@ -243,8 +241,8 @@ class _UserPageState extends State<UserPage> {
         SizedBox(height: 2,),
         new TextFormField(
             initialValue: nome,
-            onSaved: (String val) {
-              nome = val;
+            onSaved: (String? val) {
+              nome = val!;
             },
             onChanged: (String val){
               nome = val;
@@ -302,8 +300,8 @@ class _UserPageState extends State<UserPage> {
           ),
           keyboardType: TextInputType.emailAddress,
           maxLength: 40,
-            onSaved: (String val) {
-              login = val;
+            onSaved: (String? val) {
+              login = val!;
             },
             onChanged: (String val){
               login = val;
@@ -337,83 +335,34 @@ class _UserPageState extends State<UserPage> {
                 ),errorStyle: TextStyle(color: clTitle)),
             keyboardType: TextInputType.phone,
             maxLength: 14,
-          onSaved: (String val) {
-            fone = val;
+          onSaved: (String? val) {
+            fone = val!;
           },
           onChanged: (String val){
             fone = val;
           },
           validator: _validarNome,
         ),
-        /**Text('Nome'),
-        TextFormField(
-          style: TextStyle(color: HexColor(Constants.red)),
-          initialValue: nome,
-          decoration: new InputDecoration(
-            contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-          onSaved: (String val) {
-            nome = val;
-          },
-          onChanged: (String val){
-            nome = val;
-          },
-          validator: _validarNome,
-        ),
-        Text('Login/E-mail'),
-        TextFormField(
-          style: TextStyle(color: HexColor(Constants.red)),
-          initialValue: login,
-          decoration: new InputDecoration(
-            contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-          onSaved: (String val) {
-            login = val;
-          },
-          onChanged: (String val){
-            login = val;
-          },
-          validator: _validarLogin,
-        ),
-        Text('Celular/WhatsApp'),
-        TextFormField(
-          inputFormatters: [
-            maskFormatter
-          ],
-          style: TextStyle(color: HexColor(Constants.red)),
-          initialValue: fone,
-          decoration: new InputDecoration(
-            contentPadding: new EdgeInsets.fromLTRB(20.0, 10.0, 0.0, 0.0),),
-          onSaved: (String val) {
-            fone = val;
-          },
-          onChanged: (String val){
-            fone = val;
-          },
-          validator: _validarFone,
-        ),
-        (widget.user["tipo"]!="C"?empresasToShow()
-            :
-        SizedBox(height:0)),
-        new SizedBox(height: 15.0),**/
       ],
     );
   }
 
-  String _validarLogin(String value) {
+  String? _validarLogin(String? value) {
     RegExp regex =
     RegExp(r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
-    if(!regex.hasMatch(value)){
+    if(!regex.hasMatch(value!)){
       return "Informe um e-mail válido.";
     }
     return null;
   }
 
-  String _validarNome(String value) {
-    if(value.length==0){
+  String? _validarNome(String? value) {
+    if(value!.length==0){
       return "Esse campo não pode ficar em branco.";
     }
     return null;
   }
-  String _validarFone(String value) {
+  String? _validarFone(String value) {
     if(value.length<14){
       return "Informe um número de celular válido.";
     }
@@ -434,16 +383,16 @@ class _UserPageState extends State<UserPage> {
             height: 2,
             color: HexColor(Constants.blue),
           ),
-          onChanged: (Empresa newValue) {
+          onChanged: (Empresa? newValue) {
             setState(() {
-              empSel = newValue;
+              empSel = newValue!;
               _empSearch.setDefaultOpt(newValue);
             });
           },
           items: _empSearch.lstOptions.map((Empresa bean) {
             return  DropdownMenuItem<Empresa>(
                 value: bean,
-                child: SizedBox(width: 310.0,child: Text(bean.name,overflow: TextOverflow.ellipsis,)));}
+                child: SizedBox(width: 310.0,child: Text(bean.name!,overflow: TextOverflow.ellipsis,)));}
           ).toList(),
           value: empSel,
         ),
@@ -454,8 +403,8 @@ class _UserPageState extends State<UserPage> {
   _sendForm() {
     int changes=0;
     print(nome+"|"+login+"|"+fone);
-    if (_key.currentState.validate()) {
-      _key.currentState.save();
+    if (_key.currentState!.validate()) {
+      _key.currentState!.save();
       if(usr.name!=nome)changes++;
       if(usr.login!=login) {
         changes++;

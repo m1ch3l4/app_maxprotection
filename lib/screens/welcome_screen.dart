@@ -1,12 +1,10 @@
-import 'dart:io';
-
 import 'package:app_maxprotection/screens/VerifyMfa.dart';
 import 'package:app_maxprotection/screens/inner_forgotpass.dart';
 import 'package:app_maxprotection/screens/login_request.dart';
 import 'package:app_maxprotection/widgets/RadialButton.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_login.dart';
@@ -22,10 +20,13 @@ import '../widgets/constants.dart';
 import '../widgets/custom_route.dart';
 import 'contactus.dart';
 import 'home_page.dart';
-import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   static const routeName = '/welcome';
+
+  final String logoff;
+
+  WelcomeScreen(this.logoff);
 
   WelcomeScreenState createState() => WelcomeScreenState();
 }
@@ -46,10 +47,27 @@ class WelcomeScreenState extends State<WelcomeScreen>{
 
   FingerPrintAuth fp = new FingerPrintAuth();
   SharedPref sharedPref = SharedPref();
+  var logoff=null;
 
   bool _isHidden=true;
+  bool _ok=false;
 
   double tamanho = 0.0;
+
+  var senhaFocus = FocusNode(
+    onKey: (node,event) {
+      print('***onkey***Pressionou ${event.logicalKey.debugName}');
+      return KeyEventResult.ignored;
+    },
+    onKeyEvent: (node,event){
+      print('******Pressionou ${event.logicalKey.debugName}');
+      return event.logicalKey == LogicalKeyboardKey.keyQ
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
+    }
+  );
+  var loginFocus = FocusNode();
+  var forgotFocus = FocusNode();
 
   @override
   State<StatefulWidget> createState() {
@@ -61,6 +79,12 @@ class WelcomeScreenState extends State<WelcomeScreen>{
     _fabHeight = pos * (_panelHeightOpen - _panelHeightClosed) + _initFabHeight;
   }
 
+  void dispose(){
+    loginFocus.dispose();
+    forgotFocus.dispose();
+  }
+
+
     @override
     Widget build(BuildContext context) {
       return Material(
@@ -71,9 +95,9 @@ class WelcomeScreenState extends State<WelcomeScreen>{
               if(snapshot.connectionState!=ConnectionState.done){
                 return CircularProgressIndicator();
               }else {
-                //print("LOGIN_SCREEN: snapshot.value...");
-                //print(snapshot.data);
-                if (snapshot.data!=null && snapshot.data.toString().length>0) {
+                print("widget.logoff...."+widget.logoff);
+
+                if (snapshot.data!=null && snapshot.data.toString().length>0 && widget.logoff!="true") {
                   EmpresasSearch _empSearch = new EmpresasSearch();
                   List<Empresa> lstEmpresas = [];
                   var a = snapshot.data as Map<String,dynamic>;
@@ -88,11 +112,15 @@ class WelcomeScreenState extends State<WelcomeScreen>{
                     }
                   }
                   FCMInitConsultor _fcmInit = new FCMInitConsultor();
+                  sharedPref.remove("logoff");
                   _fcmInit.setConsultant(a);
-
                   return HomePage(); //login with fingerprint
                 } else {
+                  if(snapshot.data!=null && snapshot.data.toString().length>0 && widget.logoff=="true")
+                    firstLogin = false;
+                    else
                   firstLogin = true;
+
                   print('Primeiro login $firstLogin');
                   return buildWelcomeScrenn(context);
                 }
@@ -110,6 +138,8 @@ class WelcomeScreenState extends State<WelcomeScreen>{
     print("Tamanho da tela? "+height.toString());
 
     tamanho = height;
+
+    print("build....");
 
     return
       Scaffold(
@@ -132,8 +162,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
 
         ),
         backgroundColor: Colors.transparent,
-      )
-      ;
+      );
   }
   Widget _logo(BuildContext context, double width, double height){
     return Container(
@@ -159,7 +188,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   }
 
   Widget _formLogin(BuildContext context, double width, double height){
-    return Container(
+    Widget c = Container(
       width: width,
         height: height,
         alignment: Alignment.center,
@@ -189,6 +218,12 @@ class WelcomeScreenState extends State<WelcomeScreen>{
                     )],
                 ))
           ]));
+    print("Vendo os 2 estados..."+_isHidden.toString()+"|"+_ok.toString());
+    if(!_isHidden && !_ok) {
+      //passCtrl.selection = TextSelection.collapsed(offset: passCtrl.text.length);
+      FocusScope.of(context).requestFocus(senhaFocus);
+    }
+    return c;
   }
 
   getlogin(BuildContext context){
@@ -202,7 +237,8 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   }
 
   forgotPass(BuildContext context){
-    Navigator.of(context).push(FadePageRoute(
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pushReplacement(FadePageRoute(
       builder: (context)=>ForgotScreen(),
     ));
   }
@@ -213,6 +249,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
         child: new Column(
           children: <Widget>[
             new TextFormField(
+              focusNode: loginFocus,
               controller: loginCtrl,
               cursorColor: HexColor(Constants.red),
               style: TextStyle(color: HexColor(Constants.red)),
@@ -240,9 +277,13 @@ class WelcomeScreenState extends State<WelcomeScreen>{
               maxLength: 40,
             ),
             new TextFormField(
-              cursorColor: Colors.white,
+              cursorColor: HexColor(Constants.red),
               obscureText: _isHidden,
               controller: passCtrl,
+              focusNode: senhaFocus,
+                onFieldSubmitted: (value){
+                  _ok = true;
+                },
               style: TextStyle(color: HexColor(Constants.red)),
               decoration: new InputDecoration(hintText: 'Senha', hintStyle: TextStyle(color: HexColor(Constants.red)),
                   border: OutlineInputBorder(
@@ -252,6 +293,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
                   ),
                   filled:true,
                   fillColor: Colors.white,
+                  focusColor: HexColor(Constants.red),
                   suffixIcon: InkWell(
                     onTap: _togglePasswordView,
                     child: Icon(Icons.visibility_outlined,color: HexColor(Constants.red)),
@@ -274,7 +316,11 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   void _togglePasswordView() {
     setState(() {
       _isHidden = !_isHidden;
+      _ok = _isHidden;
+      //FocusScope.of(context).requestFocus(senhaFocus);
     });
+    print("toggle...");
+
   }
 
 
@@ -331,6 +377,8 @@ class WelcomeScreenState extends State<WelcomeScreen>{
       else
         fp.authWithBiometrics().then((val) {
           if(val){
+            sharedPref.save("logoff", "");
+            sharedPref.save("fl","");
             Navigator.of(context).push(FadePageRoute(
               builder: (context)=>HomePage()
               //builder: (context)=>LoginScreen(),
@@ -357,6 +405,11 @@ class WelcomeScreenState extends State<WelcomeScreen>{
         /**Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
           builder: (context)=>HomePage(),
         ),(Route<dynamic> route) => false);**/
+        var f = sharedPref.read("fl");
+        if(firstLogin && f=="")
+          sharedPref.save("fl", "true");
+        /**else
+          sharedPref.save("fl","");**/
         Navigator.of(context).pushAndRemoveUntil(FadePageRoute(
           builder: (context)=>verifyTwoFactor(),
         ),(Route<dynamic> route) => false);

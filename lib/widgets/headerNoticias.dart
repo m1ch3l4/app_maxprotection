@@ -1,4 +1,3 @@
-//@dart=2.10
 import 'package:app_maxprotection/widgets/top_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -11,13 +10,13 @@ import 'custom_route.dart';
 class headerNoticias extends StatelessWidget{
 
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  BuildContext ctx;
-  double width;
-  Function f;
+  BuildContext? ctx;
+  double? width;
+  Function? f;
 
   @override
   Widget build(BuildContext context) {
-    return _header(width, context);
+    return _header(width!, context);
   }
 
   headerNoticias(GlobalKey<ScaffoldState> key, BuildContext context, double w, Function onclick){
@@ -43,7 +42,7 @@ class headerNoticias extends StatelessWidget{
                   icon: const Icon(Icons.menu, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    _scaffoldKey.currentState.openDrawer();
+                    _scaffoldKey.currentState!.openDrawer();
                   },
                 ),
                 Spacer(),
@@ -53,7 +52,7 @@ class headerNoticias extends StatelessWidget{
                   icon: const Icon(Icons.home_outlined, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    Navigator.of(ctx).pushReplacement(FadePageRoute(
+                    Navigator.of(ctx!).push(FadePageRoute(
                       builder: (ctx) => HomePage(),
                     ));
                   },
@@ -86,7 +85,7 @@ class headerNoticias extends StatelessWidget{
                     ),
                   ),
                   onTap: (){
-                    f();
+                    f!();
                   },
                 ),
               ],

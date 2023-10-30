@@ -1,12 +1,10 @@
-// @dart=2.9
-
 import 'package:app_maxprotection/model/usuario.dart';
 
 class ChatData{
-  DateTime data;
-  String texto;
-  String tipo;
-  Usuario sender;
+  DateTime? data;
+  String? texto;
+  String? tipo;
+  Usuario? sender;
 
   ChatData.data([this.data, this.texto,this.tipo]) {
     // Set these rather than using the default value because Firebase returns

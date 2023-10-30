@@ -1,20 +1,18 @@
-// @dart=2.9
-
 import 'package:intl/intl.dart';
 
 import 'ActionCreator.dart';
 
 class ActionLog{
-  int id;
-  int type;
-  int origin;
-  String description;
-  String htmlDescription;
-  String status;
-  String justification;
-  String createdDate;
-  ActionCreator createdBy;
-  bool isDeleted;
+  int? id;
+  int? type;
+  int? origin;
+  String? description;
+  String? htmlDescription;
+  String? status;
+  String? justification;
+  String? createdDate;
+  ActionCreator? createdBy;
+  bool? isDeleted;
 
   ActionLog.data([this.id=0,this.type=0,this.origin=0,this.description="-",this.htmlDescription="-",this.status="-",this.justification="-",this.createdDate="-"]){
     this.id ??= 0;
