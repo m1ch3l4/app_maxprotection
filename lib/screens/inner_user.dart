@@ -228,7 +228,9 @@ class _UserPageState extends State<UserPage> {
       child: _formUI(width),
     )),
     Spacer(),
-    Row(mainAxisAlignment:MainAxisAlignment.center,children: [RadialButton(buttonText: "Salvar", width: width*0.8, onpressed: ()=> _sendForm())],)]);
+    Row(mainAxisAlignment:MainAxisAlignment.center,children: [RadialButton(buttonText: "Salvar", width: width*0.8, onpressed: ()=> _sendForm())],),
+    Spacer(),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children: [RadialButton(buttonText: "Quero excluir minha conta", width: width*0.8, onpressed: ()=> deleteAccount())],)]);
   }
 
   Widget _formUI(double width) {
@@ -423,6 +425,10 @@ class _UserPageState extends State<UserPage> {
         _validate = true;
       });
     }
+  }
+
+  deleteAccount(){
+    Logoff.confirmarDelete(context,usr);
   }
 
   Future<String> changeUser() {

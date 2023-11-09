@@ -77,6 +77,49 @@ class ChangePassApi{
     }
   }
 
+  static Future<ApiResponse<String>>deleteUser(Usuario usr) async{
+
+    try{
+      var ssl = false;
+      var response = null;
+
+      if(Constants.protocolEndpoint == "https://")
+        ssl = true;
+
+      var url =Constants.urlEndpoint+'user/acesso/'+usr!.id.toString()+"/false";
+
+      String basicAuth = "Bearer "+usr!.token!;
+
+        var client = HttpsClient().httpsclient;
+        response = await client.get(Uri.parse(url),
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              // Required for CORS support to work
+              "Access-Control-Allow-Credentials": "true",
+              // Required for cookies, authorization headers with HTTPS
+              "Access-Control-Allow-Headers": "Origin,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Authorization": basicAuth
+            }).timeout(Duration(seconds: 5));
+
+      print("status.deleteUser....${response.statusCode}");
+
+      //Map<String,dynamic> mapResponse = jsonDecode(Utf8Decoder().convert(response.bodyBytes));
+
+      if(response.statusCode == 200){
+        return ApiResponse.ok("ok");
+      }else{
+        if(response.statusCode == 401) {
+          return ApiResponse.error("As suas credenciais não são mais válidas...");
+        }
+      }
+    }catch(error, exception){
+      print("Erro : $error > $exception ");
+      return ApiResponse.error("Sem comunicação ... tente mais tarde... ");
+    }
+    return ApiResponse.error("Falha ao alterar dados do usuário");
+  }
+
   static Future<ApiResponse<Usuario>> changeUser(Usuario usr, String nome, String login, String fone) async {
     SharedPref sharedPref = SharedPref();
     try{
