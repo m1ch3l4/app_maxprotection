@@ -1,4 +1,6 @@
 import 'package:intl/intl.dart';
+
+import 'empresa.dart';
 class TechSupportData{
   String? title;
   String? data;
@@ -10,6 +12,7 @@ class TechSupportData{
   String? tecnico;
   String? urgencia;
 
+  Empresa? emp;
   TechSupportData(this.title,this.data,this.status,this.id,this.justify,this.empresa) {
     // Set these rather than using the default value because Firebase returns
     // null if the value is not specified.
@@ -32,6 +35,9 @@ class TechSupportData{
   }
   void setUrgencia(String urgencia){
     this.urgencia = urgencia;
+  }
+  void setEmp(Empresa e){
+    this.emp = e;
   }
 
   TechSupportData.fromJson(Map<String, dynamic> json) {

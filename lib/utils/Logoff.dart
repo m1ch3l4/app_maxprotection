@@ -74,5 +74,7 @@ class Logoff{
     await preferences.clear();
     preferences.setString("logoff", "true");
     preferences.setString("fl","true");
+    FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+    FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
   }
 }

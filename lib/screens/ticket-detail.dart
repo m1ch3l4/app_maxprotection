@@ -175,23 +175,9 @@ class _TicketsPageState extends State<TicketsPage> {
     double _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     double h = MediaQuery.of(context).size.height;
 
+    //print("Altura...."+h.toString());
+
     return new Scaffold(
-      /**appBar: AppBar(title: Text(widget.title),
-        backgroundColor: HexColor(Constants.red),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(FadePageRoute(
-                builder: (context) => TicketlistConsultor(widget.emp,widget.status),
-              ));
-            },
-          )
-        ],
-      ),**/
       appBar: AppBar(backgroundColor: HexColor(Constants.blue), toolbarHeight: 0,),
       backgroundColor: HexColor(Constants.grey),
       key: _scaffoldKey,
@@ -228,8 +214,9 @@ class _TicketsPageState extends State<TicketsPage> {
                 headerTkDetail(_scaffoldKey,context, width,detail!.title!,detail!.type!,detail!.id!,goBack),
                 Container(
                   width: width,
-                  height: MediaQuery.of(context).size.height-(h<700?195:105),
-                  //padding:  EdgeInsets.only(left:5),
+                  height: MediaQuery.of(context).size.height-(h<700?260:230), //TODO: rever aqui a altura
+                  //height: MediaQuery.of(context).size.height-225,
+                  margin:  EdgeInsets.only(bottom:5),
                   child: getDetail(),
                 )
           ]
@@ -437,7 +424,7 @@ class _TicketsPageState extends State<TicketsPage> {
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       children: [
-        for(var i=detail!.actions.length-1;i>0;i--)
+        for(var i=detail!.actions.length-1;i>=0;i--)
           cardLog(detail!.actions[i])
       ],
     );

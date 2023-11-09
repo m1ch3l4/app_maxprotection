@@ -60,15 +60,15 @@ class BlockButtonWidget extends StatelessWidget{
               children: <Widget>[
                 Container(
                   alignment: (width!>200?Alignment.centerRight:Alignment.centerLeft),
-                  width: (width!>200?width!*0.45:width!*0.32),
-                  padding: (width!>200?EdgeInsets.only(right:10):EdgeInsets.only(left: 10)),
+                  width: (width!>200?width!*0.38:width!*0.32),
+                  padding: (width!>200?EdgeInsets.only(right:15):EdgeInsets.only(left: 10)),
                   child:InkWell(
                     child: (image!=null?Image.asset(image!,width: (tam<700?40:45),height: (tam<700?40:45),):icon),
                   ),
                 ),
                 Container(
                     alignment: (width!>200?Alignment.centerLeft:Alignment.center),
-                    width: (width!>200?width!*0.55:width!*0.68),
+                    width: (width!>200?width!*0.62:width!*0.68),
                     padding: EdgeInsets.only(right: 6),
                   child: Text(title!,style:TextStyle(fontSize: (tam<700?11.5:13),color: HexColor(Constants.textColor)),textAlign: TextAlign.center,)
                 )

@@ -50,7 +50,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   var logoff=null;
 
   bool _isHidden=true;
-  bool _ok=false;
+  bool _ok=true;
 
   double tamanho = 0.0;
 

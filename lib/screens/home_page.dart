@@ -50,7 +50,7 @@ import 'inner_zabbix.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
-GlobalKey<_MyHomePageState> keyHP = new GlobalKey<_MyHomePageState>();
+//final GlobalKey<_MyHomePageState> keyHP = new GlobalKey<_MyHomePageState>();
 
 class HomePage extends StatelessWidget {
   static const routeName = '/dashboard';
@@ -64,7 +64,7 @@ class HomePage extends StatelessWidget {
           return (snapshot.hasData ? new MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'TI & Segurança',
-            home: new MyHomePage(key:keyHP,title: 'MaxProtection E-Seg', user: snapshot.data as Map<String, dynamic>),
+            home: new MyHomePage(title: 'MaxProtection E-Seg', user: snapshot.data as Map<String, dynamic>),
           ) : CircularProgressIndicator());
         },
     );
@@ -73,7 +73,7 @@ class HomePage extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget{
-  MyHomePage({required Key key, this.title,this.user}) : super(key: key);
+  MyHomePage({this.title,this.user});
 
   final String? title;
   final Map<String, dynamic>? user;

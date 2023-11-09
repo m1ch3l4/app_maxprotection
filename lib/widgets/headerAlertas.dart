@@ -72,7 +72,7 @@ class headerAlertas extends StatelessWidget{
                   onPressed: () {
                     Navigator.of(ctx!).maybePop(ctx).then((value) {
                       if (value == false) {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                             ctx!,
                             FadePageRoute(
                               builder: (ctx) => HomePage(),

@@ -121,7 +121,7 @@ class FCMInitConsultor{
   void unRegisterAll() async {
     for(String s in topics) {
       print('FCMInit...unsubscribe...'+s);
-      _firebaseMessaging.unsubscribeFromTopic(s);
+      await _firebaseMessaging.unsubscribeFromTopic(s);
     }
     _firebaseMessaging.deleteToken();
   }
@@ -146,22 +146,7 @@ class FCMInitConsultor{
     );
 
     setListeners();
-    /**
-    print('User granted permission: ${settings.authorizationStatus}');
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-      print("notificationShow");
-  } else {
-      print('User declined or has not accepted permission');
-      await Permission.notification.isDenied.then((value) {
-        if (value) {
-          Permission.notification.request();
-        }else{
-          setListeners();
-        }
-      });
-    }**/
   }
 
   setListeners(){
@@ -247,6 +232,7 @@ class FCMInitConsultor{
   Future<void> setConsultant(Map<String, dynamic> usr) async {
     user = usr;
     isTecnico=false;
+
 
     lst = [];
     if(user['tipo']=="C" && user['empresas']!=null) {
@@ -355,7 +341,8 @@ class FCMInitConsultor{
                   child: Text('Fechar',
                       style: TextStyle(color: HexColor(Constants.blue))),
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(context, rootNavigator: true).pop();
+                      //Navigator.of(context).pop();
                     }
                 ),
                 TextButton(
@@ -400,7 +387,8 @@ class FCMInitConsultor{
                     removeMessageRead(message.id!);
                     PushApi.changePass(user["id"], message.id!).then((value){
                       //Navigator.of(bdctx).pop();
-                      Navigator.of(ctx).pop();
+                      //Navigator.of(ctx).pop();
+                      Navigator.of(bdctx, rootNavigator: true).pop();
                       goto(message,bdctx);
                     } );
                   },

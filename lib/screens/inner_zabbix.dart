@@ -301,6 +301,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
   }
 
   void initState() {
+    super.initState();
     BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 30));
     txt.text = df.format(firstDate);
@@ -321,8 +322,6 @@ class _ZabbixPageState extends State<ZabbixPage> {
       setSelectedEmpresa(e);
       getData();
     }
-
-    super.initState();
     _fabHeight = _initFabHeight;
   }
 

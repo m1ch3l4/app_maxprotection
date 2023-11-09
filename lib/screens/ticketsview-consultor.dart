@@ -191,7 +191,7 @@ class _TicketsPageState extends State<TicketsPage> {
 
 
   bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
-    Navigator.of(context).pushReplacement(FadePageRoute(
+    Navigator.of(context).push(FadePageRoute(
       builder: (context) => HomePage(),
     ));
     return true;

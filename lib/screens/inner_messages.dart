@@ -34,7 +34,6 @@ import '../widgets/slider_menu.dart';
 import '../widgets/top_container.dart';
 import 'home_page.dart';
 
-GlobalKey<_MessagesPageState> keyMP = new GlobalKey<_MessagesPageState>();
 
 class InnerMessages extends StatelessWidget {
 
@@ -50,7 +49,7 @@ class InnerMessages extends StatelessWidget {
     return FutureBuilder(
         future: sharedPref.read("usuario"),
         builder: (context,snapshot){
-          return (snapshot.hasData ? new MessagesPage(key:keyMP,title: 'Mensagens', user: snapshot.data as Map<String, dynamic>, tipo: tipo)
+          return (snapshot.hasData ? new MessagesPage(title: 'Mensagens', user: snapshot.data as Map<String, dynamic>, tipo: tipo)
           : CircularProgressIndicator());
         },
     );
@@ -58,7 +57,7 @@ class InnerMessages extends StatelessWidget {
 }
 
 class MessagesPage extends StatefulWidget {
-  MessagesPage({required Key key, this.title,this.user,this.tipo}) : super(key: key);
+  MessagesPage({this.title,this.user,this.tipo});
 
   final String? title;
   final Map<String, dynamic>? user;
@@ -214,7 +213,7 @@ class _MessagesPageState extends State<MessagesPage> {
         ));
         lst.add(Spacer());
         lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
-          title: "Mensaens Tickets",ctx: context,r:false,
+          title: "Mensagens Tickets",ctx: context,r:false,
           action: InnerMessages(2),
           icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),);
         break;
@@ -227,7 +226,7 @@ class _MessagesPageState extends State<MessagesPage> {
         ));
         lst.add(Spacer());
         lst.add(TopHomeWidget(cardColor: HexColor(Constants.grey),width: width*0.4,
-          title: "Mensaens Siem",ctx: context,r:false,
+          title: "Mensagens Siem",ctx: context,r:false,
           action: InnerMessages(1),
           icon:Icon(Icons.mail_rounded,color: Colors.white,size: 24,),),);
         break;
@@ -285,10 +284,11 @@ class _MessagesPageState extends State<MessagesPage> {
       responseData = await http.get(Uri.parse(urlApi), headers: h).timeout(
           Duration(seconds: 5));
     }
+    print("response.data "+responseData.statusCode.toString());
+    print("response..."+responseData.toString());
     if(responseData.statusCode == 200){
       String source = Utf8Decoder().convert(responseData.bodyBytes);
-      print("source...");
-      print(source);
+      print("source..."+source.toString());
       final data = jsonDecode(source);
       setState(() {
         for(Map<String,dynamic> i in data){

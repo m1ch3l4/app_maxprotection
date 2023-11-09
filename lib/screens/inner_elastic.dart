@@ -384,6 +384,7 @@ class _ElasticPageState extends State<ElasticPage> {
   }
 
   void initState() {
+    super.initState();
     BackButtonInterceptor.add(myInterceptor);
     firstDate = minDate.subtract(Duration(days: 90));
     txt.text = df.format(firstDate);
@@ -407,8 +408,6 @@ class _ElasticPageState extends State<ElasticPage> {
       setSelectedEmpresa(e);
       getData();
     }
-
-    super.initState();
     _fabHeight = _initFabHeight;
   }
 
