@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:app_maxprotection/utils/EmpresasSearch.dart';
+import 'package:app_maxprotection/utils/Logoff.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:app_maxprotection/widgets/closePopup.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
@@ -316,6 +317,8 @@ class _ElasticPageState extends State<ElasticPage> {
         data = [];
           loading=false;
         });
+        await Logoff.cleanDados();
+        exit(0);
       }
       loading = false;
     }
