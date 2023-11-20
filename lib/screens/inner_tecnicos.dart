@@ -208,8 +208,9 @@ class _TecnicosPageState extends State<TecnicosPage> {
   }
 
   Widget _body(){
-    return Expanded(
-        child: listView());
+    /**return Expanded(
+        child: listView());**/
+    return listView();
   }
 
  /** Widget _header(double width){

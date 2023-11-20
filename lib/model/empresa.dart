@@ -8,6 +8,8 @@ class Empresa extends Equatable{
   int? novo;
   int? aguardando;
   int? atendimento;
+  bool? siem;
+  bool? zabbix;
 
   Empresa(this.id,this.name);
 
@@ -19,6 +21,12 @@ class Empresa extends Equatable{
   }
   void setAtendimento(int atd){
     this.atendimento = atd;
+  }
+  void setSiem(bool siem){
+    this.siem = siem;
+  }
+  void setZabbix(bool zab){
+    this.zabbix = zab;
   }
 
   /** Empresa.data([this.id,this.name]){
@@ -32,11 +40,15 @@ class Empresa extends Equatable{
   Empresa.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     name = json['name'];
+    siem = json["siem"];
+    zabbix = json["zabbix"];
   }
 
   Map toJson() => {
     'id': id,
-    'name': name
+    'name': name,
+    'siem':siem,
+    'zabbix':zabbix
   };
 
   @override

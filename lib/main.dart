@@ -173,6 +173,8 @@ class MyApp extends StatelessWidget {
   Widget getScreen(){
     Widget screen = WelcomeScreen("");
 
+    //print("itens para decidir a tela...usr:"+(usr!=null).toString()+"|logoff:"+logoff.toString()+"|mfa:"+mfa.toString());
+
     if(usr!=null && logoff=="true") {
       print("WelcomeScreen");
       screen = WelcomeScreen(logoff);

@@ -162,11 +162,11 @@ class ForgotScreenState extends State<ForgotScreen>{
       AlertDialog alert;
       Widget cancelButton = ElevatedButton(
         child: Text("OK"),
-        onPressed:  () {
+        onPressed:  () async{
           Navigator.of(context, rootNavigator: true).pop('dialog');
-          Logoff.cleanDados();
-          Navigator.of(context).push(FadePageRoute(
-              builder: (context)=>WelcomeScreen("")
+          await Logoff.cleanDados();
+          Navigator.of(context).pushReplacement(FadePageRoute(
+              builder: (context)=>WelcomeScreen("true")
           ));
         },
       );

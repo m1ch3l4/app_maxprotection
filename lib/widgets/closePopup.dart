@@ -4,8 +4,8 @@ import '../utils/HexColor.dart';
 import 'constants.dart';
 
 class closePopup extends StatelessWidget{
-
-  closePopup();
+  BuildContext dContext;
+  closePopup(this.dContext);
   
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,10 @@ class closePopup extends StatelessWidget{
         child: FittedBox(
             child: FloatingActionButton(
               backgroundColor: Colors.white,
-              onPressed: () {Navigator.pop(context);},
+              onPressed: () {
+                //Navigator.pop(dContext);
+                Navigator.of(dContext, rootNavigator: true).pop();
+                },
               child: Icon(
                 Icons.close,
                 size: 25,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app_maxprotection/api/PushConfirmApi.dart';
 import 'package:app_maxprotection/model/TechSupportModel.dart';
+import 'package:app_maxprotection/model/usuario.dart';
 import 'package:app_maxprotection/screens/inner_elastic.dart';
 import 'package:app_maxprotection/screens/inner_messages.dart';
 import 'package:app_maxprotection/utils/SharedPref.dart';
@@ -102,7 +103,8 @@ class FCMInitConsultor{
   static final FCMInitConsultor _instance = FCMInitConsultor._internal();
   factory FCMInitConsultor() => _instance;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  late Map<String, dynamic> user;
+  //late Map<String, dynamic> user;
+  late Usuario user;
   List<Empresa> lst = [];
   late String screen;
   late BuildContext ctx;
@@ -118,10 +120,10 @@ class FCMInitConsultor{
     }
   }
 
-  void unRegisterAll() async {
+  Future<void> unRegisterAll() async {
     for(String s in topics) {
       print('FCMInit...unsubscribe...'+s);
-      await _firebaseMessaging.unsubscribeFromTopic(s);
+      _firebaseMessaging.unsubscribeFromTopic(s);
     }
     _firebaseMessaging.deleteToken();
   }
@@ -166,7 +168,7 @@ class FCMInitConsultor{
         messageFCM.type = message.data['type'];
       }
       //goto(message.data['type'], ctx);
-      if(user["tipo"]=="T"){
+      if(user.tipo=="T"){
         showMessage(messageFCM);
       }else{
         showSimpleMessage(messageFCM);
@@ -195,7 +197,7 @@ class FCMInitConsultor{
   }
 
 
-  Map<String, dynamic> get getUsr=>user;
+  Usuario get getUsr=>user;
 
   Future<void> readSavedPushMessage() async{
     var value = await sharedPref.getValue("pushid");
@@ -229,23 +231,25 @@ class FCMInitConsultor{
     await storage.deleteItem(id);
   }
 
-  Future<void> setConsultant(Map<String, dynamic> usr) async {
+  Future<void> setConsultant(Usuario usr) async {
     user = usr;
     isTecnico=false;
 
 
     lst = [];
-    if(user['tipo']=="C" && user['empresas']!=null) {
-      for (Map i in user['empresas']) {
-        lst.add(Empresa(i["id"], i["name"]));
-      }
+    if(user.tipo=="C" && user.empresas!=null) {
+      lst.addAll(user.empresas);
+      /**for (Map i in user['empresas']) {
+        lst.add(Empresa.fromJson(i as Map<String, dynamic>));
+      }**/
     }
 
-    if(user['tipo']=='T') {
-      if(user['empresas']!=null){
-        for (Map i in user['empresas']) {
-          lst.add(Empresa(i["id"], i["name"]));
-        }
+    if(user.tipo=='T') {
+      if(user.empresas!=null){
+        /**for (Map i in user['empresas']) {
+          lst.add(Empresa.fromJson(i as Map<String,dynamic>));
+        }**/
+        lst.addAll(user.empresas);
       }
       isTecnico = true;
       readSavedPushMessage();
@@ -266,14 +270,18 @@ class FCMInitConsultor{
 
     topics = [];
 
-    if(user["tipo"]=="C" || user["tipo"]=="T"){
+    if(user.tipo=="C" || user.tipo=="T"){
       print("FCMInit...assumindo que é consultor ou técnico...");
       lst.map((item) {
         if(item.id!="0"){
-          _firebaseMessaging.subscribeToTopic('elastic' + item.id!);
-          topics.add('elastic'+item.id!);
-          _firebaseMessaging.subscribeToTopic('zabbix' + item.id!);
-          topics.add('zabbix' + item.id!);
+          if(item.siem!) {
+            _firebaseMessaging.subscribeToTopic('elastic' + item.id!);
+            topics.add('elastic' + item.id!);
+          }
+          if(item.zabbix!) {
+            _firebaseMessaging.subscribeToTopic('zabbix' + item.id!);
+            topics.add('zabbix' + item.id!);
+          }
           _firebaseMessaging.subscribeToTopic('techsupport' + item.id!);
           topics.add('techsupport' + item.id!);
         }
@@ -289,25 +297,25 @@ class FCMInitConsultor{
             topics.add('techsupport' + emp.id);
           }
         }); **/
-        if(user["tipo"]=="T" && user["interno"]) {
-          _firebaseMessaging.subscribeToTopic("plantao" + user["id"]);
-          topics.add('plantao'+user['id']);
+        if(user.tipo=="T" && user.interno!) {
+          _firebaseMessaging.subscribeToTopic("plantao" + user.id!);
+          topics.add('plantao'+user.id!);
         }
     }else{ //se for diretor....
       print("FCMInit...assumindo que é diretor...");
         _firebaseMessaging.subscribeToTopic(
-              'elastic' + user['company_id'].toString());
-        topics.add('elastic' + user['company_id'].toString());
+              'elastic' + user.idempresa.toString());
+        topics.add('elastic' + user.idempresa.toString());
           _firebaseMessaging.subscribeToTopic(
-              'zabbix' + user['company_id'].toString());
-        topics.add('zabbix' + user['company_id'].toString());
-        _firebaseMessaging.subscribeToTopic('techsupport'+user['company_id'].toString());
-        topics.add('techsupport'+user['company_id'].toString());
+              'zabbix' + user.idempresa.toString());
+        topics.add('zabbix' + user.idempresa.toString());
+        _firebaseMessaging.subscribeToTopic('techsupport'+user.idempresa.toString());
+        topics.add('techsupport'+user.idempresa.toString());
    }
      _firebaseMessaging.subscribeToTopic('news');
     topics.add('news');
-    _firebaseMessaging.subscribeToTopic("message"+user["id"]);
-    topics.add('message'+user['id']);
+    _firebaseMessaging.subscribeToTopic("message"+user.id!);
+    topics.add('message'+user.id!);
 
     for(String s in topics) {
       print('FCMInit...registrado em:'+s);
@@ -385,7 +393,7 @@ class FCMInitConsultor{
                       style: TextStyle(color: HexColor(Constants.blue))),
                   onPressed: () {
                     removeMessageRead(message.id!);
-                    PushApi.changePass(user["id"], message.id!).then((value){
+                    PushApi.changePass(user.id!, message.id!).then((value){
                       //Navigator.of(bdctx).pop();
                       //Navigator.of(ctx).pop();
                       Navigator.of(bdctx, rootNavigator: true).pop();
@@ -400,12 +408,12 @@ class FCMInitConsultor{
     }
   }
   void goto(MessageData msg, BuildContext context){
-    print("goto.userTipo: "+user["tipo"]);
+    print("goto.userTipo: "+user.tipo!);
     print(msg.type);
     print("Empresa.id: "+msg.enterprise!);
     print("Alert.id: "+msg.aid!);
 
-    bool isConsultor = (user["tipo"]=="C"?true:false);
+    bool isConsultor = (user.tipo=="C"?true:false);
     switch (msg.type) {
       case 'elastic':
         Navigator.of(context).pushReplacement(FadePageRoute(

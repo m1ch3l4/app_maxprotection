@@ -70,15 +70,21 @@ class headerAlertas extends StatelessWidget{
                   icon: const Icon(Icons.arrow_back_ios, color:Colors.white,size: 20.0),
                   tooltip: 'Abrir Menu',
                   onPressed: () {
-                    Navigator.of(ctx!).maybePop(ctx).then((value) {
-                      if (value == false) {
-                        Navigator.push(
-                            ctx!,
-                            FadePageRoute(
-                              builder: (ctx) => HomePage(),
-                            ));
-                      }
-                    });
+                    if(usr!["tipo"]=="C"){
+                      Navigator.of(ctx!).push(FadePageRoute(
+                        builder: (ctx) => HomePage(),
+                      ));
+                    }else {
+                      Navigator.of(ctx!).maybePop(ctx).then((value) {
+                        if (value == false) {
+                          Navigator.push(
+                              ctx!,
+                              FadePageRoute(
+                                builder: (ctx) => HomePage(),
+                              ));
+                        }
+                      });
+                    }
                     /**Navigator.of(ctx).push(FadePageRoute(
                       builder: (ctx) => HomePage(),
                     ));**/

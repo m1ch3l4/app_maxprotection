@@ -47,7 +47,7 @@ class TechSupportData{
     status = json['status'];
     id = json['internalId'].toString();
     justify = json['justifyStatus'];
-    empresa = json['empresa']['name'];
+    empresa = json['empresa']!=null?json['empresa']['name']:"-";
     urgencia = json['urgency'];
   }
 

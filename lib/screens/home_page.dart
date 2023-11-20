@@ -152,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage>{
       }
     }
     FCMInitConsultor _fcmInit = new FCMInitConsultor();
-    _fcmInit.setConsultant(a!);
+    _fcmInit.setConsultant(Usuario.fromJson(a!));
   }
 
 
@@ -306,7 +306,8 @@ class _MyHomePageState extends State<MyHomePage>{
 
         if (!refresh.hasAccess! && refresh.tipo == "T") {
           Message.showMessage("A sua credencial não é mais válida!");
-          Logoff.logoff();
+          await Logoff.cleanDados();
+          exit(0);
         }
 
         double width = MediaQuery.of(context).size.width;
@@ -330,13 +331,13 @@ class _MyHomePageState extends State<MyHomePage>{
             print("Se entrou aqui encontrou mudança na lista de empresas...");
             _empSearch.setOptions(lstEmpresas);
             FCMInitConsultor().unRegisterAll();
-            FCMInitConsultor().setConsultant(refresh.toJson());
+            FCMInitConsultor().setConsultant(refresh);
           }
           prefs.setString('usuario', json.encode(refresh));
         }
       } else {
         Message.showMessage("A sua credencial não é mais válida!");
-        Logoff.cleanDados();
+        await Logoff.cleanDados();
         exit(0);
       }
     }

@@ -160,24 +160,40 @@ class LoginApi{
 
 
       if(response.statusCode == 200){
-
-        mapResponse.forEach((k,v) => print("got key $k with $v"));
-
         final usuario = Usuario.fromJson(mapResponse);
 
         if(usuario.id=="-1"){
           //return ApiResponse.error(utf8.decode(usuario.name.codeUnits)); //acento
           return ApiResponse.error(usuario!.name!);
         }else {
+         /** mapResponse.forEach((k,v) {
+            if(k == "relacionamento" || k =="enterpriseSet") {
+              List<dynamic> l = v;
+              l.asMap().entries.forEach((item) {
+                //print(">>>>>"+item.value.toString());
+                Map<String,dynamic>m = item.value;
+                m.forEach((key, value) {
+                  if(key == "name")
+                    print(value.toString());
+                  if(key=="siem")
+                    print(value.toString());
+                  if(key=="zabbix")
+                    print(value.toString());
+                });
+              });
+            }
+          }); **/
+
           Perfil.setTecnico(usuario.tipo == "T" ? true : false);
           usuario.senha=password;
           if (usuario!.hasAccess! || usuario.tipo != "T") {
             prefs.remove("mfa");
+            prefs.setString("logoff", "false");
             prefs.setString('usuario', json.encode(usuario));
             prefs.setString(
                 'tecnico', (usuario.tipo == "T" ? "true" : "false"));
             FCMInitConsultor _fcmInit = new FCMInitConsultor();
-            _fcmInit.setConsultant(usuario.toJson());
+            _fcmInit.setConsultant(usuario);
             return ApiResponse.ok(usuario);
           } else {
             return ApiResponse.error("A sua credencial não é mais válida!");

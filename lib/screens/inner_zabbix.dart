@@ -8,6 +8,7 @@ import 'package:app_maxprotection/widgets/searchempresa_wdt.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
@@ -231,12 +232,13 @@ class _ZabbixPageState extends State<ZabbixPage> {
           listModel.clear();
           for (Map<String,dynamic> i in dataJ) {
             var alert = AlertData.fromJson(i);
-            if(widget.aid!=null && isConsultor){
+            /**if(widget.aid!=null && isConsultor){
               if(alert.id == widget.aid)
                 listModel.add(alert);
             }else {
               listModel.add(alert);
-            }
+            }**/
+            listModel.add(alert);
             if(alert.zstatus==null)alert.zstatus="OK";
             if(!dados.containsKey(alert.zstatus)){
               dados.putIfAbsent(alert.zstatus!, () => 1);
@@ -337,10 +339,16 @@ class _ZabbixPageState extends State<ZabbixPage> {
     _fcmInit.configureMessage(context, "zabbix");
     try {
       widgetSearchEmpresa =
-          searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,);
+          searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,tipo:"zabbix");
     }catch(e){
       print("erro searchEmpresa..."+e.toString());
     }
+
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      if(widget.aid!=null)
+        showAlertByPopup(context);
+    });
+
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
@@ -609,6 +617,44 @@ class _ZabbixPageState extends State<ZabbixPage> {
       },);
   }
 
+  Future<void> showAlertByPopup(BuildContext context) async{
+    AlertData d = listModel.firstWhere((element) => element.id==widget.aid);
+    print("showAlertByPoup...");
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32.0))),
+            content:
+            Stack(
+                children: [
+                  Container(
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          //crossAxisAlignment: CrossAxisAlignment.,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red))),
+                                Spacer(),
+                                closePopup(context)
+                              ]
+                              ,),
+                            SizedBox(height: 20,),
+                            detalhes(d),
+                          ]))
+                ]
+            ),
+            actions: <Widget>[
+            ],
+          );
+        });
+  }
+
   Future<void> showAlert(BuildContext context,int index) async {
     AlertData d = listModel.elementAt(index);
     return showDialog(
@@ -632,7 +678,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
                               children: [
                                 Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red))),
                                 Spacer(),
-                                closePopup()
+                                closePopup(context)
                               ]
                               ,),
                             SizedBox(height: 20,),

@@ -7,6 +7,7 @@ import 'package:app_maxprotection/utils/SharedPref.dart';
 import 'package:app_maxprotection/widgets/closePopup.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
@@ -283,12 +284,13 @@ class _ElasticPageState extends State<ElasticPage> {
           var alert = AlertData.fromJson(i);
           alert.setEmpresa(ent["name"]);
 
-          if(widget.aid!=null && isConsultor){
+          /**if(widget.aid!=null && isConsultor){
             if(alert.id==widget.aid)
               listModel.add(alert);
           }else {
             listModel.add(alert);
-          }
+          }**/
+          listModel.add(alert);
           if(!dados!.containsKey(alert.status)){
             dados!.putIfAbsent(alert.status!, () => 1);
           }else{
@@ -435,7 +437,13 @@ class _ElasticPageState extends State<ElasticPage> {
     _panelHeightOpen = MediaQuery.of(context).size.height * .25;
     _fcmInit.configureMessage(context, "elastic");
     widgetSearchEmpresa =
-        searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,);
+        searchEmpresa(onchangeF: () => getData(), context: context,width: MediaQuery.of(context).size.width*0.95,notifyParent: setSelectedEmpresa,tipo:"siem");
+
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      if(widget.aid!=null)
+        showAlertByPopup(context);
+    });
+
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: HexColor(Constants.grey),
@@ -734,6 +742,41 @@ class _ElasticPageState extends State<ElasticPage> {
       },);
   }
 
+  Future<void> showAlertByPopup(BuildContext context) async {
+    AlertData d = listModel.firstWhere((element) => element.id==widget.aid);
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32.0))),
+            content: Stack(
+                children: [
+                  Container(
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          //crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red))),
+                                closePopup(context)
+                              ]
+                              ,),
+                            SizedBox(height:20,),
+                            detalhes(d),
+                          ]))
+                ]
+            ),
+            actions: <Widget>[
+            ],
+          );
+        });
+  }
+
   Future<void> showAlert(BuildContext context,int index) async {
     AlertData d = listModel.elementAt(index);
     return showDialog(
@@ -755,7 +798,7 @@ class _ElasticPageState extends State<ElasticPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text("Detalhes do Alert",style: TextStyle(fontWeight: FontWeight.w500,color: HexColor(Constants.red))),
-                                closePopup()
+                                closePopup(context)
                               ]
                               ,),
                             SizedBox(height:20,),

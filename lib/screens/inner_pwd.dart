@@ -9,10 +9,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import '../api/ChangPassApi.dart';
+import '../model/usuario.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/HexColor.dart';
 import '../widgets/RadialButton.dart';
@@ -326,7 +328,7 @@ class _PwdPageState extends State<PwdPage> {
   }
 
   Future<String> changePass(String iduser,String newpass) {
-    return ChangePassApi.changePass(widget.user!["token"],iduser, newpass,consultant).then((resp) {
+    return ChangePassApi.changePass(widget.user!["token"],iduser, newpass,consultant).then((resp) async {
       print('LoginAPI. ${resp.ok}');
       if(!resp.ok){
         Message.showMessage("Não foi possível alterar sua senha!");
@@ -334,9 +336,21 @@ class _PwdPageState extends State<PwdPage> {
         return 'user not exists';
       }else {
 
-        Message.showMessage("Senha Alterada com sucesso!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
+        //Message.showMessage("Senha Alterada com sucesso!\nSuas credenciais não são mais validas\n, você deverá fazer login novamente.");
+        final prefs = await SharedPreferences.getInstance();
+        Usuario doSistema = Usuario.fromSharedPref(widget.user!);
+        doSistema.senha = newpass;
+        await prefs.setString('usuario', json.encode(doSistema));
+        await prefs.setString("fl","false");
 
-        Logoff.logoffSenha();
+        Message.showMessage("Senha Alterada com sucesso!");
+        Navigator.pushReplacement(
+            context,
+            FadePageRoute(
+              builder: (ctx) => HomePage(),
+            ));
+
+        //await Logoff.logoffSenha();
 
         return 'senha alterada';
       }

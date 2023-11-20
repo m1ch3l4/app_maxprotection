@@ -17,8 +17,9 @@ class searchEmpresa extends StatefulWidget {
   final BuildContext? context;
   final double? width;
   final Function(Empresa)? notifyParent;
+  final String? tipo; //zabbix, siem, tickets
 
-  searchEmpresa({ this.onchangeF, this.context,this.width,this.notifyParent});
+  searchEmpresa({ this.onchangeF, this.context,this.width,this.notifyParent,this.tipo});
 
   _searchEmpresa? state;
 
@@ -51,7 +52,10 @@ class _searchEmpresa extends State<searchEmpresa>{
       });
     }
     searchForGestureDetector(_dropdownButtonKey.currentContext!);
-    detector!.onTap!();
+    if(detector!=null && detector!.onTap!=null)
+      detector!.onTap!();
+    else
+      Message.showMessage("As suas empresas não tem contrato de "+widget.tipo!.toUpperCase());
   }
 
   void initState() {
@@ -65,7 +69,15 @@ class _searchEmpresa extends State<searchEmpresa>{
       });
       //empSel = _empSearch.defaultOpt;
       for (Empresa bean in _empSearch.lstOptions) {
-        if(!_data.contains(bean)){
+        print(bean.id!+"|"+bean.name!+"|"+bean.zabbix!.toString()+"|"+bean.siem!.toString());
+        bool ok = false;
+        if(widget.tipo=="zabbix" && bean.zabbix!)
+          ok = true;
+        if(widget.tipo=="siem" && bean.siem!)
+          ok = true;
+        if(widget.tipo!="zabbix" && widget.tipo!="siem")
+          ok = true;
+        if(!_data.contains(bean) && ok){
         _data.add(
             new DropdownMenuItem(
                 value: bean,

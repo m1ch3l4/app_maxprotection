@@ -215,7 +215,8 @@ class _TicketsPageState extends State<TicketsPage> {
           var o = i["owner"];
           var ticket = TechSupportData.fromJson(i);
           ticket.setEmpresa(e!=null?e["name"]:"");
-          ticket.setEmp(Empresa.fromJson(e));
+          if(e!=null)
+            ticket.setEmp(Empresa.fromJson(e));
           ticket.setUser(c!=null?c["name"]:"");
           ticket.setTecnico((o!=null?o["name"]:""));
           if(!listModel.contains(ticket))
@@ -450,7 +451,7 @@ class _TicketsPageState extends State<TicketsPage> {
           Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TicketDetail(tech,tech.emp,widget.status), // <-- document instance
+            builder: (context) => tech.emp!=null?TicketDetail(tech,tech.emp,widget.status):TicketDetail(tech,widget.empresa,widget.status), // <-- document instance
           ));},
         child: Card(
         child:

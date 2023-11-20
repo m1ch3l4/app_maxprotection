@@ -454,7 +454,7 @@ class _MessagesPageState extends State<MessagesPage> {
                               children: [
                                 Text("Detalhes da Mensagem",style: TextStyle(fontWeight: FontWeight.bold,color: HexColor(Constants.red))),
                                 Spacer(),
-                                closePopup()
+                                closePopup(context)
                               ]
                               ,),
                             SizedBox(height: 20,),

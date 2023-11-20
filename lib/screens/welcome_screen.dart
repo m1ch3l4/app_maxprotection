@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_login.dart';
 import '../model/empresa.dart';
+import '../model/usuario.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/FingerPrintAuth.dart';
@@ -50,7 +51,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   var logoff=null;
 
   bool _isHidden=true;
-  bool _ok=true;
+  bool _ok=false;
 
   double tamanho = 0.0;
 
@@ -80,6 +81,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   }
 
   void dispose(){
+    super.dispose();
     loginFocus.dispose();
     forgotFocus.dispose();
   }
@@ -113,7 +115,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
                   }
                   FCMInitConsultor _fcmInit = new FCMInitConsultor();
                   sharedPref.remove("logoff");
-                  _fcmInit.setConsultant(a);
+                  _fcmInit.setConsultant(Usuario.fromJson(a));
                   return HomePage(); //login with fingerprint
                 } else {
                   if(snapshot.data!=null && snapshot.data.toString().length>0 && widget.logoff=="true")
@@ -237,7 +239,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
   }
 
   forgotPass(BuildContext context){
-    FocusScope.of(context).unfocus();
+    //FocusScope.of(context).dispose();
     Navigator.of(context).pushReplacement(FadePageRoute(
       builder: (context)=>ForgotScreen(),
     ));
@@ -377,7 +379,7 @@ class WelcomeScreenState extends State<WelcomeScreen>{
       else
         fp.authWithBiometrics().then((val) {
           if(val){
-            sharedPref.save("logoff", "");
+            sharedPref.save("logoff", "false");
             sharedPref.save("fl","");
             Navigator.of(context).push(FadePageRoute(
               builder: (context)=>HomePage()

@@ -33,8 +33,8 @@ class Logoff{
           backgroundColor: Colors.transparent,
           elevation: 0
       ),
-      onPressed:  () {
-        logoff();
+      onPressed:  () async{
+        await logoff();
       },
     );  // set up the AlertDialog
     alert = AlertDialog(
@@ -109,7 +109,7 @@ class Logoff{
     SharedPreferences preferences = await SharedPreferences.getInstance();
     preferences.setString("logoff", "true");
     //await preferences.clear();
-    FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+    await FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
     FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
     exit(0);
   }
@@ -118,7 +118,7 @@ class Logoff{
     await preferences.clear();
     preferences.setString("logoff", "true");
     preferences.setString("fl","false");
-    FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+    await FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
     FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
     exit(0);
   }
@@ -127,7 +127,7 @@ class Logoff{
     await preferences.clear();
     preferences.setString("logoff", "true");
     preferences.setString("fl","true");
-    FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
+    await FCMInitConsultor().unRegisterAll(); //esperando que ele consiga cancelar registro no Push...
     FCMInitConsultor().deletePushStorage(); //deletando repositório pushmessage
   }
 }

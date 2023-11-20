@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api/api_login.dart';
 import '../model/empresa.dart';
+import '../model/usuario.dart';
 import '../utils/EmpresasSearch.dart';
 import '../utils/FCMInitialize-consultant.dart';
 import '../utils/FingerPrintAuth.dart';
@@ -80,7 +81,7 @@ class LoginScreenState extends State<LoginScreen> {
                   }
                 }
                 FCMInitConsultor _fcmInit = new FCMInitConsultor();
-                _fcmInit.setConsultant(a);
+                _fcmInit.setConsultant(Usuario.fromJson(a));
 
                 return HomePage(); //login with fingerprint
               } else {
