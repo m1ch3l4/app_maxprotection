@@ -403,6 +403,7 @@ class _ElasticPageState extends State<ElasticPage> {
       isConsultor = true;
       initialEnterpriseData();
     }else {
+      if(widget.eid==null)
       getData();
     }
 

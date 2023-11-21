@@ -45,6 +45,7 @@ Future<void> stopAlertSound() async{
   player.dispose();
 }
 
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("*****Handling a background message: ${message.messageId}");
   print(message.data["type"]); //Verificar a configuração de alert de som por tipo de mensagem
@@ -177,6 +178,7 @@ class FCMInitConsultor{
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage mes) {
+      print("onMessageOpenedApp");
       stopAlertSound();
       String tipo = mes.data["type"];
       String eid = mes.data["eid"];
@@ -317,9 +319,9 @@ class FCMInitConsultor{
     _firebaseMessaging.subscribeToTopic("message"+user.id!);
     topics.add('message'+user.id!);
 
-    for(String s in topics) {
+    /**for(String s in topics) {
       print('FCMInit...registrado em:'+s);
-    }
+    }**/
 
   }
 
@@ -349,6 +351,7 @@ class FCMInitConsultor{
                   child: Text('Fechar',
                       style: TextStyle(color: HexColor(Constants.blue))),
                     onPressed: () {
+                      removeMessageRead(message.id!);
                       Navigator.of(context, rootNavigator: true).pop();
                       //Navigator.of(context).pop();
                     }
@@ -357,6 +360,7 @@ class FCMInitConsultor{
                   child: Text('Ver Ocorrência',
                       style: TextStyle(color: HexColor(Constants.blue))),
                   onPressed: () {
+                    removeMessageRead(message.id!);
                     Navigator.of(context).pop();
                     goto(message,context);
                   },

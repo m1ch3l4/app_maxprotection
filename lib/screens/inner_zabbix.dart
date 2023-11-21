@@ -203,9 +203,9 @@ class _ZabbixPageState extends State<ZabbixPage> {
           widget.user!['company_id'].toString() + "/" + dtParam1 + "/" + dtParam2; //é Diretor!
     }
 
-    print("****URL API: ");
+    /** print("****URL API: ");
     print(urlApi);
-    print("**********");
+    print("**********"); **/
 
     String basicAuth = "Bearer "+widget.user!["token"];
 
@@ -314,10 +314,13 @@ class _ZabbixPageState extends State<ZabbixPage> {
     if(widget.user!["tipo"]=="C") {
       isConsultor = true;
     }else {
+      print("deveria chamar o getData aqui...tipo!=consultor...");
+      if(widget.eid==null)
       getData();
     }
 
     if(widget.eid!=null) {
+      print("vai chamar o getData aqui...widget.eid");
       firstDate = minDate.subtract(Duration(days:2));
       dtParam1 = dbFormat.format(firstDate);
       Empresa e = Empresa(widget.eid,"");
@@ -620,6 +623,7 @@ class _ZabbixPageState extends State<ZabbixPage> {
   Future<void> showAlertByPopup(BuildContext context) async{
     AlertData d = listModel.firstWhere((element) => element.id==widget.aid);
     print("showAlertByPoup...");
+    if(d!=null)
     return showDialog(
         context: context,
         builder: (context) {

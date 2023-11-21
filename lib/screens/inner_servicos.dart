@@ -206,7 +206,7 @@ class _ServicosPageState extends State<ServicosPage> {
     if(Constants.protocolEndpoint == "https://")
       ssl = true;
 
-    if(isConsultor){
+    if(isConsultor || widget.user!["tipo"]!="D"){
       if(empSel!=null)
         urlApi =  Constants.urlEndpoint + "enterprise/showcontrato/" +empSel.id!;
     }else {
@@ -276,7 +276,7 @@ class _ServicosPageState extends State<ServicosPage> {
                 Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.only(top:170),
-                  child: (isConsultor?widgetSearchEmpresa:SizedBox(height: 1,)),
+                  child: ((isConsultor||widget.user!["tipo"]!="D")?widgetSearchEmpresa:SizedBox(height: 1,)),
                 ),
               ]),
           Spacer(),
@@ -312,10 +312,11 @@ class _ServicosPageState extends State<ServicosPage> {
       ssl = true;
 
 
-    if(isConsultor) {
+    if(isConsultor || widget.user!["tipo"]!="D") {
       empSel = _empSearch.defaultOpt;
       urlApi = Constants.urlEndpoint + "servico/lista/" + empSel.id!;
     }else {
+      if(widget.user!["tipo"]=="D")
       urlApi = Constants.urlEndpoint + "servico/lista/" +
           widget.user!['company_id'].toString();
     }
