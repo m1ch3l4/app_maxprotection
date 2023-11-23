@@ -247,6 +247,8 @@ class FCMInitConsultor{
     }
 
     if(user.tipo=='T') {
+      print("empresas do usuário...."+user.empresas.toString());
+      print("empresas do usuario....");
       if(user.empresas!=null){
         /**for (Map i in user['empresas']) {
           lst.add(Empresa.fromJson(i as Map<String,dynamic>));
@@ -319,9 +321,9 @@ class FCMInitConsultor{
     _firebaseMessaging.subscribeToTopic("message"+user.id!);
     topics.add('message'+user.id!);
 
-    /**for(String s in topics) {
+    for(String s in topics) {
       print('FCMInit...registrado em:'+s);
-    }**/
+    }
 
   }
 

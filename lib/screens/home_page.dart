@@ -152,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage>{
       }
     }
     FCMInitConsultor _fcmInit = new FCMInitConsultor();
-    _fcmInit.setConsultant(Usuario.fromJson(a!));
+    _fcmInit.setConsultant(Usuario.fromSharedPref(a!));
   }
 
 
